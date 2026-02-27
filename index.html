@@ -1,167 +1,436 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Deckbuilding Dashboard - Yu-Gi-Oh</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body { font-family: Arial,sans-serif; background:#121212; color:#eee; margin:0; padding:0; }
-h1,h2 { text-align:center; }
-.container { display:flex; flex-wrap: wrap; justify-content:center; padding:20px; gap:20px; }
-.panel { background:#1f1f1f; border-radius:12px; padding:20px; width:320px; }
-.panel h2 { margin-top:0; }
-input { width:60px; margin-left:10px; }
-button { margin-top:10px; padding:10px 20px; border:none; border-radius:8px; background:#00bcd4; color:#111; cursor:pointer; }
-button:hover { background:#0097a7; }
-.stats-box { margin-top:10px; padding:10px; background:#2c2c2c; border-radius:8px; }
-.stat { font-size:16px; margin-bottom:6px; }
-canvas { background:#fff; border-radius:10px; margin-top:20px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YGO DECK BUILDER V1.0</title>
+    <style>
+        :root {
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-gray: #D1D1D6;
+            --ios-white: #FFFFFF;
+            --ios-text: #1C1C1E;
+            --ios-secondary: #8E8E93;
+            --shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--ios-bg);
+            color: var(--ios-text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { width: 100%; max-width: 480px; }
+
+        header { text-align: center; margin: 20px 0 25px; }
+        header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
+        header p { font-size: 13px; color: var(--ios-secondary); margin-top: 5px; }
+
+        .card {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 0.5px solid #E5E5EA;
+        }
+
+        .category-title { font-weight: 700; font-size: 17px; color: var(--ios-blue); }
+        
+        .add-btn {
+            background: #F2F2F7;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 18px;
+            color: var(--ios-blue);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 60px 50px;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        input {
+            background: #F2F2F7;
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .input-qty { text-align: center; font-weight: 700; }
+
+        .hopt-label {
+            font-size: 10px;
+            color: var(--ios-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hopt-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--ios-blue);
+        }
+
+        .btn-ios {
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .btn-analyze {
+            background: var(--ios-blue);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+        }
+
+        .btn-analyze.confirm {
+            background: var(--ios-green);
+            transform: scale(1.02);
+            box-shadow: 0 6px 15px rgba(52, 199, 89, 0.3);
+        }
+
+        .btn-delete {
+            background: none;
+            color: var(--ios-red);
+            font-size: 12px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .btn-delete.confirm {
+            background: var(--ios-red);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .total-section { text-align: center; margin: 20px 0; }
+        .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
+
+        /* ESTILOS DE RESULTADOS Y BARRA */
+        .results-area { display: none; margin-top: 10px; width: 100%; }
+        
+        .result-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .hand-bar-container {
+            height: 40px;
+            width: 100%;
+            background: #E5E5EA;
+            border-radius: 10px;
+            display: flex;
+            overflow: hidden;
+            margin: 15px 0;
+            border: 0.5px solid #D1D1D6;
+        }
+
+        .bar-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 800;
+            color: white;
+            transition: width 0.5s ease;
+            text-shadow: 0px 0px 2px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .segment-starters { background-color: var(--ios-green); }
+        .segment-extenders { background-color: var(--ios-blue); }
+        .segment-handtraps { background-color: var(--ios-white); color: #1C1C1E; text-shadow: none; border-right: 0.5px solid #D1D1D6; }
+        .segment-boardbreakers { background-color: var(--ios-gray); color: #1C1C1E; text-shadow: none; }
+        .segment-bricks { background-color: var(--ios-red); }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #F9F9F9;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Deckbuilding Dashboard - Yu-Gi-Oh</h1>
-
 <div class="container">
-  <div class="panel">
-    <h2>Configuración del Deck</h2>
-    Starters: <input type="number" id="starters" value="15"><br><br>
-    Extenders: <input type="number" id="extenders" value="8"><br><br>
-    Bricks: <input type="number" id="bricks" value="5"><br><br>
-    Handtraps: <input type="number" id="handtraps" value="6"><br><br>
-    Board Breakers: <input type="number" id="breakers" value="9"><br><br>
-    Draw1: <input type="number" id="draw1" value="3"><br><br>
-    Draw2: <input type="number" id="draw2" value="0"><br><br>
-    Otros: <input type="number" id="others" value="0"><br><br>
-    <button onclick="calculate()">Calcular</button>
-    <div class="stats-box" id="deckStats"></div>
-  </div>
+    <header>
+        <h1>YGO DECK BUILDER V1.0</h1>
+        <p>Ing. Ismael Villamagua</p>
+    </header>
 
-  <div class="panel">
-    <h2>Probabilidades Mano Inicial (5 cartas)</h2>
-    <canvas id="barChart" width="400" height="300"></canvas>
-    <div class="stats-box" id="barValues"></div>
-  </div>
+    <div id="categories-main"></div>
+    
+    <div class="total-section">
+        <span class="total-badge">Total en el Mazo: <span id="deck-total">0</span> cartas</span>
+        <button id="mainBtn" class="btn-ios btn-analyze" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
+        <button id="deleteBtn" class="btn-ios btn-delete" onclick="handleDeleteClick()">Borrar todos los datos</button>
+    </div>
 
-  <div class="panel">
-    <h2>Curvas de Consistencia</h2>
-    <canvas id="lineChart" width="400" height="300"></canvas>
-    <div class="stats-box" id="lineValues"></div>
-  </div>
+    <div id="results" class="results-area">
+        <div class="result-card">
+            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5)</div>
+            <div id="bar-t1" class="hand-bar-container"></div>
+            <div id="legend-t1" class="legend-grid"></div>
+        </div>
+
+        <div class="result-card">
+            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6)</div>
+            <div id="bar-t2" class="hand-bar-container"></div>
+            <div id="legend-t2" class="legend-grid"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-// combinaciones
-function comb(n,k){if(k<0||k>n) return 0;if(k===0||k===n) return 1;let res=1;for(let i=1;i<=k;i++)res*=(n-i+1)/i;return res;}
-function hyper(N,K,n,k){return comb(K,k)*comb(N-K,n-k)/comb(N,n);}
+    const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
+    const catClasses = {
+        "Starters": "segment-starters",
+        "Extenders": "segment-extenders",
+        "Hand Traps": "segment-handtraps",
+        "Board Breakers": "segment-boardbreakers",
+        "Bricks": "segment-bricks"
+    };
+    
+    let analyzeConfirm = { active: false, timeout: null };
+    let deleteConfirm = { active: false, timeout: null };
 
-// Calcula probabilidad de mano funcional incluyendo draws
-function functionalProb(deck, handSize){
-    let N=deck.reduce((a,b)=>a+b,0);
-    let starters=deck[0], extenders=deck[1], bricks=deck[2], handtraps=deck[3], breakers=deck[4], draw1=deck[5], draw2=deck[6], others=deck[7]||0;
-    let interaction=handtraps+breakers;
+    window.onload = () => {
+        const mainContainer = document.getElementById('categories-main');
+        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
 
-    let pDead=hyper(N,starters,handSize,0);
-    let pStarter=1-pDead;
-    let pExtender=1-hyper(N,extenders,handSize,0);
-    let pInteraction=1-hyper(N,interaction,handSize,0);
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+            cardDiv.id = catId;
+            cardDiv.innerHTML = `
+                <div class="category-header">
+                    <span class="category-title">${cat}</span>
+                    <button class="add-btn" onclick="addRow('${catId}')">+</button>
+                </div>
+                <div class="rows-container"></div>
+            `;
+            mainContainer.appendChild(cardDiv);
 
-    let functional=pStarter*pExtender*pInteraction;
+            if (savedData[cat] && savedData[cat].length > 0) {
+                savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt));
+            } else {
+                addRow(catId);
+            }
+        });
+        updateTotal();
+    };
 
-    // efecto de draws (aprox)
-    let totalDraws=draw1+draw2;
-    if(totalDraws>0){
-        let extraCards=Math.min(totalDraws,handSize);
-        functional+=(1-functional)*0.5*extraCards/totalDraws;
+    function addRow(catId, name = '', qty = '', hopt = true) {
+        const target = document.querySelector(`#${catId} .rows-container`);
+        const row = document.createElement('div');
+        row.className = 'input-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Nombre" class="i-name" value="${name}" oninput="saveAll()">
+            <input type="number" placeholder="0" class="i-qty" min="0" max="3" value="${qty}" oninput="saveAll()">
+            <div class="hopt-label">
+                <input type="checkbox" class="hopt-checkbox" ${hopt ? 'checked' : ''} onchange="saveAll()">
+                <span>HOPT</span>
+            </div>
+        `;
+        target.appendChild(row);
+        updateTotal();
     }
 
-    return {pStarter,pExtender,pInteraction,functional,pDead};
-}
+    function saveAll() {
+        const dataToSave = {};
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            const rows = document.querySelectorAll(`#${catId} .input-row`);
+            dataToSave[cat] = Array.from(rows).map(row => ({
+                name: row.querySelector('.i-name').value,
+                qty: row.querySelector('.i-qty').value,
+                hopt: row.querySelector('.hopt-checkbox').checked
+            })).filter(card => card.name !== '' || card.qty !== '');
+        });
+        localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
+        updateTotal();
+    }
 
-// curvas de 5-8 cartas
-function calculateCurves(deck){
-    let handSizes=[5,6,7,8];
-    let curves={handSizes,starter:[],extender:[],interaction:[],functional:[],dead:[]};
-    handSizes.forEach(h=>{
-        let probs=functionalProb(deck,h);
-        curves.starter.push(probs.pStarter*100);
-        curves.extender.push(probs.pExtender*100);
-        curves.interaction.push(probs.pInteraction*100);
-        curves.functional.push(probs.functional*100);
-        curves.dead.push(probs.pDead*100);
-    });
-    return curves;
-}
+    function updateTotal() {
+        let t = 0;
+        document.querySelectorAll('.i-qty').forEach(i => t += parseInt(i.value || 0));
+        document.getElementById('deck-total').innerText = t;
+    }
 
-let barChart,lineChart;
+    function handleAnalyzeClick() {
+        const btn = document.getElementById('mainBtn');
+        if (!analyzeConfirm.active) {
+            analyzeConfirm.active = true;
+            btn.innerText = "CONFIRMAR ANÁLISIS";
+            btn.classList.add('confirm');
+            analyzeConfirm.timeout = setTimeout(() => {
+                analyzeConfirm.active = false;
+                btn.innerText = "ANALIZAR DECK";
+                btn.classList.remove('confirm');
+            }, 2000);
+        } else {
+            clearTimeout(analyzeConfirm.timeout);
+            executeAnalysis();
+            analyzeConfirm.active = false;
+            btn.innerText = "ANALIZAR DECK";
+            btn.classList.remove('confirm');
+        }
+    }
 
-function calculate(){
-    let deck=[
-        parseInt(document.getElementById("starters").value),
-        parseInt(document.getElementById("extenders").value),
-        parseInt(document.getElementById("bricks").value),
-        parseInt(document.getElementById("handtraps").value),
-        parseInt(document.getElementById("breakers").value),
-        parseInt(document.getElementById("draw1").value),
-        parseInt(document.getElementById("draw2").value),
-        parseInt(document.getElementById("others").value)
-    ];
-    let totalDeck=deck.reduce((a,b)=>a+b,0);
-    document.getElementById("deckStats").innerHTML=
-        `<div class="stat">Tamaño total del deck: ${totalDeck}</div>
-         <div class="stat">Starters: ${deck[0]}</div>
-         <div class="stat">Extenders: ${deck[1]}</div>
-         <div class="stat">Bricks: ${deck[2]}</div>
-         <div class="stat">Interacción: ${deck[3]+deck[4]}</div>
-         <div class="stat">Draws: ${deck[5]+deck[6]}</div>`;
+    function handleDeleteClick() {
+        const btn = document.getElementById('deleteBtn');
+        if (!deleteConfirm.active) {
+            deleteConfirm.active = true;
+            btn.innerText = "CONFIRMAR BORRADO";
+            btn.classList.add('confirm');
+            deleteConfirm.timeout = setTimeout(() => {
+                deleteConfirm.active = false;
+                btn.innerText = "Borrar todos los datos";
+                btn.classList.remove('confirm');
+            }, 2000);
+        } else {
+            clearTimeout(deleteConfirm.timeout);
+            localStorage.removeItem('ygo_deck_save');
+            location.reload();
+        }
+    }
 
-    // mano inicial
-    let probs=functionalProb(deck,5);
-    if(barChart) barChart.destroy();
-    barChart=new Chart(document.getElementById("barChart"),{
-        type:'bar',
-        data:{
-            labels:['≥1 Starter','≥1 Extender','≥1 Interacción','Mano Funcional','Mano Muerta'],
-            datasets:[{
-                label:'Probabilidad (%)',
-                data:[probs.pStarter*100,probs.pExtender*100,probs.pInteraction*100,probs.functional*100,probs.pDead*100],
-                backgroundColor:['#4caf50','#2196f3','#ff9800','#9c27b0','#f44336']
-            }]
-        },
-        options:{plugins:{legend:{display:false}},responsive:true,scales:{y:{beginAtZero:true,max:100}}}
-    });
-    document.getElementById("barValues").innerHTML=
-        `<div class="stat">≥1 Starter: ${Math.round(probs.pStarter*100)}%</div>
-         <div class="stat">≥1 Extender: ${Math.round(probs.pExtender*100)}%</div>
-         <div class="stat">≥1 Interacción: ${Math.round(probs.pInteraction*100)}%</div>
-         <div class="stat">Mano Funcional: ${Math.round(probs.functional*100)}%</div>
-         <div class="stat">Mano Muerta: ${Math.round(probs.pDead*100)}%</div>`;
+    function executeAnalysis() {
+        const fullDeck = [];
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            const rows = document.querySelectorAll(`#${catId} .input-row`);
+            rows.forEach(row => {
+                const name = row.querySelector('.i-name').value || "Carta";
+                const qty = parseInt(row.querySelector('.i-qty').value) || 0;
+                const isHOPT = row.querySelector('.hopt-checkbox').checked;
+                for(let i=0; i<qty; i++) fullDeck.push({ name, cat, isHOPT });
+            });
+        });
 
-    // curvas
-    let curves=calculateCurves(deck);
-    if(lineChart) lineChart.destroy();
-    lineChart=new Chart(document.getElementById("lineChart"),{
-        type:'line',
-        data:{
-            labels:curves.handSizes.map(h=>"Robadas "+h),
-            datasets:[
-                {label:'≥1 Starter',data:curves.starter,borderColor:'#4caf50',fill:false,pointBackgroundColor:'#4caf50'},
-                {label:'≥1 Extender',data:curves.extender,borderColor:'#2196f3',fill:false,pointBackgroundColor:'#2196f3'},
-                {label:'≥1 Interacción',data:curves.interaction,borderColor:'#ff9800',fill:false,pointBackgroundColor:'#ff9800'},
-                {label:'Mano Funcional',data:curves.functional,borderColor:'#9c27b0',fill:false,pointBackgroundColor:'#9c27b0'},
-                {label:'Mano Muerta',data:curves.dead,borderColor:'#f44336',fill:false,pointBackgroundColor:'#f44336'}
-            ]
-        },
-        options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,max:100}}}
-    });
+        if(fullDeck.length < 40) {
+            alert("El mazo requiere al menos 40 cartas.");
+            return;
+        }
 
-    let lineHtml="";
-    curves.handSizes.forEach((h,i)=>{
-        lineHtml+=`<div class="stat">Robadas ${h}: Funcional ${Math.round(curves.functional[i])}% | ≥1 Starter ${Math.round(curves.starter[i])}% | ≥1 Extender ${Math.round(curves.extender[i])}% | ≥1 Interacción ${Math.round(curves.interaction[i])}% | Mano Muerta ${Math.round(curves.dead[i])}%</div>`;
-    });
-    document.getElementById("lineValues").innerHTML=lineHtml;
-}
+        document.getElementById('results').style.display = 'block';
+        processResults(fullDeck, 5, 'bar-t1', 'legend-t1');
+        processResults(fullDeck, 6, 'bar-t2', 'legend-t2');
+        window.scrollTo({ top: document.getElementById('results').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function processResults(deck, handSize, barId, legendId) {
+        const iterations = 10000;
+        const stats = {};
+        categories.forEach(c => stats[c] = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 });
+
+        for(let i=0; i<iterations; i++) {
+            const hand = [...deck].sort(() => 0.5 - Math.random()).slice(0, handSize);
+            categories.forEach(cat => {
+                const catCards = hand.filter(c => c.cat === cat);
+                let effectiveCount = 0;
+                const grouped = {};
+                catCards.forEach(c => {
+                    if(!grouped[c.name]) grouped[c.name] = { count: 0, isHOPT: c.isHOPT };
+                    grouped[c.name].count++;
+                });
+                for(const name in grouped) {
+                    effectiveCount += grouped[name].isHOPT ? 1 : grouped[name].count;
+                }
+                stats[cat][effectiveCount]++;
+            });
+        }
+
+        const bar = document.getElementById(barId);
+        const legend = document.getElementById(legendId);
+        bar.innerHTML = '';
+        legend.innerHTML = '';
+
+        let handTendency = [];
+        categories.forEach(cat => {
+            let bestK = 0, maxVal = 0;
+            for(let k=0; k<=handSize; k++) {
+                if(stats[cat][k] > maxVal) { maxVal = stats[cat][k]; bestK = k; }
+            }
+            const p = ((maxVal / iterations) * 100).toFixed(1);
+            handTendency.push({ cat, count: bestK, prob: p });
+        });
+
+        // Dibujar Barra
+        const totalCardsInTrend = handTendency.reduce((acc, curr) => acc + curr.count, 0);
+        
+        handTendency.forEach(item => {
+            if(item.count > 0) {
+                const width = (item.count / handSize) * 100;
+                const segment = document.createElement('div');
+                segment.className = `bar-segment ${catClasses[item.cat]}`;
+                segment.style.width = `${width}%`;
+                segment.innerText = `${item.cat.toUpperCase()}: ${item.count}`;
+                bar.appendChild(segment);
+            }
+
+            // Añadir a la leyenda
+            legend.innerHTML += `
+                <div class="legend-item">
+                    <span style="font-weight:700">${item.cat}</span>
+                    <span class="total-badge" style="margin:0">${item.prob}% (Moda: ${item.count})</span>
+                </div>
+            `;
+        });
+    }
 </script>
-</body>
 
+</body>
 </html>
