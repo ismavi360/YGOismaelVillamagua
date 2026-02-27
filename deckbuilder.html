@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Deckbuilding Dashboard - Yu-Gi-Oh</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial,sans-serif; background:#121212; color:#eee; margin:0; padding:0; }
+h1,h2 { text-align:center; }
+.container { display:flex; flex-wrap: wrap; justify-content:center; padding:20px; gap:20px; }
+.panel { background:#1f1f1f; border-radius:12px; padding:20px; width:320px; }
+.panel h2 { margin-top:0; }
+input { width:60px; margin-left:10px; }
+button { margin-top:10px; padding:10px 20px; border:none; border-radius:8px; background:#00bcd4; color:#111; cursor:pointer; }
+button:hover { background:#0097a7; }
+.stats-box { margin-top:10px; padding:10px; background:#2c2c2c; border-radius:8px; }
+.stat { font-size:16px; margin-bottom:6px; }
+canvas { background:#fff; border-radius:10px; margin-top:20px; }
+</style>
+</head>
+<body>
+
+<h1>Deckbuilding Dashboard - Yu-Gi-Oh</h1>
+
+<div class="container">
+  <div class="panel">
+    <h2>Configuración del Deck</h2>
+    Starters: <input type="number" id="starters" value="15"><br><br>
+    Extenders: <input type="number" id="extenders" value="8"><br><br>
+    Bricks: <input type="number" id="bricks" value="5"><br><br>
+    Handtraps: <input type="number" id="handtraps" value="6"><br><br>
+    Board Breakers: <input type="number" id="breakers" value="9"><br><br>
+    Draw1: <input type="number" id="draw1" value="3"><br><br>
+    Draw2: <input type="number" id="draw2" value="0"><br><br>
+    Otros: <input type="number" id="others" value="0"><br><br>
+    <button onclick="calculate()">Calcular</button>
+    <div class="stats-box" id="deckStats"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Probabilidades Mano Inicial (5 cartas)</h2>
+    <canvas id="barChart" width="400" height="300"></canvas>
+    <div class="stats-box" id="barValues"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Curvas de Consistencia</h2>
+    <canvas id="lineChart" width="400" height="300"></canvas>
+    <div class="stats-box" id="lineValues"></div>
+  </div>
+</div>
+
+<script>
+// combinaciones
+function comb(n,k){if(k<0||k>n) return 0;if(k===0||k===n) return 1;let res=1;for(let i=1;i<=k;i++)res*=(n-i+1)/i;return res;}
+function hyper(N,K,n,k){return comb(K,k)*comb(N-K,n-k)/comb(N,n);}
+
+// Calcula probabilidad de mano funcional incluyendo draws
+function functionalProb(deck, handSize){
+    let N=deck.reduce((a,b)=>a+b,0);
+    let starters=deck[0], extenders=deck[1], bricks=deck[2], handtraps=deck[3], breakers=deck[4], draw1=deck[5], draw2=deck[6], others=deck[7]||0;
+    let interaction=handtraps+breakers;
+
+    let pDead=hyper(N,starters,handSize,0);
+    let pStarter=1-pDead;
+    let pExtender=1-hyper(N,extenders,handSize,0);
+    let pInteraction=1-hyper(N,interaction,handSize,0);
+
+    let functional=pStarter*pExtender*pInteraction;
+
+    // efecto de draws (aprox)
+    let totalDraws=draw1+draw2;
+    if(totalDraws>0){
+        let extraCards=Math.min(totalDraws,handSize);
+        functional+=(1-functional)*0.5*extraCards/totalDraws;
+    }
+
+    return {pStarter,pExtender,pInteraction,functional,pDead};
+}
+
+// curvas de 5-8 cartas
+function calculateCurves(deck){
+    let handSizes=[5,6,7,8];
+    let curves={handSizes,starter:[],extender:[],interaction:[],functional:[],dead:[]};
+    handSizes.forEach(h=>{
+        let probs=functionalProb(deck,h);
+        curves.starter.push(probs.pStarter*100);
+        curves.extender.push(probs.pExtender*100);
+        curves.interaction.push(probs.pInteraction*100);
+        curves.functional.push(probs.functional*100);
+        curves.dead.push(probs.pDead*100);
+    });
+    return curves;
+}
+
+let barChart,lineChart;
+
+function calculate(){
+    let deck=[
+        parseInt(document.getElementById("starters").value),
+        parseInt(document.getElementById("extenders").value),
+        parseInt(document.getElementById("bricks").value),
+        parseInt(document.getElementById("handtraps").value),
+        parseInt(document.getElementById("breakers").value),
+        parseInt(document.getElementById("draw1").value),
+        parseInt(document.getElementById("draw2").value),
+        parseInt(document.getElementById("others").value)
+    ];
+    let totalDeck=deck.reduce((a,b)=>a+b,0);
+    document.getElementById("deckStats").innerHTML=
+        `<div class="stat">Tamaño total del deck: ${totalDeck}</div>
+         <div class="stat">Starters: ${deck[0]}</div>
+         <div class="stat">Extenders: ${deck[1]}</div>
+         <div class="stat">Bricks: ${deck[2]}</div>
+         <div class="stat">Interacción: ${deck[3]+deck[4]}</div>
+         <div class="stat">Draws: ${deck[5]+deck[6]}</div>`;
+
+    // mano inicial
+    let probs=functionalProb(deck,5);
+    if(barChart) barChart.destroy();
+    barChart=new Chart(document.getElementById("barChart"),{
+        type:'bar',
+        data:{
+            labels:['≥1 Starter','≥1 Extender','≥1 Interacción','Mano Funcional','Mano Muerta'],
+            datasets:[{
+                label:'Probabilidad (%)',
+                data:[probs.pStarter*100,probs.pExtender*100,probs.pInteraction*100,probs.functional*100,probs.pDead*100],
+                backgroundColor:['#4caf50','#2196f3','#ff9800','#9c27b0','#f44336']
+            }]
+        },
+        options:{plugins:{legend:{display:false}},responsive:true,scales:{y:{beginAtZero:true,max:100}}}
+    });
+    document.getElementById("barValues").innerHTML=
+        `<div class="stat">≥1 Starter: ${Math.round(probs.pStarter*100)}%</div>
+         <div class="stat">≥1 Extender: ${Math.round(probs.pExtender*100)}%</div>
+         <div class="stat">≥1 Interacción: ${Math.round(probs.pInteraction*100)}%</div>
+         <div class="stat">Mano Funcional: ${Math.round(probs.functional*100)}%</div>
+         <div class="stat">Mano Muerta: ${Math.round(probs.pDead*100)}%</div>`;
+
+    // curvas
+    let curves=calculateCurves(deck);
+    if(lineChart) lineChart.destroy();
+    lineChart=new Chart(document.getElementById("lineChart"),{
+        type:'line',
+        data:{
+            labels:curves.handSizes.map(h=>"Robadas "+h),
+            datasets:[
+                {label:'≥1 Starter',data:curves.starter,borderColor:'#4caf50',fill:false,pointBackgroundColor:'#4caf50'},
+                {label:'≥1 Extender',data:curves.extender,borderColor:'#2196f3',fill:false,pointBackgroundColor:'#2196f3'},
+                {label:'≥1 Interacción',data:curves.interaction,borderColor:'#ff9800',fill:false,pointBackgroundColor:'#ff9800'},
+                {label:'Mano Funcional',data:curves.functional,borderColor:'#9c27b0',fill:false,pointBackgroundColor:'#9c27b0'},
+                {label:'Mano Muerta',data:curves.dead,borderColor:'#f44336',fill:false,pointBackgroundColor:'#f44336'}
+            ]
+        },
+        options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,max:100}}}
+    });
+
+    let lineHtml="";
+    curves.handSizes.forEach((h,i)=>{
+        lineHtml+=`<div class="stat">Robadas ${h}: Funcional ${Math.round(curves.functional[i])}% | ≥1 Starter ${Math.round(curves.starter[i])}% | ≥1 Extender ${Math.round(curves.extender[i])}% | ≥1 Interacción ${Math.round(curves.interaction[i])}% | Mano Muerta ${Math.round(curves.dead[i])}%</div>`;
+    });
+    document.getElementById("lineValues").innerHTML=lineHtml;
+}
+</script>
+</body>
+</html>
