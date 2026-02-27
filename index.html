@@ -16,6 +16,8 @@
             --ios-text: #1C1C1E;
             --ios-secondary: #8E8E93;
             --shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --aqua-strong: #00CED1; 
+            --purple-strong: #9370DB; 
         }
 
         html, body { overflow-x: hidden; touch-action: pan-y; -webkit-text-size-adjust: none; }
@@ -75,14 +77,14 @@
         .btn-ios {
             border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
             width: 100%; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
+            margin-bottom: 10px;
         }
 
-        .btn-analyze { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
-        .btn-analyze.confirm { background: var(--ios-green); transform: scale(1.02); }
-        .btn-delete { background: none; color: var(--ios-red); font-size: 12px; margin-top: 15px; font-weight: 500; }
-        .btn-delete.confirm { background: var(--ios-red); color: white; border-radius: 12px; padding: 12px; }
+        .btn-blue { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
+        .btn-blue.confirm-analyze { background: var(--ios-green); transform: scale(1.02); }
+        .btn-blue.confirm-clear { background: var(--ios-red); transform: scale(1.02); box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); }
 
-        .total-section { text-align: center; margin: 20px 0; }
+        .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
 
         .results-area { display: none; margin-top: 10px; width: 100%; }
@@ -101,7 +103,8 @@
         .tier-ERROR { color: var(--ios-red); opacity: 0.8; }
 
         .hand-bar-container {
-            height: 44px; width: 100%; background: #E5E5EA; border-radius: 12px;
+            height: 60px; 
+            width: 100%; background: #E5E5EA; border-radius: 12px;
             display: flex; overflow: hidden; margin: 15px 0; border: 0.5px solid #D1D1D6;
         }
         .bar-segment {
@@ -121,8 +124,10 @@
             z-index: 2; pointer-events: none;
         }
 
-        .segment-Starters, .fill-Starters, .segment-Extenders, .fill-Extenders { background-color: var(--ios-green); }
-        .segment-HandTraps, .fill-HandTraps, .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--ios-blue); }
+        .segment-Starters, .fill-Starters { background-color: var(--ios-green); }
+        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); } 
+        .segment-HandTraps, .fill-HandTraps { background-color: var(--ios-blue); }
+        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); } 
         .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
         .segment-Random, .fill-Random { background-color: #8E8E93; }
 
@@ -141,8 +146,8 @@
     
     <div class="total-section">
         <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
-        <button id="mainBtn" class="btn-ios btn-analyze" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
-        <button id="deleteBtn" class="btn-ios btn-delete" onclick="handleDeleteClick()">Borrar todos los datos</button>
+        <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
+        <button id="deleteBtn" class="btn-ios btn-blue" onclick="handleDeleteClick()">CLEAR DECK</button>
     </div>
 
     <div id="results" class="results-area">
@@ -234,18 +239,18 @@
         if (!analyzeConfirm.active) {
             analyzeConfirm.active = true;
             btn.innerText = "CONFIRMAR ANÁLISIS";
-            btn.classList.add('confirm');
+            btn.classList.add('confirm-analyze');
             analyzeConfirm.timeout = setTimeout(() => {
                 analyzeConfirm.active = false;
                 btn.innerText = "ANALIZAR DECK";
-                btn.classList.remove('confirm');
+                btn.classList.remove('confirm-analyze');
             }, 2000);
         } else {
             clearTimeout(analyzeConfirm.timeout);
             executeAnalysis();
             analyzeConfirm.active = false;
             btn.innerText = "ANALIZAR DECK";
-            btn.classList.remove('confirm');
+            btn.classList.remove('confirm-analyze');
         }
     }
 
@@ -253,18 +258,26 @@
         const btn = document.getElementById('deleteBtn');
         if (!deleteConfirm.active) {
             deleteConfirm.active = true;
-            btn.innerText = "CONFIRMAR BORRADO";
-            btn.classList.add('confirm');
+            btn.innerText = "¿Está seguro?";
+            btn.classList.add('confirm-clear');
             deleteConfirm.timeout = setTimeout(() => {
                 deleteConfirm.active = false;
-                btn.innerText = "Borrar todos los datos";
-                btn.classList.remove('confirm');
-            }, 2000);
+                btn.innerText = "CLEAR DECK";
+                btn.classList.remove('confirm-clear');
+            }, 3000);
         } else {
             clearTimeout(deleteConfirm.timeout);
             localStorage.removeItem('ygo_deck_save');
             location.reload();
         }
+    }
+
+    function fisherYates(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
     }
 
     function executeAnalysis() {
@@ -326,22 +339,23 @@
         const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
 
         for(let i=0; i<iterations; i++) {
-            const hand = [...deck].sort(() => 0.5 - Math.random()).slice(0, handSize);
+            // SHUFFLE FISHER-YATES: Aleatoriedad real sin sesgo posicional
+            const shuffled = fisherYates([...deck]);
+            const hand = shuffled.slice(0, handSize);
+            
             const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-            const seenNames = new Set();
+            const seenInHand = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
 
             hand.forEach(card => {
                 if (card.cat === "Bricks") {
                     handCount[card.cat]++;
-                } else {
-                    if (card.h) {
-                        if (!seenNames.has(card.name)) {
-                            handCount[card.cat]++;
-                            seenNames.add(card.name);
-                        }
-                    } else {
+                } else if (card.h) { 
+                    if (!seenInHand[card.cat].has(card.name)) {
                         handCount[card.cat]++;
+                        seenInHand[card.cat].add(card.name);
                     }
+                } else { 
+                    handCount[card.cat]++;
                 }
             });
 
@@ -355,6 +369,7 @@
         categories.forEach(cat => {
             const counts = {};
             stats[cat].forEach(val => counts[val] = (counts[val] || 0) + 1);
+            
             let maxFreq = 0;
             let modaVal = 0;
             for(const val in counts) {
@@ -363,21 +378,36 @@
                     modaVal = parseInt(val);
                 }
             }
+
+            // MODA SEGÚN PROBABILIDAD (Solo para visualización de barra)
+            const probSuccess = successCount[cat] / iterations;
+            if (modaVal === 0 && probSuccess >= 0.45) {
+                modaVal = 1;
+            }
             modaResult[cat] = modaVal;
         });
 
         const bar = document.getElementById(barId);
         bar.innerHTML = '';
         let totalModaCards = 0;
+        
         categories.forEach(cat => {
             const val = modaResult[cat];
             if(val > 0) {
-                totalModaCards += val;
-                const segment = document.createElement('div');
-                segment.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
-                segment.style.width = `${(val / handSize) * 100}%`;
-                segment.innerHTML = `<span>${cat.toUpperCase()} ${val}</span>`;
-                bar.appendChild(segment);
+                // Lógica de llenado de la barra "Mano Probable"
+                let currentVal = val;
+                if (totalModaCards + currentVal > handSize) {
+                    currentVal = handSize - totalModaCards;
+                }
+                
+                if (currentVal > 0) {
+                    const segment = document.createElement('div');
+                    segment.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
+                    segment.style.width = `${(currentVal / handSize) * 100}%`;
+                    segment.innerHTML = `<span>${cat.toUpperCase()} ${currentVal}</span>`;
+                    bar.appendChild(segment);
+                    totalModaCards += currentVal;
+                }
             }
         });
         
