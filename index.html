@@ -18,12 +18,7 @@
             --shadow: 0 4px 16px rgba(0,0,0,0.06);
         }
 
-        /* Bloqueo visual de gestos y selección innecesaria */
-        html, body {
-            overflow-x: hidden;
-            touch-action: pan-y; /* Solo permite scroll vertical, bloquea zoom táctil */
-            -webkit-text-size-adjust: none; /* Evita que iOS cambie el tamaño del texto */
-        }
+        html, body { overflow-x: hidden; touch-action: pan-y; -webkit-text-size-adjust: none; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -34,7 +29,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            user-select: none; /* Evita selección accidental al interactuar rápido */
+            user-select: none;
         }
 
         .container { width: 100%; max-width: 480px; }
@@ -63,150 +58,75 @@
         .category-title { font-weight: 700; font-size: 17px; color: var(--ios-blue); }
         
         .add-btn {
-            background: #F2F2F7;
-            border: none;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            font-size: 18px;
-            color: var(--ios-blue);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #F2F2F7; border: none; border-radius: 50%; width: 28px; height: 28px;
+            font-size: 18px; color: var(--ios-blue); cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
 
         .input-row {
-            display: grid;
-            grid-template-columns: 1fr 60px 50px;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: center;
+            display: grid; grid-template-columns: 1fr 60px 50px; gap: 10px; margin-bottom: 10px; align-items: center;
         }
 
         input {
-            background: #F2F2F7;
-            border: none;
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 15px;
-            outline: none;
-            user-select: text; /* Permite escribir en los inputs */
+            background: #F2F2F7; border: none; border-radius: 10px; padding: 12px; font-size: 15px; outline: none; user-select: text;
         }
 
-        .input-qty { text-align: center; font-weight: 700; }
-
-        .hopt-label {
-            font-size: 10px;
-            color: var(--ios-secondary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .hopt-checkbox {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--ios-blue);
-        }
+        .hopt-checkbox { width: 20px; height: 20px; accent-color: var(--ios-blue); }
 
         .btn-ios {
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 700;
-            width: 100%;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
+            border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
+            width: 100%; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
         }
 
-        .btn-analyze {
-            background: var(--ios-blue);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
-        }
-
-        .btn-analyze.confirm {
-            background: var(--ios-green);
-            transform: scale(1.02);
-            box-shadow: 0 6px 15px rgba(52, 199, 89, 0.3);
-        }
-
-        .btn-delete {
-            background: none;
-            color: var(--ios-red);
-            font-size: 12px;
-            margin-top: 15px;
-            font-weight: 500;
-        }
-
-        .btn-delete.confirm {
-            background: var(--ios-red);
-            color: white;
-            border-radius: 12px;
-            padding: 12px;
-        }
+        .btn-analyze { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
+        .btn-analyze.confirm { background: var(--ios-green); transform: scale(1.02); }
+        .btn-delete { background: none; color: var(--ios-red); font-size: 12px; margin-top: 15px; font-weight: 500; }
+        .btn-delete.confirm { background: var(--ios-red); color: white; border-radius: 12px; padding: 12px; }
 
         .total-section { text-align: center; margin: 20px 0; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
 
         .results-area { display: none; margin-top: 10px; width: 100%; }
-        
-        .result-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: var(--shadow);
+        .result-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+
+        .tier-card {
+            background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
+            color: white; text-align: center; padding: 25px; border-radius: 18px; margin-bottom: 15px;
         }
+        .tier-label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 5px; }
+        .tier-value { font-size: 34px; font-weight: 900; letter-spacing: -1px; }
+        .tier-S { color: #FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
+        .tier-A { color: var(--ios-green); }
+        .tier-B { color: var(--ios-blue); }
+        .tier-C { color: #FF9500; }
+        .tier-ERROR { color: var(--ios-red); opacity: 0.8; }
 
         .hand-bar-container {
-            height: 40px;
-            width: 100%;
-            background: #E5E5EA;
-            border-radius: 10px;
-            display: flex;
-            overflow: hidden;
-            margin: 15px 0;
-            border: 0.5px solid #D1D1D6;
+            height: 44px; width: 100%; background: #E5E5EA; border-radius: 12px;
+            display: flex; overflow: hidden; margin: 15px 0; border: 0.5px solid #D1D1D6;
         }
-
         .bar-segment {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            font-weight: 800;
-            color: white;
-            transition: width 0.5s ease;
-            text-shadow: 0px 0px 2px rgba(0,0,0,0.3);
-            white-space: nowrap;
-            overflow: hidden;
+            height: 100%; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 800; color: white; text-shadow: 0px 1px 1px rgba(0,0,0,0.2);
         }
 
-        .segment-starters { background-color: var(--ios-green); }
-        .segment-extenders { background-color: var(--ios-blue); }
-        .segment-handtraps { background-color: var(--ios-white); color: #1C1C1E; text-shadow: none; border-right: 0.5px solid #D1D1D6; }
-        .segment-boardbreakers { background-color: var(--ios-gray); color: #1C1C1E; text-shadow: none; }
-        .segment-bricks { background-color: var(--ios-red); }
-
-        .legend-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
+        .cons-bar-wrapper {
+            height: 32px; width: 100%; background: #E5E5EA; border-radius: 8px;
+            margin-bottom: 10px; overflow: hidden; position: relative; border: 0.5px solid #D1D1D6;
+            display: flex; align-items: center;
+        }
+        .cons-bar-fill { height: 100%; transition: width 0.6s ease-out; }
+        .cons-bar-text {
+            position: absolute; width: 100%; text-align: center; left: 0;
+            font-size: 12px; font-weight: 800; text-transform: uppercase;
+            z-index: 2; pointer-events: none;
         }
 
-        .legend-item {
-            font-size: 12px;
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            background: #F9F9F9;
-            border-radius: 8px;
-        }
+        .segment-Starters, .fill-Starters, .segment-Extenders, .fill-Extenders { background-color: var(--ios-green); }
+        .segment-HandTraps, .fill-HandTraps, .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--ios-blue); }
+        .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
+        .segment-Random, .fill-Random { background-color: #8E8E93; }
+
+        .text-light { color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -214,95 +134,69 @@
 <div class="container">
     <header>
         <h1>YGO DECK BUILDER V1.0</h1>
-        <p>Ing. Ismael Villamagua</p>
+        <p>Designed by Ismael Villamagua</p>
     </header>
 
     <div id="categories-main"></div>
     
     <div class="total-section">
-        <span class="total-badge">Total en el Mazo: <span id="deck-total">0</span> cartas</span>
+        <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
         <button id="mainBtn" class="btn-ios btn-analyze" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
         <button id="deleteBtn" class="btn-ios btn-delete" onclick="handleDeleteClick()">Borrar todos los datos</button>
     </div>
 
     <div id="results" class="results-area">
-        <div class="result-card">
-            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5)</div>
-            <div id="bar-t1" class="hand-bar-container"></div>
-            <div id="legend-t1" class="legend-grid"></div>
+        <div id="tier-result" class="tier-card">
+            <div class="tier-label">CLASIFICACIÓN</div>
+            <div id="tier-text" class="tier-value">DECK TIER ERROR</div>
         </div>
 
         <div class="result-card">
-            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6)</div>
+            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5 Draws)</div>
+            <div id="bar-t1" class="hand-bar-container"></div>
+            <div class="category-title" style="font-size: 14px; margin-top: 20px;">Consistencia Turno 1</div>
+            <div id="cons-t1" class="consistency-list"></div>
+        </div>
+
+        <div class="result-card">
+            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6 Draws)</div>
             <div id="bar-t2" class="hand-bar-container"></div>
-            <div id="legend-t2" class="legend-grid"></div>
+            <div class="category-title" style="font-size: 14px; margin-top: 20px;">Consistencia Turno 2</div>
+            <div id="cons-t2" class="consistency-list"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Bloqueo adicional por Script para Ctrl + y Rueda del mouse (Desktop)
-    document.addEventListener('wheel', function(e) {
-        if (e.ctrlKey) e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '0')) {
-            e.preventDefault();
-        }
-    });
-
     const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
-    const catClasses = {
-        "Starters": "segment-starters",
-        "Extenders": "segment-extenders",
-        "Hand Traps": "segment-handtraps",
-        "Board Breakers": "segment-boardbreakers",
-        "Bricks": "segment-bricks"
-    };
-    
     let analyzeConfirm = { active: false, timeout: null };
     let deleteConfirm = { active: false, timeout: null };
 
     window.onload = () => {
         const mainContainer = document.getElementById('categories-main');
         const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card';
             cardDiv.id = catId;
-            cardDiv.innerHTML = `
-                <div class="category-header">
-                    <span class="category-title">${cat}</span>
-                    <button class="add-btn" onclick="addRow('${catId}')">+</button>
-                </div>
-                <div class="rows-container"></div>
-            `;
+            const singleCat = cat.endsWith('s') ? cat.slice(0, -1) : cat;
+            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div>`;
             mainContainer.appendChild(cardDiv);
-
             if (savedData[cat] && savedData[cat].length > 0) {
-                savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt));
-            } else {
-                addRow(catId);
-            }
+                savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`));
+            } else { addRow(catId, '', '', true, `Nombre ${singleCat}`); }
         });
         updateTotal();
     };
 
-    function addRow(catId, name = '', qty = '', hopt = true) {
+    function addRow(catId, name = '', qty = '', hopt = true, placeholder = 'Nombre') {
         const target = document.querySelector(`#${catId} .rows-container`);
         const row = document.createElement('div');
         row.className = 'input-row';
-        row.innerHTML = `
-            <input type="text" placeholder="Nombre" class="i-name" value="${name}" oninput="saveAll()">
-            <input type="number" placeholder="0" class="i-qty" min="0" max="3" value="${qty}" oninput="saveAll()">
-            <div class="hopt-label">
-                <input type="checkbox" class="hopt-checkbox" ${hopt ? 'checked' : ''} onchange="saveAll()">
-                <span>HOPT</span>
-            </div>
-        `;
+        const isBrick = catId === 'cat-Bricks';
+        const hoptHtml = isBrick ? '' : `<div style="display:flex; flex-direction:column; align-items:center;"><input type="checkbox" class="hopt-checkbox" ${hopt ? 'checked' : ''} onchange="saveAll()"><span style="font-size:9px; color:var(--ios-secondary)">HOPT</span></div>`;
+        row.innerHTML = `<input type="text" placeholder="${placeholder}" class="i-name" value="${name}" oninput="saveAll()"><input type="number" placeholder="0" class="i-qty" min="0" max="3" value="${qty}" oninput="saveAll()">${hoptHtml}`;
         target.appendChild(row);
         updateTotal();
     }
@@ -311,12 +205,14 @@
         const dataToSave = {};
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
-            const rows = document.querySelectorAll(`#${catId} .input-row`);
-            dataToSave[cat] = Array.from(rows).map(row => ({
-                name: row.querySelector('.i-name').value,
-                qty: row.querySelector('.i-qty').value,
-                hopt: row.querySelector('.hopt-checkbox').checked
-            })).filter(card => card.name !== '' || card.qty !== '');
+            dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
+                const hCheck = row.querySelector('.hopt-checkbox');
+                return {
+                    name: row.querySelector('.i-name').value,
+                    qty: row.querySelector('.i-qty').value,
+                    hopt: hCheck ? hCheck.checked : false
+                };
+            }).filter(card => card.name !== '' || card.qty !== '');
         });
         localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
         updateTotal();
@@ -325,11 +221,16 @@
     function updateTotal() {
         let t = 0;
         document.querySelectorAll('.i-qty').forEach(i => t += parseInt(i.value || 0));
-        document.getElementById('deck-total').innerText = t;
+        const badge = document.getElementById('deck-total');
+        badge.innerText = t;
+        badge.style.color = (t < 40 || t > 60) ? 'var(--ios-red)' : 'var(--ios-green)';
     }
 
     function handleAnalyzeClick() {
         const btn = document.getElementById('mainBtn');
+        const t = parseInt(document.getElementById('deck-total').innerText);
+        if (t < 40 || t > 60) { alert(`DECK con ${t} cartas. Ajusta entre 40 y 60.`); return; }
+        
         if (!analyzeConfirm.active) {
             analyzeConfirm.active = true;
             btn.innerText = "CONFIRMAR ANÁLISIS";
@@ -370,81 +271,139 @@
         const fullDeck = [];
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
-            const rows = document.querySelectorAll(`#${catId} .input-row`);
-            rows.forEach(row => {
-                const name = row.querySelector('.i-name').value || "Carta";
+            document.querySelectorAll(`#${catId} .input-row`).forEach(row => {
+                const name = row.querySelector('.i-name').value || "Card";
                 const qty = parseInt(row.querySelector('.i-qty').value) || 0;
-                const isHOPT = row.querySelector('.hopt-checkbox').checked;
-                for(let i=0; i<qty; i++) fullDeck.push({ name, cat, isHOPT });
+                const hCheck = row.querySelector('.hopt-checkbox');
+                const h = hCheck ? hCheck.checked : false;
+                for(let i=0; i<qty; i++) fullDeck.push({ name, cat, h });
             });
         });
 
-        if(fullDeck.length < 40) {
-            alert("Mínimo 40 cartas.");
-            return;
-        }
-
         document.getElementById('results').style.display = 'block';
-        processResults(fullDeck, 5, 'bar-t1', 'legend-t1');
-        processResults(fullDeck, 6, 'bar-t2', 'legend-t2');
+        const t1Moda = runSimulationModa(fullDeck, 5, 'bar-t1', 'cons-t1');
+        runSimulationModa(fullDeck, 6, 'bar-t2', 'cons-t2');
+        
+        calculateTier(t1Moda);
         window.scrollTo({ top: document.getElementById('results').offsetTop - 20, behavior: 'smooth' });
     }
 
-    function processResults(deck, handSize, barId, legendId) {
+    function calculateTier(moda) {
+        const s = moda["Starters"] || 0;
+        const e = moda["Extenders"] || 0;
+        const h = moda["Hand Traps"] || 0;
+        const b = moda["Board Breakers"] || 0;
+        const bk = moda["Bricks"] || 0;
+        
+        const tienePlay = (s >= 1);
+        const motorTotal = s + e;
+        const interaccion = h + b;
+        
+        const tierDiv = document.getElementById('tier-text');
+        tierDiv.className = 'tier-value';
+        let tier = "ERROR";
+
+        if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 0) {
+            tier = "S";
+        } 
+        else if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 1) {
+            tier = "A";
+        } 
+        else if (tienePlay && motorTotal >= 2 && interaccion < 2) {
+            tier = "B";
+        } 
+        else if (s === 1 && interaccion >= 1) {
+            tier = "C";
+        }
+
+        tierDiv.innerText = (tier === "ERROR") ? "DECK TIER ERROR" : `DECK TIER ${tier}`;
+        tierDiv.classList.add(`tier-${tier}`);
+    }
+
+    function runSimulationModa(deck, handSize, barId, consId) {
         const iterations = 10000;
-        const stats = {};
-        categories.forEach(c => stats[c] = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 });
+        const stats = { Starters: [], Extenders: [], "Hand Traps": [], "Board Breakers": [], Bricks: [] };
+        const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
 
         for(let i=0; i<iterations; i++) {
             const hand = [...deck].sort(() => 0.5 - Math.random()).slice(0, handSize);
-            categories.forEach(cat => {
-                const catCards = hand.filter(c => c.cat === cat);
-                let effectiveCount = 0;
-                const grouped = {};
-                catCards.forEach(c => {
-                    if(!grouped[c.name]) grouped[c.name] = { count: 0, isHOPT: c.isHOPT };
-                    grouped[c.name].count++;
-                });
-                for(const name in grouped) {
-                    effectiveCount += grouped[name].isHOPT ? 1 : grouped[name].count;
+            const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
+            const seenNames = new Set();
+
+            hand.forEach(card => {
+                if (card.cat === "Bricks") {
+                    handCount[card.cat]++;
+                } else {
+                    if (card.h) {
+                        if (!seenNames.has(card.name)) {
+                            handCount[card.cat]++;
+                            seenNames.add(card.name);
+                        }
+                    } else {
+                        handCount[card.cat]++;
+                    }
                 }
-                stats[cat][effectiveCount]++;
             });
+
+            for(const cat in handCount) {
+                stats[cat].push(handCount[cat]);
+                if(handCount[cat] >= 1) successCount[cat]++;
+            }
         }
 
-        const bar = document.getElementById(barId);
-        const legend = document.getElementById(legendId);
-        bar.innerHTML = '';
-        legend.innerHTML = '';
-
-        let handTendency = [];
+        const modaResult = {};
         categories.forEach(cat => {
-            let bestK = 0, maxVal = 0;
-            for(let k=0; k<=handSize; k++) {
-                if(stats[cat][k] > maxVal) { maxVal = stats[cat][k]; bestK = k; }
+            const counts = {};
+            stats[cat].forEach(val => counts[val] = (counts[val] || 0) + 1);
+            let maxFreq = 0;
+            let modaVal = 0;
+            for(const val in counts) {
+                if(counts[val] > maxFreq) {
+                    maxFreq = counts[val];
+                    modaVal = parseInt(val);
+                }
             }
-            const p = ((maxVal / iterations) * 100).toFixed(1);
-            handTendency.push({ cat, count: bestK, prob: p });
+            modaResult[cat] = modaVal;
         });
 
-        handTendency.forEach(item => {
-            if(item.count > 0) {
-                const width = (item.count / handSize) * 100;
+        const bar = document.getElementById(barId);
+        bar.innerHTML = '';
+        let totalModaCards = 0;
+        categories.forEach(cat => {
+            const val = modaResult[cat];
+            if(val > 0) {
+                totalModaCards += val;
                 const segment = document.createElement('div');
-                segment.className = `bar-segment ${catClasses[item.cat]}`;
-                segment.style.width = `${width}%`;
-                segment.innerText = `${item.cat[0]}: ${item.count}`; // Sigla para ahorrar espacio
+                segment.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
+                segment.style.width = `${(val / handSize) * 100}%`;
+                segment.innerHTML = `<span>${cat.toUpperCase()} ${val}</span>`;
                 bar.appendChild(segment);
             }
-            legend.innerHTML += `
-                <div class="legend-item">
-                    <span style="font-weight:700">${item.cat}</span>
-                    <span style="color:var(--ios-secondary)">${item.prob}%</span>
-                </div>
-            `;
         });
+        
+        if(totalModaCards < handSize) {
+            const rest = handSize - totalModaCards;
+            const segment = document.createElement('div');
+            segment.className = `bar-segment segment-Random`;
+            segment.style.width = `${(rest / handSize) * 100}%`;
+            segment.innerHTML = `<span>RANDOM ${rest}</span>`;
+            bar.appendChild(segment);
+        }
+
+        const consList = document.getElementById(consId);
+        consList.innerHTML = '';
+        categories.forEach(cat => {
+            const p = ((successCount[cat] / iterations) * 100).toFixed(1);
+            const catClass = cat.replace(/\s/g, '');
+            consList.innerHTML += `
+                <div class="cons-bar-wrapper">
+                    <div class="cons-bar-text text-light">${cat} ≥ 1: ${p}%</div>
+                    <div class="cons-bar-fill fill-${catClass}" style="width:${p}%"></div>
+                </div>`;
+        });
+
+        return modaResult;
     }
 </script>
-
 </body>
 </html>
