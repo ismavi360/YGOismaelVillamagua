@@ -116,9 +116,7 @@
         .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
         .btn-pdf.confirm-pdf { background: var(--ios-green); transform: scale(1.02); }
 
-        .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
-        .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
-
+        /* Tabletas resultados responsivas */
         .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
         #capture-container { 
             background-color: #F2F2F7; 
@@ -553,19 +551,25 @@
         doc.addPage();
         const captureEl = document.getElementById('capture-container');
         
+        // --- CORRECCIÓN PARA EVITAR CONTENIDO RECORTADO ---
+        const originalStyleWidth = captureEl.style.width;
+        captureEl.style.width = '480px'; 
+        
         const canvas = await html2canvas(captureEl, { 
-            scale: 3, // ALTA CALIDAD MANTENIDA
+            scale: 3, 
             useCORS: true, 
-            width: captureEl.scrollWidth,
+            logging: false,
+            width: 480,
             windowWidth: 480 
         });
         
+        captureEl.style.width = originalStyleWidth; 
+        // -------------------------------------------------
+
         const imgData = canvas.toDataURL('image/png');
         const pdfWidth = doc.internal.pageSize.getWidth();
         const pdfHeight = doc.internal.pageSize.getHeight();
         
-        // CORRECCIÓN DE TAMAÑO Y CENTRADO
-        // Definimos márgenes mínimos (en mm)
         const margin = 20;
         const maxW = pdfWidth - (margin * 2);
         const maxH = pdfHeight - (margin * 2);
@@ -573,18 +577,15 @@
         let finalW = maxW;
         let finalH = (canvas.height * finalW) / canvas.width;
         
-        // Si el alto calculado supera el máximo, ajustamos basándonos en el alto
         if (finalH > maxH) {
             finalH = maxH;
             finalW = (canvas.width * finalH) / canvas.height;
         }
         
-        // Calculamos posiciones para centrado perfecto
-        const x = (pdfWidth - finalW) / 2;
-        const yCenter = (pdfHeight - finalH) / 2;
+        const xPos = (pdfWidth - finalW) / 2;
+        const yPos = (pdfHeight - finalH) / 2;
 
-        doc.addImage(imgData, 'PNG', x, yCenter, finalW, finalH);
-        
+        doc.addImage(imgData, 'PNG', xPos, yPos, finalW, finalH);
         doc.save(`${deckName}_Reporte.pdf`);
     }
 </script>
