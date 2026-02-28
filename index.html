@@ -104,7 +104,18 @@
         .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
 
-        .results-area { display: none; margin-top: 10px; width: 100%; }
+        /* AJUSTE PARA MÓVILES: Se elimina el ancho fijo de 450px */
+        .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
+        #capture-container { 
+            background-color: #F2F2F7; 
+            padding: 10px; 
+            width: 100%; 
+            max-width: 480px; 
+            border-radius: 20px; 
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+
         .result-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
 
         .tier-card {
@@ -175,7 +186,7 @@
     </div>
 
     <div id="results" class="results-area">
-        <div id="capture-container" style="background-color: #F2F2F7; padding: 15px; width: 450px; border-radius: 20px;">
+        <div id="capture-container">
             <div id="tier-result" class="tier-card">
                 <div class="tier-label">CLASIFICACIÓN</div>
                 <div id="tier-text" class="tier-value">DECK TIER ERROR</div>
@@ -486,7 +497,6 @@
         const tier = document.getElementById('tier-text').innerText;
         const deckTotalCount = document.getElementById('deck-total').innerText;
 
-        // --- BACKUP JSON ---
         const rawData = JSON.parse(localStorage.getItem('ygo_deck_save'));
         const blob = new Blob([JSON.stringify(rawData)], {type: "application/json"});
         const link = document.createElement("a");
@@ -494,8 +504,6 @@
         link.download = `${deckName.replace(/\s+/g, '_')}_backup.json`;
         link.click();
 
-        // --- HOJA 1: LISTADO DEL DECK ---
-        // Se unifica el tamaño a 10 para Título, Formato y Clasificación
         doc.setFont(undefined, 'bold'); doc.setFontSize(10); doc.setTextColor(0, 122, 255);
         doc.text(deckName.toUpperCase(), 20, 20);
         
@@ -531,16 +539,13 @@
             }
         });
 
-        // --- SECCIÓN FINAL DE LA HOJA 1: DECK TOTAL ---
         y += 5;
         if(y > 270) { doc.addPage(); y = 20; }
         doc.setDrawColor(0, 122, 255); doc.setLineWidth(0.8);
         doc.line(20, y, 190, y); y += 10;
-        // Se unifica el tamaño a 10 para el Tamaño Total del Deck
         doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
         doc.text(`TAMAÑO TOTAL DEL DECK: ${deckTotalCount} CARTAS`, 20, y);
 
-        // --- HOJA 2: GRÁFICAS ---
         doc.addPage();
         const canvas = await html2canvas(document.getElementById('capture-container'), {
             scale: 3, useCORS: true, logging: false, backgroundColor: '#F2F2F7'
