@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YGO DECK BUILDER V1.0</title>
+    <title>YGO DECK BUILDER</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -108,8 +108,10 @@
         }
 
         .btn-blue { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
-        .btn-blue.confirm-analyze, .btn-blue.confirm-import, .btn-blue.confirm-sync { background: var(--ios-green); transform: scale(1.02); }
-        .btn-blue.confirm-clear { background: var(--ios-red); transform: scale(1.02); }
+        .btn-purple { background: var(--purple-strong); color: white; box-shadow: 0 4px 12px rgba(147, 112, 219, 0.2); }
+        
+        .btn-ios.confirm-analyze, .btn-ios.confirm-sync { background: var(--ios-green); transform: scale(1.02); }
+        .btn-ios.confirm-clear { background: var(--ios-red); transform: scale(1.02); }
         
         .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
         .btn-pdf.confirm-pdf { background: var(--ios-green); transform: scale(1.02); }
@@ -120,9 +122,8 @@
         .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
         #capture-container { 
             background-color: #F2F2F7; 
-            padding: 10px; 
-            width: 100%; 
-            max-width: 480px; 
+            padding: 20px; 
+            width: 480px; 
             border-radius: 20px; 
             box-sizing: border-box;
             margin: 0 auto;
@@ -143,8 +144,7 @@
         .tier-ERROR { color: var(--ios-red); opacity: 0.8; }
 
         .hand-bar-container {
-            height: 60px; 
-            width: 100%; background: #E5E5EA; border-radius: 12px;
+            height: 60px; width: 100%; background: #E5E5EA; border-radius: 12px;
             display: flex; overflow: hidden; margin: 15px 0; border: 0.5px solid #D1D1D6;
         }
         .bar-segment {
@@ -165,21 +165,39 @@
         }
 
         .segment-Starters, .fill-Starters { background-color: var(--ios-green); }
-        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); color: white; } 
+        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); } 
         .segment-HandTraps, .fill-HandTraps { background-color: var(--ios-blue); }
-        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); color: white; } 
+        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); } 
         .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
         .segment-Random, .fill-Random { background-color: #8E8E93; }
 
         .text-light { color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); }
+
+        .cloud-list {
+            background: var(--ios-card); border-radius: 16px; padding: 10px; margin-top: 15px;
+            box-shadow: var(--shadow); display: none; width: 100%; box-sizing: border-box;
+        }
+        .cloud-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 12px;
+            border-bottom: 0.5px solid var(--ios-gray);
+        }
+        .cloud-item:last-child { border-bottom: none; }
+        
+        /* BOTÓN BORRAR NUBE ACTUALIZADO */
+        .btn-delete-cloud {
+            background: var(--ios-blue); color: white; border: none; border-radius: 8px;
+            padding: 8px 12px; font-size: 11px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-delete-cloud.confirm-del { background: var(--ios-red); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>YGO DECK BUILDER V1.0</h1>
-        <p>Designed by Ismael Villamagua</p>
+        <h1>YGO DECK BUILDER</h1>
+        <p>Designed by Ismael Villamagua Version 1.0</p>
     </header>
 
     <div class="deck-header-info">
@@ -191,10 +209,15 @@
     
     <div class="total-section">
         <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
-        <button id="syncBtn" class="btn-ios btn-blue" onclick="handleSyncClick()">SINCRONIZAR NUBE</button>
+        <button id="syncBtn" class="btn-ios btn-purple" onclick="handleSyncClick()">GUARDAR DECK</button>
+        <button id="viewCloudBtn" class="btn-ios btn-purple" onclick="toggleCloudList()">ABRIR DECK</button>
+        
+        <div id="cloud-explorer" class="cloud-list">
+            <div style="font-weight: bold; margin-bottom: 10px; color: var(--ios-secondary); text-align: left; padding-left: 10px;">TUS DECKBOX:</div>
+            <div id="cloud-items-container"></div>
+        </div>
+
         <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
-        <button id="importBtn" class="btn-ios btn-blue" onclick="handleImportClick()">IMPORTAR DECK</button>
-        <input type="file" id="fileInput" style="display:none" accept=".json" onchange="processFile(event)">
         <button id="deleteBtn" class="btn-ios btn-blue" onclick="handleDeleteClick()">CLEAR DECK</button>
     </div>
 
@@ -204,27 +227,24 @@
                 <div class="tier-label">CLASIFICACIÓN</div>
                 <div id="tier-text" class="tier-value">DECK TIER ERROR</div>
             </div>
-
             <div class="result-card">
                 <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5 Draws)</div>
                 <div id="bar-t1" class="hand-bar-container"></div>
                 <div id="cons-t1" class="consistency-list"></div>
             </div>
-
             <div class="result-card">
                 <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6 Draws)</div>
                 <div id="bar-t2" class="hand-bar-container"></div>
                 <div id="cons-t2" class="consistency-list"></div>
             </div>
         </div>
-
         <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
@@ -240,68 +260,73 @@
     const db = getFirestore(app);
 
     let syncConfirm = { active: false, timeout: null };
+    let delCloudConfirm = { id: null, timeout: null };
 
     window.handleSyncClick = async () => {
         const btn = document.getElementById('syncBtn');
-        const deckName = document.getElementById('deck-name').value.trim().toUpperCase();
-
-        if (!deckName) {
-            alert("Por favor, ingresa un NOMBRE DEL DECK para sincronizar.");
-            return;
-        }
-
+        const deckNameInput = document.getElementById('deck-name').value.trim().toUpperCase();
+        if (!deckNameInput) { alert("Por favor, ingresa un NOMBRE DEL DECK."); return; }
         if (!syncConfirm.active) {
             syncConfirm.active = true;
-            btn.innerText = "CONFIRMAR SINCRONIZACIÓN";
+            btn.innerText = "CONFIRMAR GUARDADO";
             btn.classList.add('confirm-sync');
             syncConfirm.timeout = setTimeout(() => {
-                syncConfirm.active = false;
-                btn.innerText = "SINCRONIZAR NUBE";
-                btn.classList.remove('confirm-sync');
+                syncConfirm.active = false; btn.innerText = "GUARDAR DECK"; btn.classList.remove('confirm-sync');
             }, 2500);
         } else {
             clearTimeout(syncConfirm.timeout);
-            btn.innerText = "BUSCANDO...";
-            
+            btn.innerText = "CONECTANDO...";
             try {
-                const docRef = doc(db, "decks", deckName);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const cloudData = docSnap.data();
-                    localStorage.setItem('ygo_deck_save', JSON.stringify(cloudData));
-                    alert("¡Deck sincronizado desde la nube!");
-                    location.reload();
-                } else {
-                    // Si no existe, lo subimos por primera vez
-                    const currentData = JSON.parse(localStorage.getItem('ygo_deck_save'));
-                    if (currentData) {
-                        await setDoc(docRef, currentData);
-                        alert("Nuevo deck guardado en la nube.");
-                    }
-                }
-            } catch (error) {
-                alert("Error de conexión con Firebase.");
-                console.error(error);
-            }
-
-            syncConfirm.active = false;
-            btn.innerText = "SINCRONIZAR NUBE";
-            btn.classList.remove('confirm-sync');
+                const docRef = doc(db, "decks", deckNameInput);
+                const currentData = JSON.parse(localStorage.getItem('ygo_deck_save'));
+                if (currentData) { await setDoc(docRef, currentData); alert(`¡Deck "${deckNameInput}" guardado!`); }
+            } catch (error) { alert("Error de conexión con Firebase."); }
+            syncConfirm.active = false; btn.innerText = "GUARDAR DECK"; btn.classList.remove('confirm-sync');
         }
     };
 
-    // Sobrescribir saveAll para que actualice la nube automáticamente si hay nombre
-    const originalSaveAll = window.saveAll;
-    window.saveAll = async () => {
-        if (typeof originalSaveAll === 'function') originalSaveAll();
-        
-        const deckName = document.getElementById('deck-name').value.trim().toUpperCase();
-        if (deckName) {
-            const data = JSON.parse(localStorage.getItem('ygo_deck_save'));
-            try {
-                await setDoc(doc(db, "decks", deckName), data);
-            } catch (e) { /* Silencioso en auto-save */ }
+    window.toggleCloudList = async () => {
+        const container = document.getElementById('cloud-explorer');
+        const list = document.getElementById('cloud-items-container');
+        if (container.style.display === 'block') { container.style.display = 'none'; return; }
+        list.innerHTML = "<p style='padding:10px; font-size:12px;'>Cargando biblioteca...</p>";
+        container.style.display = 'block';
+        try {
+            const querySnapshot = await getDocs(collection(db, "decks"));
+            list.innerHTML = "";
+            if(querySnapshot.empty) { list.innerHTML = "<p style='padding:10px; font-size:12px;'>La biblioteca está vacía.</p>"; return; }
+            querySnapshot.forEach((docSnap) => {
+                const name = docSnap.id;
+                const row = document.createElement('div');
+                row.className = 'cloud-item';
+                row.innerHTML = `<span onclick="loadFromCloud('${name}')" style="cursor:pointer; flex-grow:1; font-weight:600; font-size:14px;">${name}</span><button class="btn-delete-cloud" id="del-${name}" onclick="handleCloudDelete('${name}')">BORRAR</button>`;
+                list.appendChild(row);
+            });
+        } catch (e) { alert("Error al acceder a la nube."); }
+    };
+
+    window.loadFromCloud = async (name) => {
+        try {
+            const docRef = doc(db, "decks", name);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) { 
+                localStorage.setItem('ygo_deck_save', JSON.stringify(docSnap.data())); 
+                location.reload(); 
+            }
+        } catch (e) { alert("Error al cargar."); }
+    };
+
+    window.handleCloudDelete = async (name) => {
+        const btn = document.getElementById(`del-${name}`);
+        if (delCloudConfirm.id !== name) {
+            delCloudConfirm.id = name;
+            btn.innerText = "CONFIRMAR"; btn.classList.add('confirm-del');
+            // Timeout reducido a 2 segundos
+            delCloudConfirm.timeout = setTimeout(() => { delCloudConfirm.id = null; btn.innerText = "BORRAR"; btn.classList.remove('confirm-del'); }, 2000);
+        } else {
+            clearTimeout(delCloudConfirm.timeout);
+            try { await deleteDoc(doc(db, "decks", name)); window.toggleCloudList(); } catch (e) { alert("Error al eliminar."); }
+            delCloudConfirm.id = null;
         }
     };
 </script>
@@ -311,34 +336,24 @@
     let analyzeConfirm = { active: false, timeout: null };
     let deleteConfirm = { active: false, timeout: null };
     let pdfConfirm = { active: false, timeout: null };
-    let importConfirm = { active: false, timeout: null };
 
     window.onload = () => {
         const mainContainer = document.getElementById('categories-main');
         const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-        
         document.getElementById('deck-name').value = savedData.deckName || "";
         document.getElementById('deck-format').value = savedData.deckFormat || "";
-
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card';
             cardDiv.id = catId;
             const singleCat = cat.endsWith('s') ? cat.slice(0, -1) : cat;
-            cardDiv.innerHTML = `
-                <div class="category-header">
-                    <span class="category-title">${cat}</span>
-                    <button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button>
-                </div>
-                <div class="rows-container"></div>
-                <div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>
-            `;
+            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div><div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>`;
             mainContainer.appendChild(cardDiv);
-            if (savedData[cat] && savedData[cat].length > 0) {
-                savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`));
-            } else { addRow(catId, '', '', true, `Nombre ${singleCat}`); }
+            if (savedData[cat] && savedData[cat].length > 0) { savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`)); }
+            else { addRow(catId, '', '', true, `Nombre ${singleCat}`); }
         });
+        saveAll();
         updateTotal();
     };
 
@@ -354,26 +369,16 @@
     }
 
     function saveAll() {
-        const dataToSave = {
-            deckName: document.getElementById('deck-name').value,
-            deckFormat: document.getElementById('deck-format').value
-        };
+        const dataToSave = { deckName: document.getElementById('deck-name').value, deckFormat: document.getElementById('deck-format').value };
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
             let catSum = 0;
             dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
-                const hCheck = row.querySelector('.hopt-checkbox');
                 const qtyVal = parseInt(row.querySelector('.i-qty').value || 0);
                 catSum += qtyVal;
-                return {
-                    name: row.querySelector('.i-name').value,
-                    qty: qtyVal,
-                    hopt: hCheck ? hCheck.checked : false
-                };
+                return { name: row.querySelector('.i-name').value, qty: qtyVal, hopt: row.querySelector('.hopt-checkbox')?.checked || false };
             }).filter(card => card.name !== '' || card.qty !== 0);
-            
-            const footerVal = document.getElementById(`total-val-${catId}`);
-            if(footerVal) footerVal.innerText = catSum;
+            document.getElementById(`total-val-${catId}`).innerText = catSum;
         });
         localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
         updateTotal();
@@ -386,8 +391,6 @@
             let catSum = 0;
             document.querySelectorAll(`#${catId} .i-qty`).forEach(i => catSum += parseInt(i.value || 0));
             t += catSum;
-            const footerVal = document.getElementById(`total-val-${catId}`);
-            if(footerVal) footerVal.innerText = catSum;
         });
         const badge = document.getElementById('deck-total');
         badge.innerText = t;
@@ -397,104 +400,35 @@
     function handleAnalyzeClick() {
         const btn = document.getElementById('mainBtn');
         const t = parseInt(document.getElementById('deck-total').innerText);
-        if (t < 40 || t > 60) { alert(`DECK con ${t} cartas. Ajusta entre 40 y 60.`); return; }
-        
+        if (t < 40 || t > 60) { alert(`Ajusta el deck entre 40 y 60 cartas.`); return; }
         if (!analyzeConfirm.active) {
-            analyzeConfirm.active = true;
-            btn.innerText = "CONFIRMAR ANÁLISIS";
-            btn.classList.add('confirm-analyze');
-            analyzeConfirm.timeout = setTimeout(() => {
-                analyzeConfirm.active = false;
-                btn.innerText = "ANALIZAR DECK";
-                btn.classList.remove('confirm-analyze');
-            }, 2000);
+            analyzeConfirm.active = true; btn.innerText = "CONFIRMAR ANÁLISIS"; btn.classList.add('confirm-analyze');
+            analyzeConfirm.timeout = setTimeout(() => { analyzeConfirm.active = false; btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze'); }, 2000);
         } else {
-            clearTimeout(analyzeConfirm.timeout);
-            executeAnalysis();
-            analyzeConfirm.active = false;
-            btn.innerText = "ANALIZAR DECK";
-            btn.classList.remove('confirm-analyze');
+            clearTimeout(analyzeConfirm.timeout); executeAnalysis(); analyzeConfirm.active = false;
+            btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze');
             document.getElementById('pdfBtn').style.display = 'block';
         }
-    }
-
-    function handleImportClick() {
-        const btn = document.getElementById('importBtn');
-        if (!importConfirm.active) {
-            importConfirm.active = true;
-            btn.innerText = "¿SELECCIONAR .JSON?";
-            btn.classList.add('confirm-import');
-            importConfirm.timeout = setTimeout(() => {
-                importConfirm.active = false;
-                btn.innerText = "IMPORTAR DECK";
-                btn.classList.remove('confirm-import');
-            }, 2000);
-        } else {
-            clearTimeout(importConfirm.timeout);
-            document.getElementById('fileInput').click();
-            importConfirm.active = false;
-            btn.innerText = "IMPORTAR DECK";
-            btn.classList.remove('confirm-import');
-        }
-    }
-
-    function processFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                localStorage.setItem('ygo_deck_save', JSON.stringify(data));
-                location.reload();
-            } catch (err) { alert("Archivo inválido."); }
-        };
-        reader.readAsText(file);
     }
 
     function handleDownloadClick() {
         const btn = document.getElementById('pdfBtn');
         if (!pdfConfirm.active) {
-            pdfConfirm.active = true;
-            btn.innerText = "CONFIRMAR DESCARGA";
-            btn.classList.add('confirm-pdf');
-            pdfConfirm.timeout = setTimeout(() => {
-                pdfConfirm.active = false;
-                btn.innerText = "DESCARGAR RESULTADOS";
-                btn.classList.remove('confirm-pdf');
-            }, 2000);
-        } else {
-            clearTimeout(pdfConfirm.timeout);
-            generatePDF();
-            pdfConfirm.active = false;
-            btn.innerText = "DESCARGAR RESULTADOS";
-            btn.classList.remove('confirm-pdf');
-        }
+            pdfConfirm.active = true; btn.innerText = "CONFIRMAR DESCARGA"; btn.classList.add('confirm-pdf');
+            pdfConfirm.timeout = setTimeout(() => { pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }, 2000);
+        } else { clearTimeout(pdfConfirm.timeout); generatePDF(); pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }
     }
 
     function handleDeleteClick() {
         const btn = document.getElementById('deleteBtn');
         if (!deleteConfirm.active) {
-            deleteConfirm.active = true;
-            btn.innerText = "¿Está seguro?";
-            btn.classList.add('confirm-clear');
-            deleteConfirm.timeout = setTimeout(() => {
-                deleteConfirm.active = false;
-                btn.innerText = "CLEAR DECK";
-                btn.classList.remove('confirm-clear');
-            }, 3000);
-        } else {
-            clearTimeout(deleteConfirm.timeout);
-            localStorage.removeItem('ygo_deck_save');
-            location.reload();
-        }
+            deleteConfirm.active = true; btn.innerText = "CONFIRMAR VACIAR"; btn.classList.add('confirm-clear');
+            deleteConfirm.timeout = setTimeout(() => { deleteConfirm.active = false; btn.innerText = "CLEAR DECK"; btn.classList.remove('confirm-clear'); }, 3000);
+        } else { clearTimeout(deleteConfirm.timeout); localStorage.removeItem('ygo_deck_save'); location.reload(); }
     }
 
     function fisherYates(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
+        for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; }
         return array;
     }
 
@@ -503,52 +437,30 @@
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
             document.querySelectorAll(`#${catId} .input-row`).forEach(row => {
-                const name = row.querySelector('.i-name').value || "Card";
                 const qty = parseInt(row.querySelector('.i-qty').value) || 0;
-                const hCheck = row.querySelector('.hopt-checkbox');
-                const h = hCheck ? hCheck.checked : false;
-                for(let i=0; i<qty; i++) fullDeck.push({ name, cat, h });
+                for(let i=0; i<qty; i++) fullDeck.push({ name: row.querySelector('.i-name').value || "Card", cat, h: row.querySelector('.hopt-checkbox')?.checked || false });
             });
         });
-
         document.getElementById('results').style.display = 'block';
         const t1Moda = runSimulationModa(fullDeck, 5, 'bar-t1', 'cons-t1');
         runSimulationModa(fullDeck, 6, 'bar-t2', 'cons-t2');
-        
         calculateTier(t1Moda);
         window.scrollTo({ top: document.getElementById('results').offsetTop - 20, behavior: 'smooth' });
     }
 
     function calculateTier(moda) {
-        const s = moda["Starters"] || 0;
-        const e = moda["Extenders"] || 0;
-        const h = moda["Hand Traps"] || 0;
-        const b = moda["Board Breakers"] || 0;
-        const bk = moda["Bricks"] || 0;
-
-        const motorTotal = s + e;
-        const interaccion = h + b;
-        
-        const tierDiv = document.getElementById('tier-text');
-        tierDiv.className = 'tier-value';
-        let tier = "ERROR";
-
-        if (s === 0) {
-            tier = "ERROR";
-        } else if (motorTotal >= 2 && interaccion >= 2 && bk === 0) {
-            tier = "S";
-        } else if (motorTotal >= 2 && interaccion >= 2 && bk >= 1) {
-            tier = "A";
-        } else if (motorTotal >= 2 && interaccion === 1) {
-            tier = "B";
-        } else if (motorTotal === 1 && s <= 1) {
-            tier = "C";
-        } else {
-            tier = "ERROR";
+        const s = moda["Starters"] || 0, e = moda["Extenders"] || 0, h = moda["Hand Traps"] || 0, b = moda["Board Breakers"] || 0, bk = moda["Bricks"] || 0;
+        const motor = s + e, inter = h + b;
+        const tierDiv = document.getElementById('tier-text'); tierDiv.className = 'tier-value';
+        let t = "ERROR";
+        if (s > 0) {
+            if (motor >= 2 && inter >= 2 && bk === 0) t = "S";
+            else if (motor >= 2 && inter >= 2 && bk >= 1) t = "A";
+            else if (motor >= 2 && inter === 1) t = "B";
+            else if (motor === 1) t = "C";
         }
-
-        tierDiv.innerText = (tier === "ERROR") ? "DECK TIER ERROR" : `DECK TIER ${tier}`;
-        tierDiv.classList.add(`tier-${tier}`);
+        tierDiv.innerText = t === "ERROR" ? "DECK TIER ERROR" : `DECK TIER ${t}`;
+        tierDiv.classList.add(`tier-${t}`);
     }
 
     function runSimulationModa(deck, handSize, barId, consId) {
@@ -556,62 +468,44 @@
         const stats = { Starters: [], Extenders: [], "Hand Traps": [], "Board Breakers": [], Bricks: [] };
         const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
         for(let i=0; i<iterations; i++) {
-            const shuffled = fisherYates([...deck]);
-            const hand = shuffled.slice(0, handSize);
+            const hand = fisherYates([...deck]).slice(0, handSize);
             const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-            const seenInHand = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
-            hand.forEach(card => {
-                if (card.cat === "Bricks") { handCount[card.cat]++; } 
-                else if (card.h) { 
-                    if (!seenInHand[card.cat].has(card.name)) {
-                        handCount[card.cat]++;
-                        seenInHand[card.cat].add(card.name);
-                    }
-                } else { handCount[card.cat]++; }
+            const seen = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
+            hand.forEach(c => {
+                if (c.cat === "Bricks") handCount[c.cat]++;
+                else if (c.h) { if (!seen[c.cat].has(c.name)) { handCount[c.cat]++; seen[c.cat].add(c.name); } }
+                else handCount[c.cat]++;
             });
-            for(const cat in handCount) { stats[cat].push(handCount[cat]); if(handCount[cat] >= 1) successCount[cat]++; }
+            for(const k in handCount) { stats[k].push(handCount[k]); if(handCount[k]>=1) successCount[k]++; }
         }
         const modaResult = {};
         categories.forEach(cat => {
-            const counts = {};
-            stats[cat].forEach(val => counts[val] = (counts[val] || 0) + 1);
-            let maxFreq = 0, modaVal = 0;
-            for(const val in counts) { if(counts[val] > maxFreq) { maxFreq = counts[val]; modaVal = parseInt(val); } }
-            const probSuccess = successCount[cat] / iterations;
-            if (modaVal === 0 && probSuccess >= 0.45) { modaVal = 1; }
-            modaResult[cat] = modaVal;
+            const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
+            let maxF = 0, mV = 0;
+            for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
+            if (mV === 0 && (successCount[cat]/iterations) >= 0.45) mV = 1;
+            modaResult[cat] = mV;
         });
-        const bar = document.getElementById(barId);
-        bar.innerHTML = '';
-        let totalModaCards = 0;
+        const bar = document.getElementById(barId); bar.innerHTML = '';
+        let currentTotal = 0;
         categories.forEach(cat => {
-            const val = modaResult[cat];
-            if(val > 0) {
-                let currentVal = Math.min(val, handSize - totalModaCards);
-                if (currentVal > 0) {
-                    const segment = document.createElement('div');
-                    segment.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
-                    segment.style.width = `${(currentVal / handSize) * 100}%`;
-                    segment.innerHTML = `<span>${cat.toUpperCase()} ${currentVal}</span>`;
-                    bar.appendChild(segment);
-                    totalModaCards += currentVal;
-                }
+            let val = Math.min(modaResult[cat], handSize - currentTotal);
+            if (val > 0) {
+                const seg = document.createElement('div'); seg.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
+                seg.style.width = `${(val/handSize)*100}%`; seg.innerHTML = `<span>${cat.toUpperCase()} ${val}</span>`;
+                bar.appendChild(seg); currentTotal += val;
             }
         });
-        if(totalModaCards < handSize) {
-            const rest = handSize - totalModaCards;
-            const segment = document.createElement('div');
-            segment.className = `bar-segment segment-Random`;
-            segment.style.width = `${(rest / handSize) * 100}%`;
-            segment.innerHTML = `<span>RANDOM ${rest}</span>`;
-            bar.appendChild(segment);
+        if(currentTotal < handSize) {
+            const rest = handSize - currentTotal;
+            const seg = document.createElement('div'); seg.className = 'bar-segment segment-Random';
+            seg.style.width = `${(rest/handSize)*100}%`; seg.innerHTML = `<span>RANDOM ${rest}</span>`;
+            bar.appendChild(seg);
         }
-        const consList = document.getElementById(consId);
-        consList.innerHTML = '';
+        const consList = document.getElementById(consId); consList.innerHTML = '';
         categories.forEach(cat => {
-            const p = ((successCount[cat] / iterations) * 100).toFixed(1);
-            const catClass = cat.replace(/\s/g, '');
-            consList.innerHTML += `<div class="cons-bar-wrapper"><div class="cons-bar-text text-light">${cat}: ${p}%</div><div class="cons-bar-fill fill-${catClass}" style="width:${p}%"></div></div>`;
+            const p = ((successCount[cat]/iterations)*100).toFixed(1);
+            consList.innerHTML += `<div class="cons-bar-wrapper"><div class="cons-bar-text text-light">${cat}: ${p}%</div><div class="cons-bar-fill fill-${cat.replace(/\s/g, '')}" style="width:${p}%"></div></div>`;
         });
         return modaResult;
     }
@@ -619,76 +513,63 @@
     async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = 210;
-        const pageHeight = 297;
-        const deckName = document.getElementById('deck-name').value || "Mazo sin nombre";
-        const deckFormat = document.getElementById('deck-format').value || "N/A";
-        const tier = document.getElementById('tier-text').innerText;
-        const deckTotalCount = document.getElementById('deck-total').innerText;
-
-        const rawData = JSON.parse(localStorage.getItem('ygo_deck_save'));
-        const blob = new Blob([JSON.stringify(rawData)], {type: "application/json"});
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${deckName.replace(/\s+/g, '_')}_backup.json`;
-        link.click();
-
-        doc.setFont(undefined, 'bold'); doc.setFontSize(10); doc.setTextColor(0, 122, 255);
-        doc.text(deckName.toUpperCase(), 20, 20);
+        const deckName = (document.getElementById('deck-name').value || "DECK").toUpperCase();
+        const tierText = document.getElementById('tier-text').innerText;
         
-        doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(28, 28, 30);
-        doc.text(`Formato: ${deckFormat}`, 20, 30);
-        doc.text(`Clasificación: ${tier}`, 20, 40);
-        doc.setDrawColor(209, 209, 214); doc.line(20, 45, 190, 45);
-
-        let y = 55;
+        doc.setFontSize(16); doc.setTextColor(0, 122, 255);
+        doc.text(deckName, 20, 20);
+        
+        doc.setFontSize(10); doc.setTextColor(28, 28, 30);
+        doc.text(`Formato: ${document.getElementById('deck-format').value}`, 20, 28);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Clasificación: ${tierText}`, 20, 34);
+        doc.setFont(undefined, 'normal');
+        
+        doc.line(20, 38, 190, 38);
+        
+        let y = 48;
+        let grandTotal = 0;
         const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-        const lineSpacing = 4.5; 
         
         categories.forEach(cat => {
             const cards = savedData[cat] || [];
             if (cards.length > 0) {
-                let catTotal = 0;
-                doc.setFont(undefined, 'bold'); doc.setFontSize(10); doc.setTextColor(0, 122, 255);
-                doc.text(cat.toUpperCase(), 20, y); y += lineSpacing;
+                doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
+                doc.text(cat.toUpperCase(), 20, y); y += 6;
+                doc.setFont(undefined, 'normal'); doc.setTextColor(28, 28, 30);
                 
-                doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(28, 28, 30);
+                let catCount = 0;
                 cards.forEach(card => {
-                    if(card.name && card.qty > 0) {
-                        const q = parseInt(card.qty);
-                        doc.text(`- ${card.name} x${q} ${card.hopt ? '[HOPT]' : ''}`, 25, y);
-                        catTotal += q;
-                        y += lineSpacing;
-                    }
+                    doc.text(`- ${card.name} x${card.qty} ${card.hopt ? '[HOPT]' : ''}`, 25, y);
+                    catCount += card.qty;
+                    y += 5; if(y > 275) { doc.addPage(); y = 20; }
                 });
-                doc.setFont(undefined, 'italic'); doc.setFontSize(9); doc.setTextColor(142, 142, 147);
-                doc.text(`Subtotal ${cat}: ${catTotal} cartas`, 25, y);
-                y += lineSpacing + 2;
-                if(y > 250) { doc.addPage(); y = 20; }
+                
+                doc.setFont(undefined, 'italic');
+                doc.setTextColor(142, 142, 147); 
+                doc.text(`Total ${cat}: ${catCount}`, 25, y);
+                grandTotal += catCount;
+                y += 10; if(y > 275) { doc.addPage(); y = 20; }
             }
         });
 
-        y += 5;
-        if(y > 270) { doc.addPage(); y = 20; }
-        doc.setDrawColor(0, 122, 255); doc.setLineWidth(0.8);
-        doc.line(20, y, 190, y); y += 10;
-        doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
-        doc.text(`TAMAÑO TOTAL DEL DECK: ${deckTotalCount} CARTAS`, 20, y);
+        doc.setFontSize(12); doc.setFont(undefined, 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`TOTAL DECK: ${grandTotal} CARTAS`, 20, y);
 
         doc.addPage();
-        const canvas = await html2canvas(document.getElementById('capture-container'), {
-            scale: 3, useCORS: true, logging: false, backgroundColor: '#F2F2F7'
+        const captureEl = document.getElementById('capture-container');
+        const canvas = await html2canvas(captureEl, { 
+            scale: 2, useCORS: true, width: 480, windowWidth: 480 
         });
-        const imgData = canvas.toDataURL('image/png', 1.0);
-        const imgWidthPdf = 160; 
-        const imgHeightPdf = (canvas.height * imgWidthPdf) / canvas.width;
-        let finalW = imgWidthPdf; let finalH = imgHeightPdf;
-        if (finalH > 240) { finalH = 240; finalW = (canvas.width * finalH) / canvas.height; }
-        const posX = (pageWidth - finalW) / 2; const posY = (pageHeight - finalH) / 2;
-        doc.setFontSize(18); doc.setTextColor(0, 122, 255);
-        doc.text("ANÁLISIS DE RESULTADOS", 20, 20);
-        doc.addImage(imgData, 'PNG', posX, posY, finalW, finalH, undefined, 'FAST');
-        doc.save(`${deckName.replace(/\s+/g, '_')}_Reporte.pdf`);
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = doc.internal.pageSize.getHeight();
+        const imgWidth = 160; 
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        doc.addImage(imgData, 'PNG', (pdfWidth - imgWidth) / 2, (pdfHeight - imgHeight) / 2, imgWidth, imgHeight);
+        
+        doc.save(`${deckName}_Reporte.pdf`);
     }
 </script>
 </body>
