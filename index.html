@@ -116,7 +116,25 @@
         .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
         .btn-pdf.confirm-pdf { background: var(--ios-green); transform: scale(1.02); }
 
-        /* Tabletas resultados responsivas */
+        .total-section { 
+            text-align: center; 
+            margin: 20px 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100%;
+        }
+
+        .total-badge { 
+            display: block; 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin-bottom: 30px; /* Más espacio sobre los botones */
+            color: var(--ios-secondary);
+            text-align: center;
+            width: 100%;
+        }
+
         .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
         #capture-container { 
             background-color: #F2F2F7; 
@@ -551,7 +569,6 @@
         doc.addPage();
         const captureEl = document.getElementById('capture-container');
         
-        // --- CORRECCIÓN PARA EVITAR CONTENIDO RECORTADO ---
         const originalStyleWidth = captureEl.style.width;
         captureEl.style.width = '480px'; 
         
@@ -564,7 +581,6 @@
         });
         
         captureEl.style.width = originalStyleWidth; 
-        // -------------------------------------------------
 
         const imgData = canvas.toDataURL('image/png');
         const pdfWidth = doc.internal.pageSize.getWidth();
