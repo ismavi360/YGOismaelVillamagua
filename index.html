@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YGO DECK BUILDER</title>
+    <title>YGO DECK BUILDER V1.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -119,17 +119,20 @@
         .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
 
+        /* AJUSTE DE TABLETAS DE RESULTADOS AL ANCHO DE PANTALLA */
         .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
+        
         #capture-container { 
             background-color: #F2F2F7; 
-            padding: 20px; 
-            width: 480px; 
+            padding: 15px; 
+            width: 100%; /* Ahora ocupa el mismo ancho que los botones */
+            max-width: 480px; 
             border-radius: 20px; 
             box-sizing: border-box;
             margin: 0 auto;
         }
 
-        .result-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .result-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 15px; box-shadow: var(--shadow); }
 
         .tier-card {
             background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
@@ -183,7 +186,6 @@
         }
         .cloud-item:last-child { border-bottom: none; }
         
-        /* BOTÓN BORRAR NUBE ACTUALIZADO */
         .btn-delete-cloud {
             background: var(--ios-blue); color: white; border: none; border-radius: 8px;
             padding: 8px 12px; font-size: 11px; font-weight: bold; cursor: pointer;
@@ -196,8 +198,8 @@
 
 <div class="container">
     <header>
-        <h1>YGO DECK BUILDER</h1>
-        <p>Designed by Ismael Villamagua Version 1.0</p>
+        <h1>YGO DECK BUILDER V1.0</h1>
+        <p>Designed by Ismael Villamagua</p>
     </header>
 
     <div class="deck-header-info">
@@ -213,7 +215,7 @@
         <button id="viewCloudBtn" class="btn-ios btn-purple" onclick="toggleCloudList()">ABRIR DECK</button>
         
         <div id="cloud-explorer" class="cloud-list">
-            <div style="font-weight: bold; margin-bottom: 10px; color: var(--ios-secondary); text-align: left; padding-left: 10px;">TUS DECKBOX:</div>
+            <div style="font-weight: bold; margin-bottom: 10px; color: var(--ios-secondary); text-align: left; padding-left: 10px;">BIBLIOTECA EN LA NUBE:</div>
             <div id="cloud-items-container"></div>
         </div>
 
@@ -321,7 +323,6 @@
         if (delCloudConfirm.id !== name) {
             delCloudConfirm.id = name;
             btn.innerText = "CONFIRMAR"; btn.classList.add('confirm-del');
-            // Timeout reducido a 2 segundos
             delCloudConfirm.timeout = setTimeout(() => { delCloudConfirm.id = null; btn.innerText = "BORRAR"; btn.classList.remove('confirm-del'); }, 2000);
         } else {
             clearTimeout(delCloudConfirm.timeout);
@@ -518,13 +519,11 @@
         
         doc.setFontSize(16); doc.setTextColor(0, 122, 255);
         doc.text(deckName, 20, 20);
-        
         doc.setFontSize(10); doc.setTextColor(28, 28, 30);
         doc.text(`Formato: ${document.getElementById('deck-format').value}`, 20, 28);
         doc.setFont(undefined, 'bold');
         doc.text(`Clasificación: ${tierText}`, 20, 34);
         doc.setFont(undefined, 'normal');
-        
         doc.line(20, 38, 190, 38);
         
         let y = 48;
@@ -537,14 +536,12 @@
                 doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
                 doc.text(cat.toUpperCase(), 20, y); y += 6;
                 doc.setFont(undefined, 'normal'); doc.setTextColor(28, 28, 30);
-                
                 let catCount = 0;
                 cards.forEach(card => {
                     doc.text(`- ${card.name} x${card.qty} ${card.hopt ? '[HOPT]' : ''}`, 25, y);
                     catCount += card.qty;
                     y += 5; if(y > 275) { doc.addPage(); y = 20; }
                 });
-                
                 doc.setFont(undefined, 'italic');
                 doc.setTextColor(142, 142, 147); 
                 doc.text(`Total ${cat}: ${catCount}`, 25, y);
@@ -559,9 +556,15 @@
 
         doc.addPage();
         const captureEl = document.getElementById('capture-container');
+        
+        // Ajuste para capturar correctamente sin importar el ancho de pantalla del móvil
         const canvas = await html2canvas(captureEl, { 
-            scale: 2, useCORS: true, width: 480, windowWidth: 480 
+            scale: 2, 
+            useCORS: true, 
+            width: captureEl.scrollWidth,
+            windowWidth: 480 // Fuerza el renderizado interno a 480px para consistencia en PDF
         });
+        
         const imgData = canvas.toDataURL('image/png');
         const pdfWidth = doc.internal.pageSize.getWidth();
         const pdfHeight = doc.internal.pageSize.getHeight();
