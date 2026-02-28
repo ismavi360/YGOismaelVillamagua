@@ -108,7 +108,7 @@
         }
 
         .btn-blue { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
-        .btn-blue.confirm-analyze, .btn-blue.confirm-import { background: var(--ios-green); transform: scale(1.02); }
+        .btn-blue.confirm-analyze, .btn-blue.confirm-import, .btn-blue.confirm-sync { background: var(--ios-green); transform: scale(1.02); }
         .btn-blue.confirm-clear { background: var(--ios-red); transform: scale(1.02); }
         
         .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
@@ -191,6 +191,7 @@
     
     <div class="total-section">
         <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
+        <button id="syncBtn" class="btn-ios btn-blue" onclick="handleSyncClick()">SINCRONIZAR NUBE</button>
         <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
         <button id="importBtn" class="btn-ios btn-blue" onclick="handleImportClick()">IMPORTAR DECK</button>
         <input type="file" id="fileInput" style="display:none" accept=".json" onchange="processFile(event)">
@@ -220,6 +221,90 @@
         <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
     </div>
 </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
+        authDomain: "ygoismaelvillamagua.firebaseapp.com",
+        projectId: "ygoismaelvillamagua",
+        storageBucket: "ygoismaelvillamagua.firebasestorage.app",
+        messagingSenderId: "624990862859",
+        appId: "1:624990862859:web:170630e1e94d29fb3d910e",
+        measurementId: "G-TXKEZS7MRT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let syncConfirm = { active: false, timeout: null };
+
+    window.handleSyncClick = async () => {
+        const btn = document.getElementById('syncBtn');
+        const deckName = document.getElementById('deck-name').value.trim().toUpperCase();
+
+        if (!deckName) {
+            alert("Por favor, ingresa un NOMBRE DEL DECK para sincronizar.");
+            return;
+        }
+
+        if (!syncConfirm.active) {
+            syncConfirm.active = true;
+            btn.innerText = "CONFIRMAR SINCRONIZACIÓN";
+            btn.classList.add('confirm-sync');
+            syncConfirm.timeout = setTimeout(() => {
+                syncConfirm.active = false;
+                btn.innerText = "SINCRONIZAR NUBE";
+                btn.classList.remove('confirm-sync');
+            }, 2500);
+        } else {
+            clearTimeout(syncConfirm.timeout);
+            btn.innerText = "BUSCANDO...";
+            
+            try {
+                const docRef = doc(db, "decks", deckName);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const cloudData = docSnap.data();
+                    localStorage.setItem('ygo_deck_save', JSON.stringify(cloudData));
+                    alert("¡Deck sincronizado desde la nube!");
+                    location.reload();
+                } else {
+                    // Si no existe, lo subimos por primera vez
+                    const currentData = JSON.parse(localStorage.getItem('ygo_deck_save'));
+                    if (currentData) {
+                        await setDoc(docRef, currentData);
+                        alert("Nuevo deck guardado en la nube.");
+                    }
+                }
+            } catch (error) {
+                alert("Error de conexión con Firebase.");
+                console.error(error);
+            }
+
+            syncConfirm.active = false;
+            btn.innerText = "SINCRONIZAR NUBE";
+            btn.classList.remove('confirm-sync');
+        }
+    };
+
+    // Sobrescribir saveAll para que actualice la nube automáticamente si hay nombre
+    const originalSaveAll = window.saveAll;
+    window.saveAll = async () => {
+        if (typeof originalSaveAll === 'function') originalSaveAll();
+        
+        const deckName = document.getElementById('deck-name').value.trim().toUpperCase();
+        if (deckName) {
+            const data = JSON.parse(localStorage.getItem('ygo_deck_save'));
+            try {
+                await setDoc(doc(db, "decks", deckName), data);
+            } catch (e) { /* Silencioso en auto-save */ }
+        }
+    };
+</script>
 
 <script>
     const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
@@ -448,7 +533,6 @@
         tierDiv.className = 'tier-value';
         let tier = "ERROR";
 
-        // Lógica de Clasificación actualizada
         if (s === 0) {
             tier = "ERROR";
         } else if (motorTotal >= 2 && interaccion >= 2 && bk === 0) {
