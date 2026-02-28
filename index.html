@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YGO DECK BUILDER V1.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         :root {
             --ios-bg: #F2F2F7;
@@ -39,6 +42,17 @@
         header { text-align: center; margin: 20px 0 25px; }
         header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
         header p { font-size: 13px; color: var(--ios-secondary); margin-top: 5px; }
+
+        .deck-header-info {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
         .card {
             background: var(--ios-card);
@@ -81,8 +95,11 @@
         }
 
         .btn-blue { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
-        .btn-blue.confirm-analyze { background: var(--ios-green); transform: scale(1.02); }
-        .btn-blue.confirm-clear { background: var(--ios-red); transform: scale(1.02); box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3); }
+        .btn-blue.confirm-analyze, .btn-blue.confirm-import { background: var(--ios-green); transform: scale(1.02); }
+        .btn-blue.confirm-clear { background: var(--ios-red); transform: scale(1.02); }
+        
+        .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
+        .btn-pdf.confirm-pdf { background: var(--ios-green); transform: scale(1.02); }
 
         .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
@@ -114,7 +131,7 @@
 
         .cons-bar-wrapper {
             height: 32px; width: 100%; background: #E5E5EA; border-radius: 8px;
-            margin-bottom: 10px; overflow: hidden; position: relative; border: 0.5px solid #D1D1D6;
+            margin-bottom: 10px; overflow: hidden; position: relative;
             display: flex; align-items: center;
         }
         .cons-bar-fill { height: 100%; transition: width 0.6s ease-out; }
@@ -125,9 +142,9 @@
         }
 
         .segment-Starters, .fill-Starters { background-color: var(--ios-green); }
-        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); } 
+        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); color: white; } 
         .segment-HandTraps, .fill-HandTraps { background-color: var(--ios-blue); }
-        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); } 
+        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); color: white; } 
         .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
         .segment-Random, .fill-Random { background-color: #8E8E93; }
 
@@ -142,33 +159,42 @@
         <p>Designed by Ismael Villamagua</p>
     </header>
 
+    <div class="deck-header-info">
+        <input type="text" id="deck-name" placeholder="Nombre del Deck" oninput="saveAll()">
+        <input type="text" id="deck-format" placeholder="Formato" oninput="saveAll()">
+    </div>
+
     <div id="categories-main"></div>
     
     <div class="total-section">
         <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
         <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
+        <button id="importBtn" class="btn-ios btn-blue" onclick="handleImportClick()">IMPORTAR DECK</button>
+        <input type="file" id="fileInput" style="display:none" accept=".json" onchange="processFile(event)">
         <button id="deleteBtn" class="btn-ios btn-blue" onclick="handleDeleteClick()">CLEAR DECK</button>
     </div>
 
     <div id="results" class="results-area">
-        <div id="tier-result" class="tier-card">
-            <div class="tier-label">CLASIFICACIÓN</div>
-            <div id="tier-text" class="tier-value">DECK TIER ERROR</div>
+        <div id="capture-container" style="background-color: #F2F2F7; padding: 15px; width: 450px; border-radius: 20px;">
+            <div id="tier-result" class="tier-card">
+                <div class="tier-label">CLASIFICACIÓN</div>
+                <div id="tier-text" class="tier-value">DECK TIER ERROR</div>
+            </div>
+
+            <div class="result-card">
+                <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5 Draws)</div>
+                <div id="bar-t1" class="hand-bar-container"></div>
+                <div id="cons-t1" class="consistency-list"></div>
+            </div>
+
+            <div class="result-card">
+                <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6 Draws)</div>
+                <div id="bar-t2" class="hand-bar-container"></div>
+                <div id="cons-t2" class="consistency-list"></div>
+            </div>
         </div>
 
-        <div class="result-card">
-            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5 Draws)</div>
-            <div id="bar-t1" class="hand-bar-container"></div>
-            <div class="category-title" style="font-size: 14px; margin-top: 20px;">Consistencia Turno 1</div>
-            <div id="cons-t1" class="consistency-list"></div>
-        </div>
-
-        <div class="result-card">
-            <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6 Draws)</div>
-            <div id="bar-t2" class="hand-bar-container"></div>
-            <div class="category-title" style="font-size: 14px; margin-top: 20px;">Consistencia Turno 2</div>
-            <div id="cons-t2" class="consistency-list"></div>
-        </div>
+        <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
     </div>
 </div>
 
@@ -176,10 +202,16 @@
     const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
     let analyzeConfirm = { active: false, timeout: null };
     let deleteConfirm = { active: false, timeout: null };
+    let pdfConfirm = { active: false, timeout: null };
+    let importConfirm = { active: false, timeout: null };
 
     window.onload = () => {
         const mainContainer = document.getElementById('categories-main');
         const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
+        
+        document.getElementById('deck-name').value = savedData.deckName || "";
+        document.getElementById('deck-format').value = savedData.deckFormat || "";
+
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
             const cardDiv = document.createElement('div');
@@ -207,7 +239,10 @@
     }
 
     function saveAll() {
-        const dataToSave = {};
+        const dataToSave = {
+            deckName: document.getElementById('deck-name').value,
+            deckFormat: document.getElementById('deck-format').value
+        };
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
             dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
@@ -251,6 +286,61 @@
             analyzeConfirm.active = false;
             btn.innerText = "ANALIZAR DECK";
             btn.classList.remove('confirm-analyze');
+            document.getElementById('pdfBtn').style.display = 'block';
+        }
+    }
+
+    function handleImportClick() {
+        const btn = document.getElementById('importBtn');
+        if (!importConfirm.active) {
+            importConfirm.active = true;
+            btn.innerText = "¿SELECCIONAR .JSON?";
+            btn.classList.add('confirm-import');
+            importConfirm.timeout = setTimeout(() => {
+                importConfirm.active = false;
+                btn.innerText = "IMPORTAR DECK";
+                btn.classList.remove('confirm-import');
+            }, 2000);
+        } else {
+            clearTimeout(importConfirm.timeout);
+            document.getElementById('fileInput').click();
+            importConfirm.active = false;
+            btn.innerText = "IMPORTAR DECK";
+            btn.classList.remove('confirm-import');
+        }
+    }
+
+    function processFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                localStorage.setItem('ygo_deck_save', JSON.stringify(data));
+                location.reload();
+            } catch (err) { alert("Archivo inválido."); }
+        };
+        reader.readAsText(file);
+    }
+
+    function handleDownloadClick() {
+        const btn = document.getElementById('pdfBtn');
+        if (!pdfConfirm.active) {
+            pdfConfirm.active = true;
+            btn.innerText = "CONFIRMAR DESCARGA";
+            btn.classList.add('confirm-pdf');
+            pdfConfirm.timeout = setTimeout(() => {
+                pdfConfirm.active = false;
+                btn.innerText = "DESCARGAR RESULTADOS";
+                btn.classList.remove('confirm-pdf');
+            }, 2000);
+        } else {
+            clearTimeout(pdfConfirm.timeout);
+            generatePDF();
+            pdfConfirm.active = false;
+            btn.innerText = "DESCARGAR RESULTADOS";
+            btn.classList.remove('confirm-pdf');
         }
     }
 
@@ -307,28 +397,16 @@
         const h = moda["Hand Traps"] || 0;
         const b = moda["Board Breakers"] || 0;
         const bk = moda["Bricks"] || 0;
-        
         const tienePlay = (s >= 1);
         const motorTotal = s + e;
         const interaccion = h + b;
-        
         const tierDiv = document.getElementById('tier-text');
         tierDiv.className = 'tier-value';
         let tier = "ERROR";
-
-        if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 0) {
-            tier = "S";
-        } 
-        else if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 1) {
-            tier = "A";
-        } 
-        else if (tienePlay && motorTotal >= 2 && interaccion < 2) {
-            tier = "B";
-        } 
-        else if (s === 1 && interaccion >= 1) {
-            tier = "C";
-        }
-
+        if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 0) { tier = "S"; } 
+        else if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 1) { tier = "A"; } 
+        else if (tienePlay && motorTotal >= 2 && interaccion < 2) { tier = "B"; } 
+        else if (s === 1 && interaccion >= 1) { tier = "C"; }
         tierDiv.innerText = (tier === "ERROR") ? "DECK TIER ERROR" : `DECK TIER ${tier}`;
         tierDiv.classList.add(`tier-${tier}`);
     }
@@ -337,69 +415,39 @@
         const iterations = 10000;
         const stats = { Starters: [], Extenders: [], "Hand Traps": [], "Board Breakers": [], Bricks: [] };
         const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-
         for(let i=0; i<iterations; i++) {
-            // SHUFFLE FISHER-YATES: Aleatoriedad real sin sesgo posicional
             const shuffled = fisherYates([...deck]);
             const hand = shuffled.slice(0, handSize);
-            
             const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
             const seenInHand = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
-
             hand.forEach(card => {
-                if (card.cat === "Bricks") {
-                    handCount[card.cat]++;
-                } else if (card.h) { 
+                if (card.cat === "Bricks") { handCount[card.cat]++; } 
+                else if (card.h) { 
                     if (!seenInHand[card.cat].has(card.name)) {
                         handCount[card.cat]++;
                         seenInHand[card.cat].add(card.name);
                     }
-                } else { 
-                    handCount[card.cat]++;
-                }
+                } else { handCount[card.cat]++; }
             });
-
-            for(const cat in handCount) {
-                stats[cat].push(handCount[cat]);
-                if(handCount[cat] >= 1) successCount[cat]++;
-            }
+            for(const cat in handCount) { stats[cat].push(handCount[cat]); if(handCount[cat] >= 1) successCount[cat]++; }
         }
-
         const modaResult = {};
         categories.forEach(cat => {
             const counts = {};
             stats[cat].forEach(val => counts[val] = (counts[val] || 0) + 1);
-            
-            let maxFreq = 0;
-            let modaVal = 0;
-            for(const val in counts) {
-                if(counts[val] > maxFreq) {
-                    maxFreq = counts[val];
-                    modaVal = parseInt(val);
-                }
-            }
-
-            // MODA SEGÚN PROBABILIDAD (Solo para visualización de barra)
+            let maxFreq = 0, modaVal = 0;
+            for(const val in counts) { if(counts[val] > maxFreq) { maxFreq = counts[val]; modaVal = parseInt(val); } }
             const probSuccess = successCount[cat] / iterations;
-            if (modaVal === 0 && probSuccess >= 0.45) {
-                modaVal = 1;
-            }
+            if (modaVal === 0 && probSuccess >= 0.45) { modaVal = 1; }
             modaResult[cat] = modaVal;
         });
-
         const bar = document.getElementById(barId);
         bar.innerHTML = '';
         let totalModaCards = 0;
-        
         categories.forEach(cat => {
             const val = modaResult[cat];
             if(val > 0) {
-                // Lógica de llenado de la barra "Mano Probable"
-                let currentVal = val;
-                if (totalModaCards + currentVal > handSize) {
-                    currentVal = handSize - totalModaCards;
-                }
-                
+                let currentVal = Math.min(val, handSize - totalModaCards);
                 if (currentVal > 0) {
                     const segment = document.createElement('div');
                     segment.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
@@ -410,7 +458,6 @@
                 }
             }
         });
-        
         if(totalModaCards < handSize) {
             const rest = handSize - totalModaCards;
             const segment = document.createElement('div');
@@ -419,20 +466,95 @@
             segment.innerHTML = `<span>RANDOM ${rest}</span>`;
             bar.appendChild(segment);
         }
-
         const consList = document.getElementById(consId);
         consList.innerHTML = '';
         categories.forEach(cat => {
             const p = ((successCount[cat] / iterations) * 100).toFixed(1);
             const catClass = cat.replace(/\s/g, '');
-            consList.innerHTML += `
-                <div class="cons-bar-wrapper">
-                    <div class="cons-bar-text text-light">${cat} ≥ 1: ${p}%</div>
-                    <div class="cons-bar-fill fill-${catClass}" style="width:${p}%"></div>
-                </div>`;
+            consList.innerHTML += `<div class="cons-bar-wrapper"><div class="cons-bar-text text-light">${cat}: ${p}%</div><div class="cons-bar-fill fill-${catClass}" style="width:${p}%"></div></div>`;
+        });
+        return modaResult;
+    }
+
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const deckName = document.getElementById('deck-name').value || "Mazo sin nombre";
+        const deckFormat = document.getElementById('deck-format').value || "N/A";
+        const tier = document.getElementById('tier-text').innerText;
+        const deckTotalCount = document.getElementById('deck-total').innerText;
+
+        // --- BACKUP JSON ---
+        const rawData = JSON.parse(localStorage.getItem('ygo_deck_save'));
+        const blob = new Blob([JSON.stringify(rawData)], {type: "application/json"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${deckName.replace(/\s+/g, '_')}_backup.json`;
+        link.click();
+
+        // --- HOJA 1: LISTADO DEL DECK ---
+        // Se unifica el tamaño a 10 para Título, Formato y Clasificación
+        doc.setFont(undefined, 'bold'); doc.setFontSize(10); doc.setTextColor(0, 122, 255);
+        doc.text(deckName.toUpperCase(), 20, 20);
+        
+        doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(28, 28, 30);
+        doc.text(`Formato: ${deckFormat}`, 20, 30);
+        doc.text(`Clasificación: ${tier}`, 20, 40);
+        doc.setDrawColor(209, 209, 214); doc.line(20, 45, 190, 45);
+
+        let y = 55;
+        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
+        const lineSpacing = 4.5; 
+        
+        categories.forEach(cat => {
+            const cards = savedData[cat] || [];
+            if (cards.length > 0) {
+                let catTotal = 0;
+                doc.setFont(undefined, 'bold'); doc.setFontSize(10); doc.setTextColor(0, 122, 255);
+                doc.text(cat.toUpperCase(), 20, y); y += lineSpacing;
+                
+                doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(28, 28, 30);
+                cards.forEach(card => {
+                    if(card.name && card.qty > 0) {
+                        const q = parseInt(card.qty);
+                        doc.text(`- ${card.name} x${q} ${card.hopt ? '[HOPT]' : ''}`, 25, y);
+                        catTotal += q;
+                        y += lineSpacing;
+                    }
+                });
+                doc.setFont(undefined, 'italic'); doc.setFontSize(9); doc.setTextColor(142, 142, 147);
+                doc.text(`Subtotal ${cat}: ${catTotal} cartas`, 25, y);
+                y += lineSpacing + 2;
+                if(y > 250) { doc.addPage(); y = 20; }
+            }
         });
 
-        return modaResult;
+        // --- SECCIÓN FINAL DE LA HOJA 1: DECK TOTAL ---
+        y += 5;
+        if(y > 270) { doc.addPage(); y = 20; }
+        doc.setDrawColor(0, 122, 255); doc.setLineWidth(0.8);
+        doc.line(20, y, 190, y); y += 10;
+        // Se unifica el tamaño a 10 para el Tamaño Total del Deck
+        doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
+        doc.text(`TAMAÑO TOTAL DEL DECK: ${deckTotalCount} CARTAS`, 20, y);
+
+        // --- HOJA 2: GRÁFICAS ---
+        doc.addPage();
+        const canvas = await html2canvas(document.getElementById('capture-container'), {
+            scale: 3, useCORS: true, logging: false, backgroundColor: '#F2F2F7'
+        });
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const imgWidthPdf = 160; 
+        const imgHeightPdf = (canvas.height * imgWidthPdf) / canvas.width;
+        let finalW = imgWidthPdf; let finalH = imgHeightPdf;
+        if (finalH > 240) { finalH = 240; finalW = (canvas.width * finalH) / canvas.height; }
+        const posX = (pageWidth - finalW) / 2; const posY = (pageHeight - finalH) / 2;
+        doc.setFontSize(18); doc.setTextColor(0, 122, 255);
+        doc.text("ANÁLISIS DE RESULTADOS", 20, 20);
+        doc.addImage(imgData, 'PNG', posX, posY, finalW, finalH, undefined, 'FAST');
+        doc.save(`${deckName.replace(/\s+/g, '_')}_Reporte.pdf`);
     }
 </script>
 </body>
