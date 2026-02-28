@@ -119,13 +119,11 @@
         .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
 
-        /* AJUSTE DE TABLETAS DE RESULTADOS AL ANCHO DE PANTALLA */
         .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
-        
         #capture-container { 
             background-color: #F2F2F7; 
             padding: 15px; 
-            width: 100%; /* Ahora ocupa el mismo ancho que los botones */
+            width: 100%; 
             max-width: 480px; 
             border-radius: 20px; 
             box-sizing: border-box;
@@ -311,10 +309,7 @@
         try {
             const docRef = doc(db, "decks", name);
             const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) { 
-                localStorage.setItem('ygo_deck_save', JSON.stringify(docSnap.data())); 
-                location.reload(); 
-            }
+            if (docSnap.exists()) { localStorage.setItem('ygo_deck_save', JSON.stringify(docSnap.data())); location.reload(); }
         } catch (e) { alert("Error al cargar."); }
     };
 
@@ -519,6 +514,7 @@
         
         doc.setFontSize(16); doc.setTextColor(0, 122, 255);
         doc.text(deckName, 20, 20);
+        
         doc.setFontSize(10); doc.setTextColor(28, 28, 30);
         doc.text(`Formato: ${document.getElementById('deck-format').value}`, 20, 28);
         doc.setFont(undefined, 'bold');
@@ -557,20 +553,37 @@
         doc.addPage();
         const captureEl = document.getElementById('capture-container');
         
-        // Ajuste para capturar correctamente sin importar el ancho de pantalla del móvil
         const canvas = await html2canvas(captureEl, { 
-            scale: 2, 
+            scale: 3, // ALTA CALIDAD MANTENIDA
             useCORS: true, 
             width: captureEl.scrollWidth,
-            windowWidth: 480 // Fuerza el renderizado interno a 480px para consistencia en PDF
+            windowWidth: 480 
         });
         
         const imgData = canvas.toDataURL('image/png');
         const pdfWidth = doc.internal.pageSize.getWidth();
         const pdfHeight = doc.internal.pageSize.getHeight();
-        const imgWidth = 160; 
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        doc.addImage(imgData, 'PNG', (pdfWidth - imgWidth) / 2, (pdfHeight - imgHeight) / 2, imgWidth, imgHeight);
+        
+        // CORRECCIÓN DE TAMAÑO Y CENTRADO
+        // Definimos márgenes mínimos (en mm)
+        const margin = 20;
+        const maxW = pdfWidth - (margin * 2);
+        const maxH = pdfHeight - (margin * 2);
+        
+        let finalW = maxW;
+        let finalH = (canvas.height * finalW) / canvas.width;
+        
+        // Si el alto calculado supera el máximo, ajustamos basándonos en el alto
+        if (finalH > maxH) {
+            finalH = maxH;
+            finalW = (canvas.width * finalH) / canvas.height;
+        }
+        
+        // Calculamos posiciones para centrado perfecto
+        const x = (pdfWidth - finalW) / 2;
+        const yCenter = (pdfHeight - finalH) / 2;
+
+        doc.addImage(imgData, 'PNG', x, yCenter, finalW, finalH);
         
         doc.save(`${deckName}_Reporte.pdf`);
     }
