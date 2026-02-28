@@ -52,7 +52,10 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+            box-sizing: border-box;
         }
+
+        .deck-header-info input { width: 100%; box-sizing: border-box; }
 
         .card {
             background: var(--ios-card);
@@ -73,6 +76,16 @@
 
         .category-title { font-weight: 700; font-size: 17px; color: var(--ios-blue); }
         
+        .category-footer {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 0.5px dashed #E5E5EA;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ios-secondary);
+            text-align: right;
+        }
+
         .add-btn {
             background: #F2F2F7; border: none; border-radius: 50%; width: 28px; height: 28px;
             font-size: 18px; color: var(--ios-blue); cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -104,7 +117,6 @@
         .total-section { text-align: center; margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
         .total-badge { display: block; font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--ios-secondary); }
 
-        /* AJUSTE PARA MÓVILES: Se elimina el ancho fijo de 450px */
         .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
         #capture-container { 
             background-color: #F2F2F7; 
@@ -229,7 +241,14 @@
             cardDiv.className = 'card';
             cardDiv.id = catId;
             const singleCat = cat.endsWith('s') ? cat.slice(0, -1) : cat;
-            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div>`;
+            cardDiv.innerHTML = `
+                <div class="category-header">
+                    <span class="category-title">${cat}</span>
+                    <button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button>
+                </div>
+                <div class="rows-container"></div>
+                <div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>
+            `;
             mainContainer.appendChild(cardDiv);
             if (savedData[cat] && savedData[cat].length > 0) {
                 savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`));
@@ -256,14 +275,20 @@
         };
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
+            let catSum = 0;
             dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
                 const hCheck = row.querySelector('.hopt-checkbox');
+                const qtyVal = parseInt(row.querySelector('.i-qty').value || 0);
+                catSum += qtyVal;
                 return {
                     name: row.querySelector('.i-name').value,
-                    qty: row.querySelector('.i-qty').value,
+                    qty: qtyVal,
                     hopt: hCheck ? hCheck.checked : false
                 };
-            }).filter(card => card.name !== '' || card.qty !== '');
+            }).filter(card => card.name !== '' || card.qty !== 0);
+            
+            const footerVal = document.getElementById(`total-val-${catId}`);
+            if(footerVal) footerVal.innerText = catSum;
         });
         localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
         updateTotal();
@@ -271,7 +296,14 @@
 
     function updateTotal() {
         let t = 0;
-        document.querySelectorAll('.i-qty').forEach(i => t += parseInt(i.value || 0));
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            let catSum = 0;
+            document.querySelectorAll(`#${catId} .i-qty`).forEach(i => catSum += parseInt(i.value || 0));
+            t += catSum;
+            const footerVal = document.getElementById(`total-val-${catId}`);
+            if(footerVal) footerVal.innerText = catSum;
+        });
         const badge = document.getElementById('deck-total');
         badge.innerText = t;
         badge.style.color = (t < 40 || t > 60) ? 'var(--ios-red)' : 'var(--ios-green)';
@@ -408,16 +440,29 @@
         const h = moda["Hand Traps"] || 0;
         const b = moda["Board Breakers"] || 0;
         const bk = moda["Bricks"] || 0;
-        const tienePlay = (s >= 1);
+
         const motorTotal = s + e;
         const interaccion = h + b;
+        
         const tierDiv = document.getElementById('tier-text');
         tierDiv.className = 'tier-value';
         let tier = "ERROR";
-        if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 0) { tier = "S"; } 
-        else if (tienePlay && motorTotal >= 2 && interaccion >= 2 && bk === 1) { tier = "A"; } 
-        else if (tienePlay && motorTotal >= 2 && interaccion < 2) { tier = "B"; } 
-        else if (s === 1 && interaccion >= 1) { tier = "C"; }
+
+        // Lógica de Clasificación de Tiers
+        if (s === 0) {
+            tier = "ERROR";
+        } else if (s >= 1 && motorTotal >= 2 && interaccion >= 2 && bk === 0) {
+            tier = "S";
+        } else if (s >= 1 && motorTotal >= 2 && interaccion >= 2 && bk >= 1) {
+            tier = "A";
+        } else if (s >= 1 && motorTotal >= 2 && interaccion > 0 && interaccion < 2) {
+            tier = "B";
+        } else if (s <= 1 && e === 1) {
+            tier = "C";
+        } else {
+            tier = "ERROR";
+        }
+
         tierDiv.innerText = (tier === "ERROR") ? "DECK TIER ERROR" : `DECK TIER ${tier}`;
         tierDiv.classList.add(`tier-${tier}`);
     }
