@@ -648,7 +648,7 @@
             const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
             let maxF = 0, mV = 0;
             for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
-            if (mV === 0 && (successCount[cat]/iterations) >= 0.45) mV = 1;
+            if (mV === 0 && (successCount[cat]/iterations) >= 0.48) mV = 1;
             modaResult[cat] = mV;
         });
         
@@ -772,3 +772,4 @@
 </script>
 </body>
 </html>
+
