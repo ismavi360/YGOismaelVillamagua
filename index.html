@@ -13,7 +13,6 @@
         
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
-        /* Ajuste de alineación central para la barra de estadísticas */
         .stats-bar { 
             background: #222; 
             padding: 15px; 
@@ -29,7 +28,6 @@
             text-align: center;
         }
         
-        /* Alineación vertical perfecta para CORTE: y el Select */
         .stats-bar div { display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
         .stats-bar strong { color: var(--primary); font-size: 1.3em; }
 
@@ -37,7 +35,6 @@
         
         input, select { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2b2b2b; color: white; outline: none; font-size: 1em; text-transform: uppercase; }
         
-        /* Estilo específico para que el select no se vea más grande que el texto */
         #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
 
         button { padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 1.1em; text-transform: uppercase; }
@@ -224,8 +221,24 @@
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
             document.getElementById('standings-view').style.display = 'none';
+            
             const modoContainer = document.getElementById('modalidad-container');
             modoContainer.style.display = n >= 4 ? 'flex' : 'none';
+
+            // Lógica de habilitación de Top Cut por cantidad de participantes
+            const selectTop = document.getElementById('select-top-final');
+            const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
+            const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
+
+            if (n < 9) {
+                optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS";
+            } else if (n < 17) {
+                optTop4.disabled = false; optTop8.disabled = true;
+                if (selectTop.value === "TOP 8") selectTop.value = "TOP 4";
+            } else {
+                optTop4.disabled = false; optTop8.disabled = false;
+            }
+
             document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
             
             document.getElementById('lista-jugadores').innerHTML = jugadores.map(j => `
