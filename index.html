@@ -21,6 +21,9 @@
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
+        /* Estilo para los títulos pequeños */
+        .section-label { font-size: 0.75em; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; display: block; }
+
         .stats-bar { 
             background: #222; padding: 15px; border-radius: 10px; margin-bottom: 25px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
@@ -38,7 +41,6 @@
         
         #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
 
-        /* Estilo para el buscador de mesa */
         .search-box { background: #111; padding: 15px; border-radius: 10px; border: 2px solid var(--primary); margin-bottom: 20px; text-align: center; }
         .search-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); font-size: 0.9em; }
         .search-box select { width: 100%; max-width: 400px; border-color: var(--primary); }
@@ -59,7 +61,6 @@
         .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
         .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; transition: 0.3s; }
         
-        /* Animación de pulsación para mesa encontrada */
         .match-card.pulse-find {
             border: 2px solid var(--primary);
             box-shadow: 0 0 15px var(--primary);
@@ -122,6 +123,7 @@
 <div class="container">
     <h1 class="main-title">YGO OFFICIAL TOURNAMENT</h1>
 
+    <span class="section-label">Detalles del Torneo:</span>
     <div class="stats-bar">
         <div>INSCRITOS: <strong id="stat-count">0</strong></div>
         <div>RONDAS: <strong id="stat-rondas">0</strong></div>
@@ -142,14 +144,20 @@
         </select>
     </div>
 
-    <div id="entry-section" class="input-box">
-        <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
-        <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
+    <div id="entry-container">
+        <span id="label-ingreso" class="section-label">Ingrese Nuevo Duelista:</span>
+        <div id="entry-section" class="input-box">
+            <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
+            <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
+        </div>
     </div>
 
     <div id="view-registro">
         <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">Lanzar Torneo</button>
+        
+        <span class="section-label">Duelistas Registrados:</span>
         <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
+        
         <div class="historial-box">
             <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">Historial Global</h3>
             <div id="lista-historial-global"></div>
@@ -199,10 +207,9 @@
     let historial = [];
     let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" };
 
-    // PERSISTENCIA LOCAL DEL BUSCADOR
     window.guardarMiNombre = function(val) {
         localStorage.setItem('ygo_mi_nombre_id', val);
-        renderPareos(); // Re-render para aplicar efecto
+        renderPareos();
     };
 
     window.actualizarModalidadLocal = async function() {
@@ -261,11 +268,11 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
-        const entrySection = document.getElementById('entry-section');
+        const entryContainer = document.getElementById('entry-container');
         const buscadorMesa = document.getElementById('view-buscador-mesa');
 
         if (!torneo.activa && !torneo.finalizado) {
-            entrySection.style.display = 'flex';
+            entryContainer.style.display = 'block';
             buscadorMesa.style.display = 'none';
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
@@ -289,10 +296,9 @@
                 </div>
             `).join('');
         } else {
-            entrySection.style.display = (torneo.faseTop) ? 'none' : 'flex';
+            entryContainer.style.display = (torneo.faseTop) ? 'none' : 'block';
             buscadorMesa.style.display = 'block';
             
-            // Actualizar opciones del buscador de mesa
             const selectMiNombre = document.getElementById('select-mi-nombre');
             const miIdGuardado = localStorage.getItem('ygo_mi_nombre_id') || "";
             selectMiNombre.innerHTML = '<option value="">-- SELECCIONA TU NOMBRE --</option>' + 
@@ -449,8 +455,6 @@
             const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
             const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
             const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
-            
-            // ¿Soy yo el que está en esta mesa?
             const soyYoEnMesa = (p.j1Id === miId || p.j2Id === miId);
             const extraClase = soyYoEnMesa ? 'pulse-find' : '';
             
@@ -512,12 +516,13 @@
         const snaps = await getDocs(collection(db, "jugadores"));
         snaps.forEach(d => batch.delete(d.ref));
         batch.set(doc(db, "torneo", "estado"), { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" });
-        localStorage.removeItem('ygo_mi_nombre_id'); // Limpiar buscador local al reiniciar
+        localStorage.removeItem('ygo_mi_nombre_id');
         await batch.commit();
     };
 </script>
 </body>
 </html>
+
 
 
 
