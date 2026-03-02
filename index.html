@@ -2,290 +2,88 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YGO DECK BUILDER V1.0</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+    <title>YGO OFFICIAL TOURNAMENT</title>
     <style>
-        :root {
-            --ios-bg: #F2F2F7;
-            --ios-card: #FFFFFF;
-            --ios-blue: #007AFF;
-            --ios-green: #34C759;
-            --ios-red: #FF3B30;
-            --ios-gray: #D1D1D6;
-            --ios-white: #FFFFFF;
-            --ios-text: #1C1C1E;
-            --ios-secondary: #8E8E93;
-            --shadow: 0 4px 16px rgba(0,0,0,0.06);
-            --aqua-strong: #00CED1; 
-            --purple-strong: #9370DB; 
-        }
-
-        html, body { overflow-x: hidden; touch-action: pan-y; -webkit-text-size-adjust: none; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--ios-bg);
-            color: var(--ios-text);
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            user-select: none;
-        }
-
-        .container { width: 100%; max-width: 480px; }
-
-        header { text-align: center; margin: 20px 0 25px; }
-        header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
-        header p { font-size: 13px; color: var(--ios-secondary); margin-top: 5px; }
-
-        .deck-header-info {
-            background: var(--ios-card);
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 15px;
-            box-shadow: var(--shadow);
-            display: grid;
-            grid-template-columns: 1fr 1fr 44px;
-            gap: 8px;
-            box-sizing: border-box;
-            align-items: center;
-        }
-
-        .deck-header-info input { width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px; }
-
-        .btn-gear {
-            background: #E5E5EA;
-            border: none;
-            border-radius: 10px;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            color: var(--ios-secondary);
-        }
-        
-        .btn-gear.confirm-config { background: var(--ios-green); color: white; }
-
-        .card {
-            background: var(--ios-card);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 15px;
-            box-shadow: var(--shadow);
-        }
-
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 0.5px solid #E5E5EA;
-        }
-
-        .category-title { font-weight: 700; font-size: 17px; color: var(--ios-blue); }
-        
-        .category-footer {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 0.5px dashed #E5E5EA;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--ios-secondary);
-            text-align: right;
-        }
-
-        .add-btn {
-            background: #F2F2F7; border: none; border-radius: 50%; width: 28px; height: 28px;
-            font-size: 18px; color: var(--ios-blue); cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-
-        .input-row {
-            display: grid; grid-template-columns: 1fr 60px 50px; gap: 10px; margin-bottom: 10px; align-items: center;
-        }
-
-        input, select {
-            background: #F2F2F7; border: none; border-radius: 10px; padding: 12px; font-size: 15px; outline: none; user-select: text;
-        }
-
-        .hopt-checkbox { width: 20px; height: 20px; accent-color: var(--ios-blue); }
-
-        .btn-ios {
-            border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
-            width: 100%; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
-            margin-bottom: 10px;
-        }
-
-        .btn-blue { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
-        .btn-purple { background: var(--purple-strong); color: white; box-shadow: 0 4px 12px rgba(147, 112, 219, 0.2); }
-        
-        .btn-ios.confirm-analyze, .btn-ios.confirm-sync { background: var(--ios-green); transform: scale(1.02); color: white;}
-        .btn-ios.confirm-clear { background: var(--ios-red) !important; transform: scale(1.02); color: white; }
-        
-        .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
-        .btn-pdf.confirm-pdf { background: var(--ios-green); transform: scale(1.02); }
-
-        .total-section { 
-            text-align: center; 
-            margin: 20px 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            width: 100%;
-        }
-
-        .total-badge { 
-            display: block; 
-            font-size: 14px; 
-            font-weight: 600; 
-            margin-bottom: 30px; 
-            color: var(--ios-secondary);
-            text-align: center;
-            width: 100%;
-        }
-
-        .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
-        #capture-container { 
-            background-color: #F2F2F7; 
-            padding: 15px; 
-            width: 100%; 
-            max-width: 480px; 
-            border-radius: 20px; 
-            box-sizing: border-box;
-            margin: 0 auto;
-        }
-
-        .result-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 15px; box-shadow: var(--shadow); }
-
-        .tier-card {
-            background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
-            color: white; text-align: center; padding: 25px; border-radius: 18px; margin-bottom: 15px;
-        }
-        .tier-label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 5px; }
-        .tier-value { font-size: 30px; font-weight: 900; letter-spacing: -1px; }
-        .tier-S { color: #FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
-        .tier-A { color: var(--ios-green); }
-        .tier-B { color: var(--ios-blue); }
-        .tier-C { color: #FF9500; }
-        .tier-ERROR { color: var(--ios-red); opacity: 0.8; }
-
-        .hand-bar-container {
-            height: 60px; width: 100%; background: #E5E5EA; border-radius: 12px;
-            display: flex; overflow: hidden; margin: 15px 0; border: 0.5px solid #D1D1D6;
-        }
-        .bar-segment {
-            height: 100%; display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 800; color: white; text-shadow: 0px 1px 1px rgba(0,0,0,0.2);
-            overflow: hidden; text-align: center; white-space: nowrap; padding: 0 4px;
-        }
-
-        .cons-bar-wrapper {
-            height: 32px; width: 100%; background: #E5E5EA; border-radius: 8px;
-            margin-bottom: 10px; overflow: hidden; position: relative;
-            display: flex; align-items: center;
-        }
-        .cons-bar-fill { height: 100%; transition: width 0.6s ease-out; }
-        .cons-bar-text {
-            position: absolute; width: 100%; text-align: center; left: 0;
-            font-size: 12px; font-weight: 800; text-transform: uppercase;
-            z-index: 2; pointer-events: none;
-        }
-
-        .segment-Starters, .fill-Starters { background-color: var(--ios-green); }
-        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); } 
-        .segment-HandTraps, .fill-HandTraps { background-color: var(--ios-blue); }
-        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); } 
-        .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
-        .segment-Random, .fill-Random { background-color: #8E8E93; }
-
-        .text-light { color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); }
-
-        .cloud-list {
-            background: var(--ios-card); border-radius: 16px; padding: 10px; margin-top: 15px;
-            box-shadow: var(--shadow); display: none; width: 100%; box-sizing: border-box;
-        }
-        .cloud-item {
-            display: flex; justify-content: space-between; align-items: center; padding: 12px;
-            border-bottom: 0.5px solid var(--ios-gray);
-        }
-        
-        #tier-config-panel { display: none; margin-bottom: 20px; width: 100%; }
-        .rule-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 10px; box-shadow: var(--shadow); }
-        .rule-row { display: grid; grid-template-columns: 45px 55px 1fr 60px 45px; gap: 5px; align-items: center; margin-bottom: 8px; font-size: 10px; }
-        .rule-row span { font-weight: 800; color: var(--ios-blue); text-align: center; line-height: 1.1; }
-        .rule-row input, .rule-row select { padding: 5px; font-size: 12px; border-radius: 6px; text-align: center; }
-
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #f0f0f0; padding: 20px; }
+        .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
+        .container { max-width: 1100px; margin: auto; background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid #333; }
+        .stats-bar { background: #222; padding: 20px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-around; align-items: center; border-left: 5px solid var(--primary); gap: 15px; }
+        .stats-bar div { display: flex; align-items: center; gap: 8px; font-size: 1.1em; }
+        .stats-bar strong { color: var(--primary); font-size: 1.3em; }
+        .input-box { display: flex; gap: 10px; margin-bottom: 20px; background: #252525; padding: 15px; border-radius: 8px; border: 1px solid #444; }
+        input, select { padding: 10px; border-radius: 6px; border: 1px solid #444; background: #2b2b2b; color: white; outline: none; }
+        input { flex: 2; }
+        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: var(--primary); color: white; }
+        .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.2em; margin-bottom: 20px; }
+        .btn-delete-node { background: var(--danger); color: white; min-width: 35px; }
+        .btn-confirm-green { background: var(--success) !important; }
+        .pairings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin-top: 20px; }
+        .match-card { background: #222; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .player-btn { padding: 15px; border-radius: 8px; background: #333; cursor: pointer; width: 42%; text-align: center; font-size: 15px; border: 2px solid transparent; }
+        .player-btn.winner { background: var(--success) !important; border-color: #afffba; color: white; }
+        .historial-box { margin-top: 20px; padding: 15px; background: #151515; border-radius: 8px; border: 1px solid #333; }
+        .historial-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #222; align-items: center; }
+        .nombre-historial { transition: 0.3s; }
+        .nombre-inscrito { color: #2ecc71; font-weight: bold; }
+        .btn-re-inscribir { background: #444; color: #fff; font-size: 0.8em; margin-right: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; background: #151515; }
+        th, td { padding: 14px; text-align: center; border-bottom: 1px solid #222; }
+        th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.85em; }
+        .confirming { background: var(--danger) !important; color: white !important; animation: blink 0.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.7; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>YGO DECK BUILDER V1.0</h1>
-        <p>Designed by Ismael Villamagua</p>
-    </header>
+    <h1 class="main-title">YGO OFFICIAL TOURNAMENT</h1>
 
-    <div class="deck-header-info">
-        <input type="text" id="deck-name" placeholder="Nombre del Deck" oninput="saveAll()">
-        <input type="text" id="deck-format" placeholder="Formato" oninput="saveAll()">
-        <button id="configBtn" class="btn-gear" onclick="handleConfigClick()">⚙️</button>
-    </div>
-
-    <div id="tier-config-panel">
-        <div id="rules-container"></div>
-        <button class="btn-ios btn-blue" onclick="addTierDefinition()" style="font-size:13px; padding:10px; background:var(--ios-gray); color:var(--ios-text)">+ AÑADIR NUEVO TIER</button>
-    </div>
-
-    <div id="categories-main"></div>
-    
-    <div class="total-section">
-        <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
-
-        <button id="syncBtn" class="btn-ios btn-purple" onclick="handleSyncClick()">GUARDAR DECK</button>
-        <button id="viewCloudBtn" class="btn-ios btn-purple" onclick="toggleCloudList()">ABRIR DECK</button>
-        
-        <div id="cloud-explorer" class="cloud-list">
-            <div style="font-weight: bold; margin-bottom: 10px; color: var(--ios-secondary); text-align: left; padding-left: 10px;">TUS DECKBOX</div>
-            <div id="cloud-items-container"></div>
+    <div class="stats-bar">
+        <div>Duelistas Inscritos: <strong id="stat-count">0</strong></div>
+        <div>Rondas Suizas: <strong id="stat-rondas">0</strong></div>
+        <div id="modalidad-container" style="display:none;">
+            Corte: <select id="select-top-final" style="margin:0;"></select>
         </div>
-
-        <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
-        <button id="deleteBtn" class="btn-ios btn-blue" onclick="handleDeleteClick()">CLEAR DECK</button>
     </div>
 
-    <div id="results" class="results-area">
-        <div id="capture-container">
-            <div id="tier-result" class="tier-card">
-                <div class="tier-label">CLASIFICACIÓN</div>
-                <div id="tier-text" class="tier-value">TIER ERROR</div>
-            </div>
-            <div class="result-card">
-                <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5 Draws)</div>
-                <div id="bar-t1" class="hand-bar-container"></div>
-                <div id="cons-t1" class="consistency-list"></div>
-            </div>
-            <div class="result-card">
-                <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6 Draws)</div>
-                <div id="bar-t2" class="hand-bar-container"></div>
-                <div id="cons-t2" class="consistency-list"></div>
-            </div>
+    <div class="input-box">
+        <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
+        <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
+    </div>
+
+    <div id="view-registro">
+        <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Lanzar Torneo', iniciarTorneo)">Iniciar Ronda 1</button>
+        <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:10px;"></div>
+        <div class="historial-box">
+            <h4 style="margin-top:0; color:var(--primary)">Historial Global</h4>
+            <div id="lista-historial-global"></div>
         </div>
-        <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
+    </div>
+
+    <div id="view-torneo" style="display:none;">
+        <h2 id="txt-ronda-actual" style="color:var(--warning)">Ronda 1 / ?</h2>
+        <div id="pairings-list" class="pairings-grid"></div>
+        <div style="display:flex; gap:10px; margin-top:30px;">
+            <button style="background:#444; color:white; flex:1;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
+            <button id="btn-siguiente" style="background:var(--warning); color:black; flex:2; font-size:1.1em;" onclick="handleDoubleConfirm(this, 'Terminar Ronda / Siguiente', terminarRonda)">Siguiente Paso</button>
+        </div>
+    </div>
+
+    <div id="standings-view" style="display:none;">
+        <h2 style="margin-top:40px; border-left: 4px solid var(--success); padding-left:10px;">Standings Oficiales</h2>
+        <table id="main-table">
+            <thead><tr><th>Pos</th><th>Duelista</th><th>Pts</th><th>OMW%</th><th>OOW%</th><th>DDD</th><th>KTS Code</th></tr></thead>
+            <tbody id="tabla-body"></tbody>
+        </table>
+        <button style="background:var(--danger); color:white; width:100%; margin-top:40px; padding:15px;" onclick="handleDoubleConfirm(this, 'BORRAR JUGADORES Y REINICIAR', reiniciarTorneo)">TERMINAR TORNEO (TIER ERROR)</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
@@ -293,482 +91,370 @@
         projectId: "ygoismaelvillamagua",
         storageBucket: "ygoismaelvillamagua.firebasestorage.app",
         messagingSenderId: "624990862859",
-        appId: "1:624990862859:web:170630e1e94d29fb3d910e",
-        measurementId: "G-TXKEZS7MRT"
+        appId: "1:624990862859:web:170630e1e94d29fb3d910e"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let syncConfirm = { active: false, timeout: null };
-    let delCloudConfirm = { id: null, timeout: null };
+    let jugadores = [];
+    let historial = [];
+    let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0 };
 
-    window.handleSyncClick = async () => {
-        const btn = document.getElementById('syncBtn');
-        const deckNameInput = document.getElementById('deck-name').value.trim().toUpperCase();
-        if (!deckNameInput) { alert("Por favor, ingresa un NOMBRE DEL DECK."); return; }
-        if (!syncConfirm.active) {
-            syncConfirm.active = true;
-            btn.innerText = "CONFIRMAR GUARDADO";
-            btn.classList.add('confirm-sync');
-            syncConfirm.timeout = setTimeout(() => {
-                syncConfirm.active = false; btn.innerText = "GUARDAR DECK"; btn.classList.remove('confirm-sync');
-            }, 2500);
-        } else {
-            clearTimeout(syncConfirm.timeout);
-            btn.innerText = "CONECTANDO...";
-            try {
-                const docRef = doc(db, "decks", deckNameInput);
-                const currentData = JSON.parse(localStorage.getItem('ygo_deck_save'));
-                if (currentData) { await setDoc(docRef, currentData); alert(`¡Deck "${deckNameInput}" guardado!`); }
-            } catch (error) { alert("Error de conexión con Firebase."); }
-            syncConfirm.active = false; btn.innerText = "GUARDAR DECK"; btn.classList.remove('confirm-sync');
+    window.validarBotonInscripcion = function() {
+        const input = document.getElementById('nombreCompleto');
+        const valor = input.value.trim().toUpperCase();
+        input.value = input.value.toUpperCase(); 
+        const btn = document.getElementById('btn-registrar');
+        const yaExiste = jugadores.some(j => j.nombre === valor);
+        btn.style.display = (yaExiste || valor === "") ? 'none' : 'block';
+    };
+
+    window.confirmAction = function(btn, callback) {
+        if (btn.dataset.confirmed === "true") { callback(); } 
+        else {
+            btn.classList.add("btn-confirm-green"); btn.innerText = "CONFIRMAR"; btn.dataset.confirmed = "true";
+            setTimeout(() => { btn.classList.remove("btn-confirm-green"); btn.innerText = "X"; btn.dataset.confirmed = "false"; }, 3000);
         }
     };
 
-    window.toggleCloudList = async () => {
-        const container = document.getElementById('cloud-explorer');
-        const list = document.getElementById('cloud-items-container');
-        if (container.style.display === 'block') { container.style.display = 'none'; return; }
-        list.innerHTML = "<p style='padding:10px; font-size:12px;'>Cargando biblioteca...</p>";
-        container.style.display = 'block';
-        try {
-            const querySnapshot = await getDocs(collection(db, "decks"));
-            list.innerHTML = "";
-            if(querySnapshot.empty) { list.innerHTML = "<p style='padding:10px; font-size:12px;'>La biblioteca está vacía.</p>"; return; }
-            querySnapshot.forEach((docSnap) => {
-                const name = docSnap.id;
-                const row = document.createElement('div');
-                row.className = 'cloud-item';
-                row.innerHTML = `<span onclick="loadFromCloud('${name}')" style="cursor:pointer; flex-grow:1; font-weight:600; font-size:14px;">${name}</span><button class="btn-delete-cloud" id="del-${name}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:8px 12px; font-size:11px; font-weight:bold;" onclick="handleCloudDelete('${name}')">BORRAR</button>`;
-                list.appendChild(row);
-            });
-        } catch (e) { alert("Error al acceder a la nube."); }
-    };
-
-    window.loadFromCloud = async (name) => {
-        try {
-            const docRef = doc(db, "decks", name);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) { localStorage.setItem('ygo_deck_save', JSON.stringify(docSnap.data())); location.reload(); }
-        } catch (e) { alert("Error al cargar."); }
-    };
-
-    window.handleCloudDelete = async (name) => {
-        const btn = document.getElementById(`del-${name}`);
-        if (delCloudConfirm.id !== name) {
-            delCloudConfirm.id = name;
-            btn.innerText = "CONFIRMAR"; btn.style.background = "var(--ios-red)";
-            delCloudConfirm.timeout = setTimeout(() => { delCloudConfirm.id = null; btn.innerText = "BORRAR"; btn.style.background = "var(--ios-blue)"; }, 2000);
+    window.handleDoubleConfirm = function(btn, originalText, callback) {
+        if (btn.dataset.status === "confirming") {
+            callback(); btn.dataset.status = "idle"; btn.innerText = originalText; btn.classList.remove("confirming");
         } else {
-            clearTimeout(delCloudConfirm.timeout);
-            try { await deleteDoc(doc(db, "decks", name)); window.toggleCloudList(); } catch (e) { alert("Error al eliminar."); }
-            delCloudConfirm.id = null;
+            btn.dataset.status = "confirming"; btn.innerText = "CONFIRMAR"; btn.classList.add("confirming");
+            setTimeout(() => { btn.dataset.status = "idle"; btn.innerText = originalText; btn.classList.remove("confirming"); }, 2000);
         }
     };
-</script>
 
-<script>
-    const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
-    let analyzeConfirm = { active: false, timeout: null };
-    let deleteConfirm = { active: false, timeout: null };
-    let pdfConfirm = { active: false, timeout: null };
-    let configConfirm = { active: false, timeout: null };
-    let delTierConfirm = { idx: null, timeout: null };
-    
-    let customTierRules = [];
+    onSnapshot(collection(db, "jugadores"), (snap) => {
+        jugadores = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        actualizarUI();
+    });
 
-    window.onload = () => {
-        const mainContainer = document.getElementById('categories-main');
-        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-        document.getElementById('deck-name').value = savedData.deckName || "";
-        document.getElementById('deck-format').value = savedData.deckFormat || "";
+    onSnapshot(collection(db, "historial_global"), (snap) => {
+        historial = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderHistorial();
+    });
+
+    onSnapshot(doc(db, "torneo", "estado"), (snap) => {
+        if (snap.exists()) { torneo = snap.data(); actualizarUI(); }
+    });
+
+    function actualizarUI() {
+        const n = jugadores.length;
+        let r = 0;
+        if (n >= 4 && n <= 8) r = 3;
+        else if (n >= 9 && n <= 16) r = 4;
+        else if (n >= 17 && n <= 32) r = 5;
+        else if (n >= 33 && n <= 64) r = 6;
+        else if (n >= 65) r = 7;
         
-        customTierRules = savedData.tierRules || [
-            { name: "S", rules: { "Starters": [1, "<=", "<=", 2], "Starters + Extenders": [1, "<=", "<=", 3], "Hand Traps + Board Breakers": [2, "<=", "<=", 5], "Bricks": [0, "==", "==", 0] } },
-            { name: "A", rules: { "Starters": [1, "<=", "<=", 2], "Starters + Extenders": [1, "<=", "<=", 3], "Hand Traps + Board Breakers": [1, "<=", "<=", 5], "Bricks": [0, "<=", "<=", 5] } }
-        ];
+        document.getElementById('stat-count').innerText = n;
+        document.getElementById('stat-rondas').innerText = r;
 
-        categories.forEach(cat => {
-            const catId = `cat-${cat.replace(/\s/g, '')}`;
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'card';
-            cardDiv.id = catId;
-            const singleCat = cat.endsWith('s') ? cat.slice(0, -1) : cat;
-            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div><div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>`;
-            mainContainer.appendChild(cardDiv);
-            if (savedData[cat] && savedData[cat].length > 0) { savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`)); }
-            else { addRow(catId, '', '', true, `Nombre ${singleCat}`); }
-        });
-
-        renderTierRules();
-        saveAll();
-        updateTotal();
-    };
-
-    function handleConfigClick() {
-        const btn = document.getElementById('configBtn');
-        const panel = document.getElementById('tier-config-panel');
-        if (!configConfirm.active) {
-            configConfirm.active = true; btn.classList.add('confirm-config');
-            configConfirm.timeout = setTimeout(() => { configConfirm.active = false; btn.classList.remove('confirm-config'); }, 2500);
-        } else {
-            clearTimeout(configConfirm.timeout);
-            panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-            configConfirm.active = false; btn.classList.remove('confirm-config');
-            saveAll();
-        }
-    }
-
-    function addTierDefinition() {
-        customTierRules.push({ 
-            name: "NEW", 
-            rules: { "Starters": [0, "<=", "<=", 5], "Starters + Extenders": [0, "<=", "<=", 10], "Hand Traps + Board Breakers": [0, "<=", "<=", 10], "Bricks": [0, "<=", "<=", 5] } 
-        });
-        renderTierRules();
-    }
-
-    function renderTierRules() {
-        const container = document.getElementById('rules-container');
-        container.innerHTML = "";
-        const visibleRuleKeys = ["Starters", "Starters + Extenders", "Hand Traps + Board Breakers", "Bricks"];
-
-        customTierRules.forEach((tr, idx) => {
-            const div = document.createElement('div');
-            div.className = "rule-card";
-            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:5px;">
-                    <span style="font-weight:900; font-size:14px; color:var(--ios-text)">TIER:</span>
-                    <input type="text" value="${tr.name}" oninput="updateTierRuleName(${idx}, this.value)" style="width:60px; font-weight:900; background:var(--ios-gray); padding:5px;">
+        if (!torneo.activa && !torneo.finalizado) {
+            document.getElementById('view-registro').style.display = 'block';
+            document.getElementById('view-torneo').style.display = 'none';
+            document.getElementById('standings-view').style.display = 'none';
+            const modContainer = document.getElementById('modalidad-container');
+            const btnIniciar = document.getElementById('btn-iniciar-master');
+            if (n >= 4) {
+                modContainer.style.display = 'flex';
+                btnIniciar.style.display = 'block';
+                const select = document.getElementById('select-top-final');
+                let opts = `<option value="SUIZAS">Solo Suizas</option>`;
+                if (n >= 9) opts += `<option value="TOP 4">TOP CUT 4</option>`;
+                if (n >= 33) opts += `<option value="TOP 8">TOP CUT 8</option>`;
+                select.innerHTML = opts;
+            } else {
+                modContainer.style.display = 'none';
+                btnIniciar.style.display = 'none';
+            }
+            document.getElementById('lista-jugadores').innerHTML = jugadores.map(j => `
+                <div style="background:#222; padding:10px; border-radius:6px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
+                    <span>${j.nombre}</span>
+                    <button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>
                 </div>
-                <button class="btn-delete-tier" id="del-tier-${idx}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:bold;" onclick="handleTierDelete(${idx})">BORRAR</button>
+            `).join('');
+        } else {
+            document.getElementById('view-registro').style.display = 'none';
+            document.getElementById('view-torneo').style.display = 'block';
+            document.getElementById('standings-view').style.display = 'block';
+            document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
+            renderPareos();
+            renderStandings();
+        }
+        validarBotonInscripcion();
+        renderHistorial();
+    }
+
+    function renderHistorial() {
+        const div = document.getElementById('lista-historial-global');
+        div.innerHTML = historial.map(h => {
+            const yaInscrito = jugadores.some(j => j.nombre.toUpperCase() === h.nombre.toUpperCase());
+            return `
+            <div class="historial-item">
+                <span class="nombre-historial ${yaInscrito ? 'nombre-inscrito' : ''}">${h.nombre}</span>
+                <div>
+                    ${!yaInscrito ? `<button class="btn-re-inscribir" onclick="reInscribir('${h.nombre}')">Inscribir</button>` : ''}
+                    <button class="btn-delete-node" style="padding: 5px 10px;" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>
+                </div>
             </div>`;
+        }).join('');
+    }
+
+    window.reInscribir = function(nombre) { document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
+
+    window.registrarDuelista = async function() {
+        const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
+        if(!full) return;
+        if (jugadores.some(j => j.nombre.toUpperCase() === full)) {
+            alert("Este duelista ya está inscrito en el torneo actual.");
+            return;
+        }
+        const id = Date.now().toString();
+        if (!historial.find(h => h.nombre.toUpperCase() === full)) {
+            await setDoc(doc(db, "historial_global", id), { nombre: full });
+        }
+        await setDoc(doc(db, "jugadores", id), { nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000" });
+        document.getElementById('nombreCompleto').value = "";
+        validarBotonInscripcion();
+    };
+
+    window.borrarJugador = async function(id) { await deleteDoc(doc(db, "jugadores", id)); };
+    window.borrarDelHistorial = async function(id) { await deleteDoc(doc(db, "historial_global", id)); };
+
+    window.iniciarTorneo = async function() {
+        const r = parseInt(document.getElementById('stat-rondas').innerText);
+        const p1 = generarKTS();
+        torneo = { activa: true, ronda: 1, totalRondas: r, usaTop: document.getElementById('select-top-final').value, pareos: p1, historicoPareos: { 1: p1 }, finalizado: false, faseTop: false, rondaTopActual: 0 };
+        await setDoc(doc(db, "torneo", "estado"), torneo);
+    };
+
+    function generarKTS() {
+        let pool = [...jugadores].sort((a, b) => b.puntos - a.puntos || Math.random() - 0.5);
+        let pairs = [];
+        let byeMatch = null;
+
+        if (pool.length % 2 !== 0) {
+            for (let i = pool.length - 1; i >= 0; i--) {
+                if (!pool[i].oponentes.includes("BYE")) {
+                    let bP = pool.splice(i, 1)[0];
+                    byeMatch = { j1Id: bP.id, j2Id: "BYE", ganador: bP.id };
+                    break;
+                }
+            }
+        }
+
+        while (pool.length > 0) {
+            let j1 = pool.shift();
+            let found = false;
+            for (let i = 0; i < pool.length; i++) {
+                if (!j1.oponentes.includes(pool[i].id)) {
+                    pairs.push({ j1Id: j1.id, j2Id: pool[i].id, ganador: null });
+                    pool.splice(i, 1);
+                    found = true; break;
+                }
+            }
+            if (!found && pool.length > 0) pairs.push({ j1Id: j1.id, j2Id: pool.shift().id, ganador: null });
+        }
+        if (byeMatch) pairs.push(byeMatch);
+        return pairs;
+    }
+
+    window.marcarGanador = async function(idx, idWin) {
+        torneo.pareos[idx].ganador = (torneo.pareos[idx].ganador === idWin) ? null : idWin;
+        await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
+    }
+
+    window.terminarRonda = async function() {
+        const batch = writeBatch(db);
+        torneo.pareos.forEach(p => {
+            const j1 = jugadores.find(j => j.id === p.j1Id);
+            const j2 = p.j2Id === "BYE" ? null : jugadores.find(j => j.id === p.j2Id);
             
-            visibleRuleKeys.forEach(key => {
-                const r = tr.rules[key] || [0, "<=", "<=", 5];
-                html += `<div class="rule-row">
-                    <input type="number" value="${r[0]}" oninput="updateTierValue(${idx},'${key}',0,this.value)">
-                    <select onchange="updateTierValue(${idx},'${key}',1,this.value)">
-                        <option value="<" ${r[1]=='<'?'selected':''}> < </option>
-                        <option value="<=" ${r[1]=='<='?'selected':''}> <= </option>
-                        <option value="==" ${r[1]=='=='?'selected':''}> == </option>
-                    </select>
-                    <span>${key.toUpperCase()}</span>
-                    <select onchange="updateTierValue(${idx},'${key}',2,this.value)">
-                        <option value="<" ${r[2]=='<'?'selected':''}> < </option>
-                        <option value="<=" ${r[2]=='<='?'selected':''}> <= </option>
-                        <option value="==" ${r[2]=='=='?'selected':''}> == </option>
-                    </select>
-                    <input type="number" value="${r[3]}" oninput="updateTierValue(${idx},'${key}',3,this.value)">
-                </div>`;
-            });
-            div.innerHTML = html;
-            container.appendChild(div);
+            if (p.ganador === p.j1Id) { 
+                j1.puntos += 3; j1.resultados.push('W'); 
+                if(j2) { j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); } 
+            } else if (j2 && p.ganador === p.j2Id) { 
+                j2.puntos += 3; j2.resultados.push('W'); 
+                j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); 
+            } else if (j2) { 
+                j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); 
+                j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); 
+            } else if (p.j2Id === "BYE") {
+                j1.puntos += 3; j1.resultados.push('W');
+            }
+            j1.oponentes.push(p.j2Id);
+            if(j2) { j2.oponentes.push(j1.id); batch.update(doc(db, "jugadores", j2.id), j2); }
+            batch.update(doc(db, "jugadores", j1.id), j1);
         });
-    }
 
-    function updateTierRuleName(idx, val) { customTierRules[idx].name = val.toUpperCase(); saveAll(); }
-    function updateTierValue(idx, key, pos, val) { 
-        if(!customTierRules[idx].rules[key]) customTierRules[idx].rules[key] = [0, "<=", "<=", 5];
-        customTierRules[idx].rules[key][pos] = isNaN(parseInt(val)) ? val : parseInt(val); 
-        saveAll(); 
-    }
-
-    function handleTierDelete(idx) {
-        const btn = document.getElementById(`del-tier-${idx}`);
-        if (delTierConfirm.idx !== idx) {
-            delTierConfirm.idx = idx;
-            btn.innerText = "CONFIRMAR"; btn.style.background = "var(--ios-red)";
-            delTierConfirm.timeout = setTimeout(() => { delTierConfirm.idx = null; btn.innerText = "BORRAR"; btn.style.background = "var(--ios-blue)"; }, 2000);
+        if (!torneo.faseTop) {
+            if (torneo.ronda < torneo.totalRondas) {
+                torneo.ronda++;
+                const nP = generarKTS(); torneo.pareos = nP; torneo.historicoPareos[torneo.ronda] = nP;
+            } else {
+                if (torneo.usaTop === "SUIZAS") { torneo.finalizado = true; } 
+                else { iniciarTopCut(); }
+            }
         } else {
-            clearTimeout(delTierConfirm.timeout);
-            customTierRules.splice(idx, 1);
-            renderTierRules();
-            saveAll();
-            delTierConfirm.idx = null;
+            const ganadores = torneo.pareos.filter(p => p.ganador).map(p => p.ganador);
+            if (torneo.pareos.length === 1 && ganadores.length === 1) { 
+                torneo.finalizado = true; 
+            } else if (ganadores.length === torneo.pareos.length) {
+                const nuevosPareos = [];
+                for(let i=0; i < ganadores.length; i+=2) {
+                    nuevosPareos.push({ j1Id: ganadores[i], j2Id: ganadores[i+1], ganador: null });
+                }
+                torneo.ronda++;
+                torneo.rondaTopActual++;
+                torneo.pareos = nuevosPareos;
+                torneo.historicoPareos[torneo.ronda] = nuevosPareos;
+            } else {
+                alert("Debes marcar ganadores."); return;
+            }
         }
-    }
+        batch.set(doc(db, "torneo", "estado"), torneo);
+        await batch.commit();
+    };
 
-    function addRow(catId, name = '', qty = '', hopt = true, placeholder = 'Nombre') {
-        const target = document.querySelector(`#${catId} .rows-container`);
-        const row = document.createElement('div');
-        row.className = 'input-row';
-        const isBrick = catId === 'cat-Bricks';
-        const hoptHtml = isBrick ? '' : `<div style="display:flex; flex-direction:column; align-items:center;"><input type="checkbox" class="hopt-checkbox" ${hopt ? 'checked' : ''} onchange="saveAll()"><span style="font-size:9px; color:var(--ios-secondary)">HOPT</span></div>`;
-        row.innerHTML = `<input type="text" placeholder="${placeholder}" class="i-name" value="${name}" oninput="saveAll()"><input type="number" placeholder="0" class="i-qty" min="0" max="3" value="${qty}" oninput="saveAll()">${hoptHtml}`;
-        target.appendChild(row);
-        updateTotal();
-    }
-
-    function saveAll() {
-        const dataToSave = { 
-            deckName: document.getElementById('deck-name').value, 
-            deckFormat: document.getElementById('deck-format').value,
-            tierRules: customTierRules
-        };
-        categories.forEach(cat => {
-            const catId = `cat-${cat.replace(/\s/g, '')}`;
-            let catSum = 0;
-            dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
-                const qtyVal = parseInt(row.querySelector('.i-qty').value || 0);
-                catSum += qtyVal;
-                return { name: row.querySelector('.i-name').value, qty: qtyVal, hopt: row.querySelector('.hopt-checkbox')?.checked || false };
-            }).filter(card => card.name !== '' || card.qty !== 0);
-            document.getElementById(`total-val-${catId}`).innerText = catSum;
-        });
-        localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
-        updateTotal();
-    }
-
-    function updateTotal() {
-        let t = 0;
-        categories.forEach(cat => {
-            const catId = `cat-${cat.replace(/\s/g, '')}`;
-            let catSum = 0;
-            document.querySelectorAll(`#${catId} .i-qty`).forEach(i => catSum += parseInt(i.value || 0));
-            t += catSum;
-        });
-        const badge = document.getElementById('deck-total');
-        badge.innerText = t;
-        badge.style.color = (t < 40 || t > 60) ? 'var(--ios-red)' : 'var(--ios-green)';
-    }
-
-    function handleAnalyzeClick() {
-        const btn = document.getElementById('mainBtn');
-        const t = parseInt(document.getElementById('deck-total').innerText);
-        if (t < 40 || t > 60) { alert(`Ajusta el deck entre 40 y 60 cartas.`); return; }
-        if (!analyzeConfirm.active) {
-            analyzeConfirm.active = true; btn.innerText = "CONFIRMAR ANÁLISIS"; btn.classList.add('confirm-analyze');
-            analyzeConfirm.timeout = setTimeout(() => { analyzeConfirm.active = false; btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze'); }, 2000);
-        } else {
-            clearTimeout(analyzeConfirm.timeout); executeAnalysis(); analyzeConfirm.active = false;
-            btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze');
-            document.getElementById('pdfBtn').style.display = 'block';
+    function iniciarTopCut() {
+        torneo.faseTop = true;
+        torneo.ronda++;
+        torneo.rondaTopActual = 1;
+        renderStandings();
+        const sorted = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
+        const num = torneo.usaTop === "TOP 4" ? 4 : 8;
+        const topPlayers = sorted.slice(0, num);
+        const pairs = [];
+        for(let i=0; i < num/2; i++) {
+            pairs.push({ j1Id: topPlayers[i].id, j2Id: topPlayers[num - 1 - i].id, ganador: null });
         }
+        torneo.pareos = pairs;
+        torneo.historicoPareos[torneo.ronda] = pairs;
     }
 
-    function handleDownloadClick() {
-        const btn = document.getElementById('pdfBtn');
-        if (!pdfConfirm.active) {
-            pdfConfirm.active = true; btn.innerText = "CONFIRMAR DESCARGA"; btn.classList.add('confirm-pdf');
-            pdfConfirm.timeout = setTimeout(() => { pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }, 2000);
-        } else { clearTimeout(pdfConfirm.timeout); generatePDF(); pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }
-    }
-
-    function handleDeleteClick() {
-        const btn = document.getElementById('deleteBtn');
-        if (!deleteConfirm.active) {
-            deleteConfirm.active = true;
-            btn.innerText = "CONFIRMAR VACIAR";
-            btn.classList.add('confirm-clear');
-            deleteConfirm.timeout = setTimeout(() => {
-                deleteConfirm.active = false;
-                btn.innerText = "CLEAR DECK";
-                btn.classList.remove('confirm-clear');
-            }, 3000);
-        } else {
-            clearTimeout(deleteConfirm.timeout);
-            localStorage.removeItem('ygo_deck_save');
-            location.reload();
-        }
-    }
-
-    function fisherYates(array) {
-        for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; }
-        return array;
-    }
-
-    function executeAnalysis() {
-        const fullDeck = [];
-        categories.forEach(cat => {
-            const catId = `cat-${cat.replace(/\s/g, '')}`;
-            document.querySelectorAll(`#${catId} .input-row`).forEach(row => {
-                const qty = parseInt(row.querySelector('.i-qty').value) || 0;
-                for(let i=0; i<qty; i++) fullDeck.push({ name: row.querySelector('.i-name').value || "Card", cat, h: row.querySelector('.hopt-checkbox')?.checked || false });
-            });
-        });
-        document.getElementById('results').style.display = 'block';
-        const t1Moda = runSimulationModa(fullDeck, 5, 'bar-t1', 'cons-t1');
-        runSimulationModa(fullDeck, 6, 'bar-t2', 'cons-t2');
-        calculateCustomTier(t1Moda);
-        window.scrollTo({ top: document.getElementById('results').offsetTop - 20, behavior: 'smooth' });
-    }
-
-    function calculateCustomTier(moda) {
-        let finalTier = "ERROR";
-        const sumHTBB = (moda["Hand Traps"] || 0) + (moda["Board Breakers"] || 0);
-        const sumStarExt = (moda["Starters"] || 0) + (moda["Extenders"] || 0);
-
-        for (let tr of customTierRules) {
-            let match = true;
-            if(tr.rules["Starters"] && !validateCondition(moda["Starters"] || 0, ...tr.rules["Starters"])) match = false;
-            if(match && tr.rules["Starters + Extenders"] && !validateCondition(sumStarExt, ...tr.rules["Starters + Extenders"])) match = false;
-            if(match && tr.rules["Hand Traps + Board Breakers"] && !validateCondition(sumHTBB, ...tr.rules["Hand Traps + Board Breakers"])) match = false;
-            if(match && tr.rules["Bricks"] && !validateCondition(moda["Bricks"] || 0, ...tr.rules["Bricks"])) match = false;
-            if (match) { finalTier = tr.name; break; }
-        }
-
-        const tierDiv = document.getElementById('tier-text');
-        tierDiv.className = 'tier-value';
-        tierDiv.innerText = finalTier === "ERROR" ? "TIER ERROR" : `TIER ${finalTier}`;
-        tierDiv.classList.add(`tier-${finalTier}`);
-    }
-
-    function validateCondition(val, min, op1, op2, max) {
-        let leftOk = false;
-        if (op1 === "<") leftOk = (min < val);
-        else if (op1 === "<=") leftOk = (min <= val);
-        else if (op1 === "==") leftOk = (min == val);
-
-        let rightOk = false;
-        if (op2 === "<") rightOk = (val < max);
-        else if (op2 === "<=") rightOk = (val <= max);
-        else if (op2 === "==") rightOk = (val == max);
-
-        return leftOk && rightOk;
-    }
-
-    function runSimulationModa(deck, handSize, barId, consId) {
-        const iterations = 10000;
-        const stats = { Starters: [], Extenders: [], "Hand Traps": [], "Board Breakers": [], Bricks: [] };
-        const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-        for(let i=0; i<iterations; i++) {
-            const hand = fisherYates([...deck]).slice(0, handSize);
-            const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-            const seen = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
-            hand.forEach(c => {
-                if (c.cat === "Bricks") handCount[c.cat]++;
-                else if (c.h) { if (!seen[c.cat].has(c.name)) { handCount[c.cat]++; seen[c.cat].add(c.name); } }
-                else handCount[c.cat]++;
-            });
-            for(const k in handCount) { stats[k].push(handCount[k]); if(handCount[k]>=1) successCount[k]++; }
-        }
-        const modaResult = {};
-        categories.forEach(cat => {
-            const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
-            let maxF = 0, mV = 0;
-            for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
-            if (mV === 0 && (successCount[cat]/iterations) >= 0.48) mV = 1;
-            modaResult[cat] = mV;
-        });
+    window.retrocederRonda = async function() {
+        if (torneo.ronda === 1) return;
+        const batch = writeBatch(db);
+        const rAnt = torneo.ronda;
         
-        const bar = document.getElementById(barId); bar.innerHTML = '';
-        let currentTotal = 0;
-        categories.forEach(cat => {
-            let val = Math.min(modaResult[cat], handSize - currentTotal);
-            if (val > 0) {
-                const seg = document.createElement('div'); 
-                seg.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
-                const widthPercent = (val / handSize) * 100;
-                seg.style.width = `${widthPercent}%`;
-                
-                const label = cat.toUpperCase();
-                if (widthPercent > 12) {
-                    seg.innerHTML = `<span>${val} ${label}</span>`;
-                } else {
-                    seg.innerHTML = `<span>${val}</span>`;
-                }
-                
-                if (widthPercent < 25) {
-                    seg.style.fontSize = "7.5px";
-                } else {
-                    seg.style.fontSize = "10px";
-                }
-                
-                bar.appendChild(seg); 
-                currentTotal += val;
+        jugadores.forEach(j => {
+            if (j.resultados.length >= 1) {
+                const ult = j.resultados.pop();
+                if (ult === 'W') j.puntos -= 3;
+                if (j.oponentes.length > 0) j.oponentes.pop();
+                j.rondasPerdidas = j.rondasPerdidas.filter(r => r !== rAnt);
+                batch.update(doc(db, "jugadores", j.id), j);
             }
         });
-
-        if (currentTotal < handSize) {
-            const rest = handSize - currentTotal;
-            const seg = document.createElement('div'); 
-            seg.className = 'bar-segment segment-Random';
-            const widthPercent = (rest / handSize) * 100;
-            seg.style.width = `${widthPercent}%`; 
-            seg.innerHTML = widthPercent > 12 ? `<span>${rest} RANDOM</span>` : `<span>${rest}</span>`;
-            if (widthPercent < 25) seg.style.fontSize = "7.5px";
-            bar.appendChild(seg);
+        
+        torneo.finalizado = false;
+        if (torneo.faseTop) {
+            if (torneo.rondaTopActual > 1) torneo.rondaTopActual--;
+            else { torneo.faseTop = false; torneo.rondaTopActual = 0; }
         }
+        torneo.ronda--;
+        torneo.pareos = torneo.historicoPareos[torneo.ronda];
+        torneo.pareos.forEach(p => { if(p.j2Id !== "BYE") p.ganador = null; });
+        batch.set(doc(db, "torneo", "estado"), torneo);
+        await batch.commit();
+    };
 
-        const consList = document.getElementById(consId); consList.innerHTML = '';
-        categories.forEach(cat => {
-            const p = ((successCount[cat]/iterations)*100).toFixed(1);
-            consList.innerHTML += `<div class="cons-bar-wrapper"><div class="cons-bar-text text-light">${cat}: ${p}%</div><div class="cons-bar-fill fill-${cat.replace(/\s/g, '')}" style="width:${p}%"></div></div>`;
-        });
-        return modaResult;
+    function renderPareos() {
+        let labelRonda = "";
+        if (!torneo.faseTop) {
+            labelRonda = `SUIZAS - Ronda ${torneo.ronda} / ${torneo.totalRondas}`;
+        } else {
+            const totalTops = torneo.usaTop === "TOP 4" ? 2 : 3;
+            labelRonda = (torneo.pareos.length === 1) ? `PLAYOFFS - FINAL` : `PLAYOFFS - ${torneo.rondaTopActual} / ${totalTops}`;
+        }
+        document.getElementById('txt-ronda-actual').innerText = labelRonda;
+        const lista = document.getElementById('pairings-list');
+        lista.innerHTML = torneo.pareos.map((p, i) => {
+            const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
+            const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
+            return `<div class="match-card">
+                <div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div>
+                <div style="color:#555">Mesa ${i+1}</div>
+                ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `<div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" onclick="marcarGanador(${i},'${p.j2Id}')">${p2.nombre}</div>`}
+            </div>`;
+        }).join('');
     }
 
-    async function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        const pdfW = doc.internal.pageSize.getWidth();
-        const pdfH = doc.internal.pageSize.getHeight();
-        const margin = 15;
-        const contentW = pdfW - (margin * 2);
-
-        const deckName = (document.getElementById('deck-name').value || "DECK").toUpperCase();
-        const tierText = document.getElementById('tier-text').innerText;
+    function renderStandings() {
+        let finalWinnerId = null;
+        let finalLoserId = null;
         
-        // --- PÁGINA 1: LISTADO DE CARTAS ---
-        doc.setFontSize(16); doc.setTextColor(0, 122, 255);
-        doc.text(deckName, margin, 20);
-        doc.setFontSize(10); doc.setTextColor(28, 28, 30);
-        doc.text(`Formato: ${document.getElementById('deck-format').value}`, margin, 28);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Clasificación: ${tierText}`, margin, 34);
-        doc.setFont(undefined, 'normal');
-        doc.line(margin, 38, pdfW - margin, 38);
-        
-        let y = 48;
-        let grandTotal = 0;
-        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-        categories.forEach(cat => {
-            const cards = savedData[cat] || [];
-            if (cards.length > 0) {
-                doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
-                doc.text(cat.toUpperCase(), margin, y); y += 6;
-                doc.setFont(undefined, 'normal'); doc.setTextColor(28, 28, 30);
-                let catCount = 0;
-                cards.forEach(card => {
-                    doc.text(`- ${card.name} x${card.qty} ${card.hopt ? '[HOPT]' : ''}`, margin + 5, y);
-                    catCount += card.qty;
-                    y += 5; if(y > 275) { doc.addPage(); y = 20; }
-                });
-                doc.setFont(undefined, 'italic'); doc.setTextColor(142, 142, 147); 
-                doc.text(`Total ${cat}: ${catCount}`, margin + 5, y);
-                grandTotal += catCount; y += 10; if(y > 275) { doc.addPage(); y = 20; }
-            }
-        });
-        doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 0, 0);
-        doc.text(`TOTAL DECK: ${grandTotal} CARTAS`, margin, y);
-
-        // --- PÁGINA 2: RESULTADOS GRÁFICOS (CENTRADO Y AJUSTADO) ---
-        doc.addPage();
-        const captureEl = document.getElementById('capture-container');
-        
-        // Capturamos el contenedor de resultados
-        const canvas = await html2canvas(captureEl, { scale: 3, useCORS: true, backgroundColor: "#F2F2F7" });
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Cálculo de dimensiones para que la imagen quepa en la hoja manteniendo el ratio
-        const imgRatio = canvas.height / canvas.width;
-        let finalImgW = contentW;
-        let finalImgH = finalImgW * imgRatio;
-
-        // Si la imagen resultante es más alta que la hoja, la escalamos por altura
-        if (finalImgH > (pdfH - margin * 2)) {
-            finalImgH = pdfH - margin * 2;
-            finalImgW = finalImgH / imgRatio;
+        if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) {
+            const finalMatch = torneo.pareos[0];
+            finalWinnerId = finalMatch.ganador;
+            finalLoserId = (finalWinnerId === finalMatch.j1Id) ? finalMatch.j2Id : finalMatch.j1Id;
         }
 
-        // Cálculo para centrado horizontal y vertical
-        const posX = (pdfW - finalImgW) / 2;
-        const posY = (pdfH - finalImgH) / 2;
+        jugadores.forEach(j => {
+            let sumWinRates = 0;
+            const opsValidos = j.oponentes.filter(o => o !== "BYE");
+            opsValidos.forEach(oid => {
+                const op = jugadores.find(x => x.id === oid);
+                if(op) {
+                    const wr = Math.max(0.33, op.puntos / (Math.max(1, op.resultados.length) * 3));
+                    sumWinRates += wr;
+                }
+            });
+            j.omw_raw = opsValidos.length ? (sumWinRates / opsValidos.length) : 0.33;
+        });
 
-        doc.addImage(imgData, 'PNG', posX, posY, finalImgW, finalImgH);
-        doc.save(`${deckName}_Reporte.pdf`);
+        jugadores.forEach(j => {
+            let sumOppOMW = 0;
+            const opsValidos = j.oponentes.filter(o => o !== "BYE");
+            opsValidos.forEach(oid => {
+                const op = jugadores.find(x => x.id === oid);
+                if(op) sumOppOMW += op.omw_raw;
+            });
+
+            const AA = j.puntos.toString().padStart(2, '0');
+            const BBB = Math.floor(j.omw_raw * 1000).toString().padStart(3, '0');
+            const oow_raw = opsValidos.length ? (sumOppOMW / opsValidos.length) : 0.33;
+            const CCC = Math.floor(oow_raw * 1000).toString().padStart(3, '0');
+            const DDD = j.rondasPerdidas.reduce((acc, r) => acc + (r * r), 0).toString().padStart(2, '0');
+            
+            let PRIO = "0";
+            if (finalWinnerId && j.id === finalWinnerId) PRIO = "9";
+            else if (finalLoserId && j.id === finalLoserId) PRIO = "8";
+            
+            j.tieBreaker = `${PRIO}${AA}${BBB}${CCC}${DDD}`;
+            j.ddd_val = DDD;
+        });
+
+        jugadores.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
+        
+        document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
+            const isChamp = torneo.finalizado && ((finalWinnerId && j.id === finalWinnerId) || (!torneo.faseTop && i === 0 && j.puntos > 0));
+            const isSecond = torneo.finalizado && ((finalLoserId && j.id === finalLoserId) || (!torneo.faseTop && i === 1 && j.puntos > 0));
+            
+            return `
+            <tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.15);' : isSecond ? 'background: rgba(255, 193, 7, 0.1);' : ''}">
+                <td>${isChamp && torneo.finalizado ? '🏆' : i+1}</td>
+                <td style="${isChamp ? 'color: var(--success); font-weight: bold;' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre}</td>
+                <td>${j.puntos}</td>
+                <td>${(parseInt(j.tieBreaker.substring(3,6))/10).toFixed(1)}%</td>
+                <td>${(parseInt(j.tieBreaker.substring(6,9))/10).toFixed(1)}%</td>
+                <td>${j.ddd_val}</td>
+                <td style="font-family:monospace; color:#666; font-size:10px;">${j.tieBreaker}</td>
+            </tr>`;
+        }).join('');
     }
+
+    window.reiniciarTorneo = async function() {
+        const batch = writeBatch(db);
+        const snaps = await getDocs(collection(db, "jugadores"));
+        snaps.forEach(d => batch.delete(d.ref));
+        batch.set(doc(db, "torneo", "estado"), { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0 });
+        await batch.commit();
+    };
 </script>
 </body>
 </html>
