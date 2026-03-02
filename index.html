@@ -29,6 +29,7 @@
         .stats-bar div { display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
         .stats-bar strong { color: var(--primary); font-size: 1.3em; }
 
+        /* Contenedor de entrada de texto */
         .input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #444; }
         
         input, select { 
@@ -82,16 +83,15 @@
         .nombre-historial { text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
         .nombre-inscrito { color: #2ecc71; font-weight: bold; }
 
-        /* ESTILOS DE TABLA REDUCIDOS PARA MEJOR VISIBILIDAD */
         .table-wrapper { 
             overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #333;
             touch-action: pan-x pan-y; 
         }
-        table { width: 100%; border-collapse: collapse; background: #151515; font-size: 0.95em; } /* Reducción de fuente base */
-        th, td { padding: 10px 8px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; } /* Menos padding */
+        table { width: 100%; border-collapse: collapse; background: #151515; font-size: 0.95em; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; }
         th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.8em; font-weight: 900; }
         
-        .col-pts { font-size: 1.2em; color: var(--warning); font-weight: 900; } /* Puntos un poco más pequeños */
+        .col-pts { font-size: 1.2em; color: var(--warning); font-weight: 900; }
         .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.1em; font-weight: bold; background: rgba(0, 212, 255, 0.05); letter-spacing: 0px; }
 
         .confirming { background: var(--danger) !important; color: white !important; animation: blink 0.5s infinite; }
@@ -101,7 +101,7 @@
             .stats-bar { flex-direction: row; justify-content: space-around; }
             .pairings-grid { grid-template-columns: repeat(2, 1fr); }
             .input-box { flex-direction: row; }
-            table { font-size: 1.05em; } /* En PC se ve un poco más grande */
+            table { font-size: 1.05em; }
         }
     </style>
 </head>
@@ -123,7 +123,7 @@
         </div>
     </div>
 
-    <div class="input-box">
+    <div id="entry-section" class="input-box">
         <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
         <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
     </div>
@@ -246,6 +246,14 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
+        // Lógica de visibilidad del input de entrada
+        const entrySection = document.getElementById('entry-section');
+        if (torneo.faseTop) {
+            entrySection.style.display = 'none'; // Se oculta en Playoffs
+        } else {
+            entrySection.style.display = 'flex'; // Visible en registro y suizas
+        }
+
         if (!torneo.activa && !torneo.finalizado) {
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
@@ -289,21 +297,27 @@
 
     function renderHistorial() {
         const div = document.getElementById('lista-historial-global');
+        // También ocultamos la capacidad de reinscribir desde el historial si estamos en fase Top
         div.innerHTML = historial.map(h => {
             const yaInscrito = jugadores.some(j => j.nombre.toUpperCase() === h.nombre.toUpperCase());
             return `<div class="historial-item">
                 <span class="nombre-historial ${yaInscrito ? 'nombre-inscrito' : ''}">${h.nombre}</span>
                 <div style="display:flex; gap:8px;">
-                    ${!yaInscrito ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
+                    ${(!yaInscrito && !torneo.faseTop) ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
                     <button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>
                 </div>
             </div>`;
         }).join('');
     }
 
-    window.reInscribir = function(nombre) { document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
+    window.reInscribir = function(nombre) { 
+        if(torneo.faseTop) return; 
+        document.getElementById('nombreCompleto').value = nombre.toUpperCase(); 
+        registrarDuelista(); 
+    };
 
     window.registrarDuelista = async function() {
+        if(torneo.faseTop) return;
         const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
         if(!full) return;
         const id = Date.now().toString();
