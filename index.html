@@ -7,71 +7,46 @@
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; }
         
-        /* Bloqueo visual de gestos */
         html, body { 
             font-family: 'Segoe UI', sans-serif; 
             background: var(--bg); 
             color: #f0f0f0; 
             padding: 10px; 
             margin: 0; 
-            /* Desactiva gestos nativos del navegador */
-            touch-action: none; 
+            /* CORRECCIÓN: Permite desplazar verticalmente (pan-y) pero bloquea zoom */
+            touch-action: pan-y; 
             -webkit-text-size-adjust: 100%;
-            overscroll-behavior: none;
+            overscroll-behavior: contain;
         }
         
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
-        
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
         .stats-bar { 
-            background: #222; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-bottom: 25px; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            border-left: 5px solid var(--primary); 
-            gap: 15px; 
-            font-size: 1.1em;
-            text-align: center;
+            background: #222; padding: 15px; border-radius: 10px; margin-bottom: 25px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            border-left: 5px solid var(--primary); gap: 15px; font-size: 1.1em; text-align: center;
         }
-        
         .stats-bar div { display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
         .stats-bar strong { color: var(--primary); font-size: 1.3em; }
 
         .input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #444; }
         
-        /* Font-size a 16px para que iOS no haga zoom al enfocar */
         input, select { 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: 1px solid #444; 
-            background: #2b2b2b; 
-            color: white; 
-            outline: none; 
-            font-size: 16px; 
-            text-transform: uppercase; 
+            padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2b2b2b; 
+            color: white; outline: none; font-size: 16px; text-transform: uppercase; 
         }
         
         #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
 
         button { 
-            padding: 15px 20px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: 0.2s; 
-            font-size: 1.1em; 
-            text-transform: uppercase;
+            padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; 
+            font-weight: bold; transition: 0.2s; font-size: 1.1em; text-transform: uppercase;
+            touch-action: manipulation;
         }
         
         .btn-add { background: var(--primary); color: white; width: 100%; }
         .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
-        
         .btn-delete-node { background: var(--danger); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.2em; }
         .btn-plus { background: var(--success); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.4em; }
         .btn-confirm-green { background: var(--success) !important; }
@@ -90,12 +65,9 @@
         .nombre-inscrito { color: #2ecc71; font-weight: bold; }
 
         .table-wrapper { 
-            overflow-x: auto; 
-            margin-top: 30px; 
-            border-radius: 10px; 
-            border: 1px solid #333;
-            /* Permite scroll dentro de la tabla aunque el body esté bloqueado */
-            touch-action: pan-x; 
+            overflow-x: auto; margin-top: 30px; border-radius: 10px; border: 1px solid #333;
+            /* Permite scroll horizontal en la tabla y vertical en la pantalla */
+            touch-action: pan-x pan-y; 
         }
         table { width: 100%; border-collapse: collapse; background: #151515; font-size: 1.1em; }
         th, td { padding: 15px 10px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; }
@@ -179,31 +151,21 @@
 </div>
 
 <script>
-    // 1. Bloquea el gesto de pinza (dos dedos)
+    // BLOQUEO DE ZOOM PERO PERMITIENDO SCROLL
     document.addEventListener('touchstart', function (event) {
         if (event.touches.length > 1) {
-            event.preventDefault();
+            event.preventDefault(); // Bloquea zoom de dos dedos
         }
     }, { passive: false });
 
-    // 2. Bloquea el doble toque (double-tap to zoom)
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function (event) {
         const now = (new Date()).getTime();
         if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
+            event.preventDefault(); // Bloquea doble toque para zoom
         }
         lastTouchEnd = now;
     }, false);
-
-    // 3. Bloquea el scroll horizontal accidental del body
-    document.addEventListener('touchmove', function(event) {
-        // Solo permite el scroll si el objetivo está dentro de la tabla de standings
-        if (!event.target.closest('.table-wrapper')) {
-            // Aquí podrías dejar pasar el scroll vertical, pero bloqueamos el zoom
-            if (event.scale !== 1) { event.preventDefault(); }
-        }
-    }, { passive: false });
 </script>
 
 <script type="module">
@@ -524,6 +486,7 @@
 </script>
 </body>
 </html>
+
 
 
 
