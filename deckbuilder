@@ -1,1 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YGO DECK BUILDER V1.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-gray: #D1D1D6;
+            --ios-white: #FFFFFF;
+            --ios-text: #1C1C1E;
+            --ios-secondary: #8E8E93;
+            --shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --aqua-strong: #00CED1; 
+            --purple-strong: #9370DB; 
+        }
 
+        html, body { overflow-x: hidden; touch-action: pan-y; -webkit-text-size-adjust: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--ios-bg);
+            color: var(--ios-text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        .container { width: 100%; max-width: 480px; }
+
+        header { text-align: center; margin: 20px 0 25px; }
+        header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
+        header p { font-size: 13px; color: var(--ios-secondary); margin-top: 5px; }
+
+        .deck-header-info {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: 1fr 1fr 44px;
+            gap: 8px;
+            box-sizing: border-box;
+            align-items: center;
+        }
+
+        .deck-header-info input { width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px; }
+
+        .btn-gear {
+            background: #E5E5EA;
+            border: none;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--ios-secondary);
+        }
+        
+        .btn-gear.confirm-config { background: var(--ios-green); color: white; }
+
+        .card {
+            background: var(--ios-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 0.5px solid #E5E5EA;
+        }
+
+        .category-title { font-weight: 700; font-size: 17px; color: var(--ios-blue); }
+        
+        .category-footer {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 0.5px dashed #E5E5EA;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ios-secondary);
+            text-align: right;
+        }
+
+        .add-btn {
+            background: #F2F2F7; border: none; border-radius: 50%; width: 28px; height: 28px;
+            font-size: 18px; color: var(--ios-blue); cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        .input-row {
+            display: grid; grid-template-columns: 1fr 60px 50px; gap: 10px; margin-bottom: 10px; align-items: center;
+        }
+
+        input, select {
+            background: #F2F2F7; border: none; border-radius: 10px; padding: 12px; font-size: 15px; outline: none; user-select: text;
+        }
+
+        .hopt-checkbox { width: 20px; height: 20px; accent-color: var(--ios-blue); }
+
+        .btn-ios {
+            border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
+            width: 100%; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn-blue { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
+        .btn-purple { background: var(--purple-strong); color: white; box-shadow: 0 4px 12px rgba(147, 112, 219, 0.2); }
+        
+        .btn-ios.confirm-analyze, .btn-ios.confirm-sync { background: var(--ios-green); transform: scale(1.02); color: white;}
+        .btn-ios.confirm-clear { background: var(--ios-red) !important; transform: scale(1.02); color: white; }
+        
+        .btn-pdf { background: var(--ios-blue); color: white; margin-top: 10px; display: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
+        .btn-pdf.confirm-pdf { background: var(--ios-green); transform: scale(1.02); }
+
+        .total-section { 
+            text-align: center; 
+            margin: 20px 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100%;
+        }
+
+        .total-badge { 
+            display: block; 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin-bottom: 30px; 
+            color: var(--ios-secondary);
+            text-align: center;
+            width: 100%;
+        }
+
+        .results-area { display: none; margin-top: 10px; width: 100%; box-sizing: border-box; }
+        #capture-container { 
+            background-color: #F2F2F7; 
+            padding: 15px; 
+            width: 100%; 
+            max-width: 480px; 
+            border-radius: 20px; 
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
+
+        .result-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 15px; box-shadow: var(--shadow); }
+
+        .tier-card {
+            background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
+            color: white; text-align: center; padding: 25px; border-radius: 18px; margin-bottom: 15px;
+        }
+        .tier-label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 5px; }
+        .tier-value { font-size: 30px; font-weight: 900; letter-spacing: -1px; }
+        .tier-S { color: #FFD700; text-shadow: 0 0 15px rgba(255,215,0,0.6); }
+        .tier-A { color: var(--ios-green); }
+        .tier-B { color: var(--ios-blue); }
+        .tier-C { color: #FF9500; }
+        .tier-ERROR { color: var(--ios-red); opacity: 0.8; }
+
+        .hand-bar-container {
+            height: 60px; width: 100%; background: #E5E5EA; border-radius: 12px;
+            display: flex; overflow: hidden; margin: 15px 0; border: 0.5px solid #D1D1D6;
+        }
+        .bar-segment {
+            height: 100%; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 800; color: white; text-shadow: 0px 1px 1px rgba(0,0,0,0.2);
+            overflow: hidden; text-align: center; white-space: nowrap; padding: 0 4px;
+        }
+
+        .cons-bar-wrapper {
+            height: 32px; width: 100%; background: #E5E5EA; border-radius: 8px;
+            margin-bottom: 10px; overflow: hidden; position: relative;
+            display: flex; align-items: center;
+        }
+        .cons-bar-fill { height: 100%; transition: width 0.6s ease-out; }
+        .cons-bar-text {
+            position: absolute; width: 100%; text-align: center; left: 0;
+            font-size: 12px; font-weight: 800; text-transform: uppercase;
+            z-index: 2; pointer-events: none;
+        }
+
+        .segment-Starters, .fill-Starters { background-color: var(--ios-green); }
+        .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); } 
+        .segment-HandTraps, .fill-HandTraps { background-color: var(--ios-blue); }
+        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); } 
+        .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
+        .segment-Random, .fill-Random { background-color: #8E8E93; }
+
+        .text-light { color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); }
+
+        .cloud-list {
+            background: var(--ios-card); border-radius: 16px; padding: 10px; margin-top: 15px;
+            box-shadow: var(--shadow); display: none; width: 100%; box-sizing: border-box;
+        }
+        .cloud-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 12px;
+            border-bottom: 0.5px solid var(--ios-gray);
+        }
+        
+        #tier-config-panel { display: none; margin-bottom: 20px; width: 100%; }
+        .rule-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 10px; box-shadow: var(--shadow); }
+        .rule-row { display: grid; grid-template-columns: 45px 55px 1fr 60px 45px; gap: 5px; align-items: center; margin-bottom: 8px; font-size: 10px; }
+        .rule-row span { font-weight: 800; color: var(--ios-blue); text-align: center; line-height: 1.1; }
+        .rule-row input, .rule-row select { padding: 5px; font-size: 12px; border-radius: 6px; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>YGO DECK BUILDER V1.0</h1>
+        <p>Designed by Ismael Villamagua</p>
+    </header>
+
+    <div class="deck-header-info">
+        <input type="text" id="deck-name" placeholder="Nombre del Deck" oninput="saveAll()">
+        <input type="text" id="deck-format" placeholder="Formato" oninput="saveAll()">
+        <button id="configBtn" class="btn-gear" onclick="handleConfigClick()">⚙️</button>
+    </div>
+
+    <div id="tier-config-panel">
+        <div id="rules-container"></div>
+        <button class="btn-ios btn-blue" onclick="addTierDefinition()" style="font-size:13px; padding:10px; background:var(--ios-gray); color:var(--ios-text)">+ AÑADIR NUEVO TIER</button>
+    </div>
+
+    <div id="categories-main"></div>
+    
+    <div class="total-section">
+        <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
+
+        <button id="syncBtn" class="btn-ios btn-purple" onclick="handleSyncClick()">GUARDAR DECK</button>
+        <button id="viewCloudBtn" class="btn-ios btn-purple" onclick="toggleCloudList()">ABRIR DECK</button>
+        
+        <div id="cloud-explorer" class="cloud-list">
+            <div style="font-weight: bold; margin-bottom: 10px; color: var(--ios-secondary); text-align: left; padding-left: 10px;">TUS DECKBOX</div>
+            <div id="cloud-items-container"></div>
+        </div>
+
+        <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
+        <button id="deleteBtn" class="btn-ios btn-blue" onclick="handleDeleteClick()">CLEAR DECK</button>
+    </div>
+
+    <div id="results" class="results-area">
+        <div id="capture-container">
+            <div id="tier-result" class="tier-card">
+                <div class="tier-label">CLASIFICACIÓN</div>
+                <div id="tier-text" class="tier-value">TIER ERROR</div>
+            </div>
+            <div class="result-card">
+                <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 1 (5 Draws)</div>
+                <div id="bar-t1" class="hand-bar-container"></div>
+                <div id="cons-t1" class="consistency-list"></div>
+            </div>
+            <div class="result-card">
+                <div class="category-title" style="color:var(--ios-text)">Mano Probable: Turno 2 (6 Draws)</div>
+                <div id="bar-t2" class="hand-bar-container"></div>
+                <div id="cons-t2" class="consistency-list"></div>
+            </div>
+        </div>
+        <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
+        authDomain: "ygoismaelvillamagua.firebaseapp.com",
+        projectId: "ygoismaelvillamagua",
+        storageBucket: "ygoismaelvillamagua.firebasestorage.app",
+        messagingSenderId: "624990862859",
+        appId: "1:624990862859:web:170630e1e94d29fb3d910e",
+        measurementId: "G-TXKEZS7MRT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let syncConfirm = { active: false, timeout: null };
+    let delCloudConfirm = { id: null, timeout: null };
+
+    window.handleSyncClick = async () => {
+        const btn = document.getElementById('syncBtn');
+        const deckNameInput = document.getElementById('deck-name').value.trim().toUpperCase();
+        if (!deckNameInput) { alert("Por favor, ingresa un NOMBRE DEL DECK."); return; }
+        if (!syncConfirm.active) {
+            syncConfirm.active = true;
+            btn.innerText = "CONFIRMAR GUARDADO";
+            btn.classList.add('confirm-sync');
+            syncConfirm.timeout = setTimeout(() => {
+                syncConfirm.active = false; btn.innerText = "GUARDAR DECK"; btn.classList.remove('confirm-sync');
+            }, 2500);
+        } else {
+            clearTimeout(syncConfirm.timeout);
+            btn.innerText = "CONECTANDO...";
+            try {
+                const docRef = doc(db, "decks", deckNameInput);
+                const currentData = JSON.parse(localStorage.getItem('ygo_deck_save'));
+                if (currentData) { await setDoc(docRef, currentData); alert(`¡Deck "${deckNameInput}" guardado!`); }
+            } catch (error) { alert("Error de conexión con Firebase."); }
+            syncConfirm.active = false; btn.innerText = "GUARDAR DECK"; btn.classList.remove('confirm-sync');
+        }
+    };
+
+    window.toggleCloudList = async () => {
+        const container = document.getElementById('cloud-explorer');
+        const list = document.getElementById('cloud-items-container');
+        if (container.style.display === 'block') { container.style.display = 'none'; return; }
+        list.innerHTML = "<p style='padding:10px; font-size:12px;'>Cargando biblioteca...</p>";
+        container.style.display = 'block';
+        try {
+            const querySnapshot = await getDocs(collection(db, "decks"));
+            list.innerHTML = "";
+            if(querySnapshot.empty) { list.innerHTML = "<p style='padding:10px; font-size:12px;'>La biblioteca está vacía.</p>"; return; }
+            querySnapshot.forEach((docSnap) => {
+                const name = docSnap.id;
+                const row = document.createElement('div');
+                row.className = 'cloud-item';
+                row.innerHTML = `<span onclick="loadFromCloud('${name}')" style="cursor:pointer; flex-grow:1; font-weight:600; font-size:14px;">${name}</span><button class="btn-delete-cloud" id="del-${name}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:8px 12px; font-size:11px; font-weight:bold;" onclick="handleCloudDelete('${name}')">BORRAR</button>`;
+                list.appendChild(row);
+            });
+        } catch (e) { alert("Error al acceder a la nube."); }
+    };
+
+    window.loadFromCloud = async (name) => {
+        try {
+            const docRef = doc(db, "decks", name);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) { localStorage.setItem('ygo_deck_save', JSON.stringify(docSnap.data())); location.reload(); }
+        } catch (e) { alert("Error al cargar."); }
+    };
+
+    window.handleCloudDelete = async (name) => {
+        const btn = document.getElementById(`del-${name}`);
+        if (delCloudConfirm.id !== name) {
+            delCloudConfirm.id = name;
+            btn.innerText = "CONFIRMAR"; btn.style.background = "var(--ios-red)";
+            delCloudConfirm.timeout = setTimeout(() => { delCloudConfirm.id = null; btn.innerText = "BORRAR"; btn.style.background = "var(--ios-blue)"; }, 2000);
+        } else {
+            clearTimeout(delCloudConfirm.timeout);
+            try { await deleteDoc(doc(db, "decks", name)); window.toggleCloudList(); } catch (e) { alert("Error al eliminar."); }
+            delCloudConfirm.id = null;
+        }
+    };
+</script>
+
+<script>
+    const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
+    let analyzeConfirm = { active: false, timeout: null };
+    let deleteConfirm = { active: false, timeout: null };
+    let pdfConfirm = { active: false, timeout: null };
+    let configConfirm = { active: false, timeout: null };
+    let delTierConfirm = { idx: null, timeout: null };
+    
+    let customTierRules = [];
+
+    window.onload = () => {
+        const mainContainer = document.getElementById('categories-main');
+        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
+        document.getElementById('deck-name').value = savedData.deckName || "";
+        document.getElementById('deck-format').value = savedData.deckFormat || "";
+        
+        customTierRules = savedData.tierRules || [
+            { name: "S", rules: { "Starters": [1, "<=", "<=", 2], "Starters + Extenders": [1, "<=", "<=", 3], "Hand Traps + Board Breakers": [2, "<=", "<=", 5], "Bricks": [0, "==", "==", 0] } },
+            { name: "A", rules: { "Starters": [1, "<=", "<=", 2], "Starters + Extenders": [1, "<=", "<=", 3], "Hand Traps + Board Breakers": [1, "<=", "<=", 5], "Bricks": [0, "<=", "<=", 5] } }
+        ];
+
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+            cardDiv.id = catId;
+            const singleCat = cat.endsWith('s') ? cat.slice(0, -1) : cat;
+            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div><div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>`;
+            mainContainer.appendChild(cardDiv);
+            if (savedData[cat] && savedData[cat].length > 0) { savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`)); }
+            else { addRow(catId, '', '', true, `Nombre ${singleCat}`); }
+        });
+
+        renderTierRules();
+        saveAll();
+        updateTotal();
+    };
+
+    function handleConfigClick() {
+        const btn = document.getElementById('configBtn');
+        const panel = document.getElementById('tier-config-panel');
+        if (!configConfirm.active) {
+            configConfirm.active = true; btn.classList.add('confirm-config');
+            configConfirm.timeout = setTimeout(() => { configConfirm.active = false; btn.classList.remove('confirm-config'); }, 2500);
+        } else {
+            clearTimeout(configConfirm.timeout);
+            panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+            configConfirm.active = false; btn.classList.remove('confirm-config');
+            saveAll();
+        }
+    }
+
+    function addTierDefinition() {
+        customTierRules.push({ 
+            name: "NEW", 
+            rules: { "Starters": [0, "<=", "<=", 5], "Starters + Extenders": [0, "<=", "<=", 10], "Hand Traps + Board Breakers": [0, "<=", "<=", 10], "Bricks": [0, "<=", "<=", 5] } 
+        });
+        renderTierRules();
+    }
+
+    function renderTierRules() {
+        const container = document.getElementById('rules-container');
+        container.innerHTML = "";
+        const visibleRuleKeys = ["Starters", "Starters + Extenders", "Hand Traps + Board Breakers", "Bricks"];
+
+        customTierRules.forEach((tr, idx) => {
+            const div = document.createElement('div');
+            div.className = "rule-card";
+            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-weight:900; font-size:14px; color:var(--ios-text)">TIER:</span>
+                    <input type="text" value="${tr.name}" oninput="updateTierRuleName(${idx}, this.value)" style="width:60px; font-weight:900; background:var(--ios-gray); padding:5px;">
+                </div>
+                <button class="btn-delete-tier" id="del-tier-${idx}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:bold;" onclick="handleTierDelete(${idx})">BORRAR</button>
+            </div>`;
+            
+            visibleRuleKeys.forEach(key => {
+                const r = tr.rules[key] || [0, "<=", "<=", 5];
+                html += `<div class="rule-row">
+                    <input type="number" value="${r[0]}" oninput="updateTierValue(${idx},'${key}',0,this.value)">
+                    <select onchange="updateTierValue(${idx},'${key}',1,this.value)">
+                        <option value="<" ${r[1]=='<'?'selected':''}> < </option>
+                        <option value="<=" ${r[1]=='<='?'selected':''}> <= </option>
+                        <option value="==" ${r[1]=='=='?'selected':''}> == </option>
+                    </select>
+                    <span>${key.toUpperCase()}</span>
+                    <select onchange="updateTierValue(${idx},'${key}',2,this.value)">
+                        <option value="<" ${r[2]=='<'?'selected':''}> < </option>
+                        <option value="<=" ${r[2]=='<='?'selected':''}> <= </option>
+                        <option value="==" ${r[2]=='=='?'selected':''}> == </option>
+                    </select>
+                    <input type="number" value="${r[3]}" oninput="updateTierValue(${idx},'${key}',3,this.value)">
+                </div>`;
+            });
+            div.innerHTML = html;
+            container.appendChild(div);
+        });
+    }
+
+    function updateTierRuleName(idx, val) { customTierRules[idx].name = val.toUpperCase(); saveAll(); }
+    function updateTierValue(idx, key, pos, val) { 
+        if(!customTierRules[idx].rules[key]) customTierRules[idx].rules[key] = [0, "<=", "<=", 5];
+        customTierRules[idx].rules[key][pos] = isNaN(parseInt(val)) ? val : parseInt(val); 
+        saveAll(); 
+    }
+
+    function handleTierDelete(idx) {
+        const btn = document.getElementById(`del-tier-${idx}`);
+        if (delTierConfirm.idx !== idx) {
+            delTierConfirm.idx = idx;
+            btn.innerText = "CONFIRMAR"; btn.style.background = "var(--ios-red)";
+            delTierConfirm.timeout = setTimeout(() => { delTierConfirm.idx = null; btn.innerText = "BORRAR"; btn.style.background = "var(--ios-blue)"; }, 2000);
+        } else {
+            clearTimeout(delTierConfirm.timeout);
+            customTierRules.splice(idx, 1);
+            renderTierRules();
+            saveAll();
+            delTierConfirm.idx = null;
+        }
+    }
+
+    function addRow(catId, name = '', qty = '', hopt = true, placeholder = 'Nombre') {
+        const target = document.querySelector(`#${catId} .rows-container`);
+        const row = document.createElement('div');
+        row.className = 'input-row';
+        const isBrick = catId === 'cat-Bricks';
+        const hoptHtml = isBrick ? '' : `<div style="display:flex; flex-direction:column; align-items:center;"><input type="checkbox" class="hopt-checkbox" ${hopt ? 'checked' : ''} onchange="saveAll()"><span style="font-size:9px; color:var(--ios-secondary)">HOPT</span></div>`;
+        row.innerHTML = `<input type="text" placeholder="${placeholder}" class="i-name" value="${name}" oninput="saveAll()"><input type="number" placeholder="0" class="i-qty" min="0" max="3" value="${qty}" oninput="saveAll()">${hoptHtml}`;
+        target.appendChild(row);
+        updateTotal();
+    }
+
+    function saveAll() {
+        const dataToSave = { 
+            deckName: document.getElementById('deck-name').value, 
+            deckFormat: document.getElementById('deck-format').value,
+            tierRules: customTierRules
+        };
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            let catSum = 0;
+            dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
+                const qtyVal = parseInt(row.querySelector('.i-qty').value || 0);
+                catSum += qtyVal;
+                return { name: row.querySelector('.i-name').value, qty: qtyVal, hopt: row.querySelector('.hopt-checkbox')?.checked || false };
+            }).filter(card => card.name !== '' || card.qty !== 0);
+            document.getElementById(`total-val-${catId}`).innerText = catSum;
+        });
+        localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
+        updateTotal();
+    }
+
+    function updateTotal() {
+        let t = 0;
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            let catSum = 0;
+            document.querySelectorAll(`#${catId} .i-qty`).forEach(i => catSum += parseInt(i.value || 0));
+            t += catSum;
+        });
+        const badge = document.getElementById('deck-total');
+        badge.innerText = t;
+        badge.style.color = (t < 40 || t > 60) ? 'var(--ios-red)' : 'var(--ios-green)';
+    }
+
+    function handleAnalyzeClick() {
+        const btn = document.getElementById('mainBtn');
+        const t = parseInt(document.getElementById('deck-total').innerText);
+        if (t < 40 || t > 60) { alert(`Ajusta el deck entre 40 y 60 cartas.`); return; }
+        if (!analyzeConfirm.active) {
+            analyzeConfirm.active = true; btn.innerText = "CONFIRMAR ANÁLISIS"; btn.classList.add('confirm-analyze');
+            analyzeConfirm.timeout = setTimeout(() => { analyzeConfirm.active = false; btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze'); }, 2000);
+        } else {
+            clearTimeout(analyzeConfirm.timeout); executeAnalysis(); analyzeConfirm.active = false;
+            btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze');
+            document.getElementById('pdfBtn').style.display = 'block';
+        }
+    }
+
+    function handleDownloadClick() {
+        const btn = document.getElementById('pdfBtn');
+        if (!pdfConfirm.active) {
+            pdfConfirm.active = true; btn.innerText = "CONFIRMAR DESCARGA"; btn.classList.add('confirm-pdf');
+            pdfConfirm.timeout = setTimeout(() => { pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }, 2000);
+        } else { clearTimeout(pdfConfirm.timeout); generatePDF(); pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }
+    }
+
+    function handleDeleteClick() {
+        const btn = document.getElementById('deleteBtn');
+        if (!deleteConfirm.active) {
+            deleteConfirm.active = true;
+            btn.innerText = "CONFIRMAR VACIAR";
+            btn.classList.add('confirm-clear');
+            deleteConfirm.timeout = setTimeout(() => {
+                deleteConfirm.active = false;
+                btn.innerText = "CLEAR DECK";
+                btn.classList.remove('confirm-clear');
+            }, 3000);
+        } else {
+            clearTimeout(deleteConfirm.timeout);
+            localStorage.removeItem('ygo_deck_save');
+            location.reload();
+        }
+    }
+
+    function fisherYates(array) {
+        for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; }
+        return array;
+    }
+
+    function executeAnalysis() {
+        const fullDeck = [];
+        categories.forEach(cat => {
+            const catId = `cat-${cat.replace(/\s/g, '')}`;
+            document.querySelectorAll(`#${catId} .input-row`).forEach(row => {
+                const qty = parseInt(row.querySelector('.i-qty').value) || 0;
+                for(let i=0; i<qty; i++) fullDeck.push({ name: row.querySelector('.i-name').value || "Card", cat, h: row.querySelector('.hopt-checkbox')?.checked || false });
+            });
+        });
+        document.getElementById('results').style.display = 'block';
+        const t1Moda = runSimulationModa(fullDeck, 5, 'bar-t1', 'cons-t1');
+        runSimulationModa(fullDeck, 6, 'bar-t2', 'cons-t2');
+        calculateCustomTier(t1Moda);
+        window.scrollTo({ top: document.getElementById('results').offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function calculateCustomTier(moda) {
+        let finalTier = "ERROR";
+        const sumHTBB = (moda["Hand Traps"] || 0) + (moda["Board Breakers"] || 0);
+        const sumStarExt = (moda["Starters"] || 0) + (moda["Extenders"] || 0);
+
+        for (let tr of customTierRules) {
+            let match = true;
+            if(tr.rules["Starters"] && !validateCondition(moda["Starters"] || 0, ...tr.rules["Starters"])) match = false;
+            if(match && tr.rules["Starters + Extenders"] && !validateCondition(sumStarExt, ...tr.rules["Starters + Extenders"])) match = false;
+            if(match && tr.rules["Hand Traps + Board Breakers"] && !validateCondition(sumHTBB, ...tr.rules["Hand Traps + Board Breakers"])) match = false;
+            if(match && tr.rules["Bricks"] && !validateCondition(moda["Bricks"] || 0, ...tr.rules["Bricks"])) match = false;
+            if (match) { finalTier = tr.name; break; }
+        }
+
+        const tierDiv = document.getElementById('tier-text');
+        tierDiv.className = 'tier-value';
+        tierDiv.innerText = finalTier === "ERROR" ? "TIER ERROR" : `TIER ${finalTier}`;
+        tierDiv.classList.add(`tier-${finalTier}`);
+    }
+
+    function validateCondition(val, min, op1, op2, max) {
+        let leftOk = false;
+        if (op1 === "<") leftOk = (min < val);
+        else if (op1 === "<=") leftOk = (min <= val);
+        else if (op1 === "==") leftOk = (min == val);
+
+        let rightOk = false;
+        if (op2 === "<") rightOk = (val < max);
+        else if (op2 === "<=") rightOk = (val <= max);
+        else if (op2 === "==") rightOk = (val == max);
+
+        return leftOk && rightOk;
+    }
+
+    function runSimulationModa(deck, handSize, barId, consId) {
+        const iterations = 10000;
+        const stats = { Starters: [], Extenders: [], "Hand Traps": [], "Board Breakers": [], Bricks: [] };
+        const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
+        for(let i=0; i<iterations; i++) {
+            const hand = fisherYates([...deck]).slice(0, handSize);
+            const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
+            const seen = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
+            hand.forEach(c => {
+                if (c.cat === "Bricks") handCount[c.cat]++;
+                else if (c.h) { if (!seen[c.cat].has(c.name)) { handCount[c.cat]++; seen[c.cat].add(c.name); } }
+                else handCount[c.cat]++;
+            });
+            for(const k in handCount) { stats[k].push(handCount[k]); if(handCount[k]>=1) successCount[k]++; }
+        }
+        const modaResult = {};
+        categories.forEach(cat => {
+            const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
+            let maxF = 0, mV = 0;
+            for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
+            if (mV === 0 && (successCount[cat]/iterations) >= 0.48) mV = 1;
+            modaResult[cat] = mV;
+        });
+        
+        const bar = document.getElementById(barId); bar.innerHTML = '';
+        let currentTotal = 0;
+        categories.forEach(cat => {
+            let val = Math.min(modaResult[cat], handSize - currentTotal);
+            if (val > 0) {
+                const seg = document.createElement('div'); 
+                seg.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
+                const widthPercent = (val / handSize) * 100;
+                seg.style.width = `${widthPercent}%`;
+                
+                const label = cat.toUpperCase();
+                if (widthPercent > 12) {
+                    seg.innerHTML = `<span>${val} ${label}</span>`;
+                } else {
+                    seg.innerHTML = `<span>${val}</span>`;
+                }
+                
+                if (widthPercent < 25) {
+                    seg.style.fontSize = "7.5px";
+                } else {
+                    seg.style.fontSize = "10px";
+                }
+                
+                bar.appendChild(seg); 
+                currentTotal += val;
+            }
+        });
+
+        if (currentTotal < handSize) {
+            const rest = handSize - currentTotal;
+            const seg = document.createElement('div'); 
+            seg.className = 'bar-segment segment-Random';
+            const widthPercent = (rest / handSize) * 100;
+            seg.style.width = `${widthPercent}%`; 
+            seg.innerHTML = widthPercent > 12 ? `<span>${rest} RANDOM</span>` : `<span>${rest}</span>`;
+            if (widthPercent < 25) seg.style.fontSize = "7.5px";
+            bar.appendChild(seg);
+        }
+
+        const consList = document.getElementById(consId); consList.innerHTML = '';
+        categories.forEach(cat => {
+            const p = ((successCount[cat]/iterations)*100).toFixed(1);
+            consList.innerHTML += `<div class="cons-bar-wrapper"><div class="cons-bar-text text-light">${cat}: ${p}%</div><div class="cons-bar-fill fill-${cat.replace(/\s/g, '')}" style="width:${p}%"></div></div>`;
+        });
+        return modaResult;
+    }
+
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pdfW = doc.internal.pageSize.getWidth();
+        const pdfH = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        const contentW = pdfW - (margin * 2);
+
+        const deckName = (document.getElementById('deck-name').value || "DECK").toUpperCase();
+        const tierText = document.getElementById('tier-text').innerText;
+        
+        // --- PÁGINA 1: LISTADO DE CARTAS ---
+        doc.setFontSize(16); doc.setTextColor(0, 122, 255);
+        doc.text(deckName, margin, 20);
+        doc.setFontSize(10); doc.setTextColor(28, 28, 30);
+        doc.text(`Formato: ${document.getElementById('deck-format').value}`, margin, 28);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Clasificación: ${tierText}`, margin, 34);
+        doc.setFont(undefined, 'normal');
+        doc.line(margin, 38, pdfW - margin, 38);
+        
+        let y = 48;
+        let grandTotal = 0;
+        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
+        categories.forEach(cat => {
+            const cards = savedData[cat] || [];
+            if (cards.length > 0) {
+                doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
+                doc.text(cat.toUpperCase(), margin, y); y += 6;
+                doc.setFont(undefined, 'normal'); doc.setTextColor(28, 28, 30);
+                let catCount = 0;
+                cards.forEach(card => {
+                    doc.text(`- ${card.name} x${card.qty} ${card.hopt ? '[HOPT]' : ''}`, margin + 5, y);
+                    catCount += card.qty;
+                    y += 5; if(y > 275) { doc.addPage(); y = 20; }
+                });
+                doc.setFont(undefined, 'italic'); doc.setTextColor(142, 142, 147); 
+                doc.text(`Total ${cat}: ${catCount}`, margin + 5, y);
+                grandTotal += catCount; y += 10; if(y > 275) { doc.addPage(); y = 20; }
+            }
+        });
+        doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 0, 0);
+        doc.text(`TOTAL DECK: ${grandTotal} CARTAS`, margin, y);
+
+        // --- PÁGINA 2: RESULTADOS GRÁFICOS (CENTRADO Y AJUSTADO) ---
+        doc.addPage();
+        const captureEl = document.getElementById('capture-container');
+        
+        // Capturamos el contenedor de resultados
+        const canvas = await html2canvas(captureEl, { scale: 3, useCORS: true, backgroundColor: "#F2F2F7" });
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Cálculo de dimensiones para que la imagen quepa en la hoja manteniendo el ratio
+        const imgRatio = canvas.height / canvas.width;
+        let finalImgW = contentW;
+        let finalImgH = finalImgW * imgRatio;
+
+        // Si la imagen resultante es más alta que la hoja, la escalamos por altura
+        if (finalImgH > (pdfH - margin * 2)) {
+            finalImgH = pdfH - margin * 2;
+            finalImgW = finalImgH / imgRatio;
+        }
+
+        // Cálculo para centrado horizontal y vertical
+        const posX = (pdfW - finalImgW) / 2;
+        const posY = (pdfH - finalImgH) / 2;
+
+        doc.addImage(imgData, 'PNG', posX, posY, finalImgW, finalImgH);
+        doc.save(`${deckName}_Reporte.pdf`);
+    }
+</script>
+</body>
+</html>
