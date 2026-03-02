@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>YGO OFFICIAL TOURNAMENT</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; --gold: #ffd700; }
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; --gold: #ffd700; --judge: #9b59b6; }
         
         html, body { 
             font-family: 'Segoe UI', sans-serif; 
@@ -21,6 +21,14 @@
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
+        /* Panel de Acceso */
+        .access-panel { background: #222; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .access-panel select { width: 100%; max-width: 300px; border-color: var(--warning); }
+        .role-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+        .role-org { background: var(--danger); color: white; }
+        .role-judge { background: var(--judge); color: white; }
+        .role-player { background: #555; color: white; }
+
         .section-label { font-size: 0.75em; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; display: block; }
 
         .stats-bar { 
@@ -122,6 +130,16 @@
 <div class="container">
     <h1 class="main-title">YGO OFFICIAL TOURNAMENT</h1>
 
+    <span class="section-label">Acceso de Usuario:</span>
+    <div class="access-panel">
+        <select id="select-rol" onchange="cambiarRol(this.value)">
+            <option value="PLAYER">DUELISTA (LECTURA)</option>
+            <option value="JUDGE">JUDGE (REPORTAR)</option>
+            <option value="ORGANIZADOR">ORGANIZADOR (TOTAL)</option>
+        </select>
+        <div id="badge-rol" class="role-badge role-player">DUELISTA</div>
+    </div>
+
     <span class="section-label">Detalles del Torneo:</span>
     <div class="stats-bar">
         <div>INSCRITOS: <strong id="stat-count">0</strong></div>
@@ -143,7 +161,7 @@
         </select>
     </div>
 
-    <div id="entry-container">
+    <div id="entry-container" style="display:none;">
         <span id="label-ingreso" class="section-label">Ingrese Nuevo Duelista:</span>
         <div id="entry-section" class="input-box">
             <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
@@ -166,7 +184,8 @@
     <div id="view-torneo" style="display:none;">
         <h2 id="txt-ronda-actual" style="color:var(--warning); text-align: center; text-transform: uppercase;">Ronda 1 / ?</h2>
         <div id="pairings-list" class="pairings-grid"></div>
-        <div id="torneo-controls" style="display:flex; flex-direction: column; gap:15px; margin-top:30px;">
+        
+        <div id="torneo-controls" style="display:none; flex-direction: column; gap:15px; margin-top:30px;">
             <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'Siguiente Paso', terminarRonda)">Terminar Ronda / Siguiente</button>
             <button id="btn-retroceder" style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
         </div>
@@ -182,7 +201,8 @@
                 <tbody id="tabla-body"></tbody>
             </table>
         </div>
-        <button style="background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'TERMINAR TORNEO (TIER ERROR)', reiniciarTorneo)">Finalizar Evento</button>
+        
+        <button id="btn-finalizar-evento" style="display:none; background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'TERMINAR TORNEO (TIER ERROR)', reiniciarTorneo)">Finalizar Evento</button>
     </div>
 </div>
 
@@ -205,6 +225,13 @@
     let jugadores = [];
     let historial = [];
     let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" };
+    let miRol = localStorage.getItem('ygo_rol') || "PLAYER";
+
+    window.cambiarRol = function(val) {
+        miRol = val;
+        localStorage.setItem('ygo_rol', val);
+        actualizarUI();
+    };
 
     window.guardarMiNombre = function(val) {
         localStorage.setItem('ygo_mi_nombre_id', val);
@@ -212,6 +239,7 @@
     };
 
     window.actualizarModalidadLocal = async function() {
+        if(miRol !== "ORGANIZADOR") return;
         const nueva = document.getElementById('select-top-final').value;
         if(torneo.activa) await updateDoc(doc(db, "torneo", "estado"), { usaTop: nueva });
     };
@@ -222,7 +250,7 @@
         input.value = input.value.toUpperCase(); 
         const btn = document.getElementById('btn-registrar');
         const yaExiste = jugadores.some(j => j.nombre === valor);
-        btn.style.display = (yaExiste || valor === "") ? 'none' : 'block';
+        btn.style.display = (miRol === "ORGANIZADOR" && !yaExiste && valor !== "") ? 'block' : 'none';
     };
 
     window.confirmAction = function(btn, callback) {
@@ -267,40 +295,49 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
+        // Actualizar Badge de Rol
+        const badge = document.getElementById('badge-rol');
+        document.getElementById('select-rol').value = miRol;
+        badge.innerText = miRol;
+        badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : 'role-player');
+
         const entryContainer = document.getElementById('entry-container');
         const buscadorMesa = document.getElementById('view-buscador-mesa');
+        const selectTop = document.getElementById('select-top-final');
+
+        // Restricción de Corte Final
+        selectTop.disabled = (miRol !== "ORGANIZADOR");
 
         if (!torneo.activa && !torneo.finalizado) {
-            entryContainer.style.display = 'block';
+            entryContainer.style.display = (miRol === "ORGANIZADOR") ? 'block' : 'none';
             buscadorMesa.style.display = 'none';
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
             document.getElementById('standings-view').style.display = 'none';
             
-            const selectTop = document.getElementById('select-top-final');
             const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
             const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
             if (n < 9) { optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS"; }
             else if (n < 17) { optTop4.disabled = false; optTop8.disabled = true; if (selectTop.value === "TOP 8") selectTop.value = "TOP 4"; }
             else { optTop4.disabled = false; optTop8.disabled = false; }
 
-            document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
+            document.getElementById('btn-iniciar-master').style.display = (n >= 4 && miRol === "ORGANIZADOR") ? 'block' : 'none';
+            
             document.getElementById('lista-jugadores').innerHTML = jugadores.map((j, index) => `
                 <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <span style="color:var(--primary); font-weight:bold; font-family:monospace; font-size:1.1em;">${(index + 1).toString().padStart(2, '0')}.</span>
                         <span style="font-size:1.1em; text-transform:uppercase;">${j.nombre}</span>
                     </div>
-                    <button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>
+                    ${miRol === "ORGANIZADOR" ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>` : ''}
                 </div>
             `).join('');
         } else {
-            entryContainer.style.display = (torneo.faseTop) ? 'none' : 'block';
+            entryContainer.style.display = (torneo.faseTop || miRol !== "ORGANIZADOR") ? 'none' : 'block';
             buscadorMesa.style.display = 'block';
             
             const selectMiNombre = document.getElementById('select-mi-nombre');
             const miIdGuardado = localStorage.getItem('ygo_mi_nombre_id') || "";
-
             const jugadoresOrdenados = [...jugadores].sort((a, b) => a.nombre.localeCompare(b.nombre));
 
             selectMiNombre.innerHTML = '<option value="">-- SELECCIONA TU NOMBRE --</option>' + 
@@ -311,7 +348,12 @@
             document.getElementById('view-registro').style.display = 'none';
             document.getElementById('view-torneo').style.display = 'block';
             document.getElementById('standings-view').style.display = 'block';
+            
+            // Controles de Organizador
+            document.getElementById('torneo-controls').style.display = (miRol === "ORGANIZADOR") ? 'flex' : 'none';
             document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
+            document.getElementById('btn-finalizar-evento').style.display = (miRol === "ORGANIZADOR") ? 'block' : 'none';
+            
             renderPareos();
             renderStandings();
         }
@@ -321,8 +363,6 @@
 
     function renderHistorial() {
         const div = document.getElementById('lista-historial-global');
-        
-        // ORDENAMIENTO ALFABÉTICO DEL HISTORIAL GLOBAL
         const historialOrdenado = [...historial].sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         div.innerHTML = historialOrdenado.map(h => {
@@ -330,16 +370,16 @@
             return `<div class="historial-item">
                 <span class="nombre-historial ${yaInscrito ? 'nombre-inscrito' : ''}">${h.nombre}</span>
                 <div style="display:flex; gap:8px;">
-                    ${(!yaInscrito && !torneo.faseTop) ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
-                    <button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>
+                    ${(!yaInscrito && !torneo.faseTop && miRol === "ORGANIZADOR") ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
+                    ${miRol === "ORGANIZADOR" ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>` : ''}
                 </div>
             </div>`;
         }).join('');
     }
 
-    window.reInscribir = function(nombre) { if(torneo.faseTop) return; document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
+    window.reInscribir = function(nombre) { if(torneo.faseTop || miRol !== "ORGANIZADOR") return; document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
     window.registrarDuelista = async function() {
-        if(torneo.faseTop) return;
+        if(torneo.faseTop || miRol !== "ORGANIZADOR") return;
         const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
         if(!full) return;
         const id = Date.now().toString();
@@ -348,10 +388,11 @@
         document.getElementById('nombreCompleto').value = "";
     };
 
-    window.borrarJugador = async function(id) { await deleteDoc(doc(db, "jugadores", id)); };
-    window.borrarDelHistorial = async function(id) { await deleteDoc(doc(db, "historial_global", id)); };
+    window.borrarJugador = async function(id) { if(miRol === "ORGANIZADOR") await deleteDoc(doc(db, "jugadores", id)); };
+    window.borrarDelHistorial = async function(id) { if(miRol === "ORGANIZADOR") await deleteDoc(doc(db, "historial_global", id)); };
 
     window.iniciarTorneo = async function() {
+        if(miRol !== "ORGANIZADOR") return;
         const r = parseInt(document.getElementById('stat-rondas').innerText);
         const p1 = generarKTS();
         const mod = document.getElementById('select-top-final').value;
@@ -384,12 +425,13 @@
     }
 
     window.marcarGanador = async function(idx, idWin) {
-        if(torneo.finalizado) return;
+        if(torneo.finalizado || miRol === "PLAYER") return; // Solo Org y Judge
         torneo.pareos[idx].ganador = (torneo.pareos[idx].ganador === idWin) ? null : idWin;
         await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
     }
 
     window.terminarRonda = async function() {
+        if(miRol !== "ORGANIZADOR") return;
         const batch = writeBatch(db);
         torneo.pareos.forEach(p => {
             const j1 = jugadores.find(j => j.id === p.j1Id);
@@ -429,7 +471,7 @@
     }
 
     window.retrocederRonda = async function() {
-        if (torneo.ronda === 1 && !torneo.finalizado) return;
+        if (miRol !== "ORGANIZADOR" || (torneo.ronda === 1 && !torneo.finalizado)) return;
         const batch = writeBatch(db);
         const rAnt = torneo.ronda;
         if (torneo.finalizado) { torneo.finalizado = false; } else {
@@ -464,12 +506,20 @@
             const soyYoEnMesa = (p.j1Id === miId || p.j2Id === miId);
             const extraClase = soyYoEnMesa ? 'pulse-find' : '';
             
+            // Si es Duelista, los botones no tienen cursor pointer (CSS se encarga pero aquí evitamos la función)
+            const clickable = miRol !== "PLAYER";
+
             return `<div class="${mesaClase} ${extraClase}">
                 <div class="match-info">${esMesaFinal ? 'MESA FINAL' : 'MESA ' + (i+1)}</div>
                 <div class="match-players">
-                    <div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div>
+                    <div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" style="${!clickable?'cursor:default':''}" onclick="${clickable && p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">
+                        ${p1.nombre}
+                    </div>
                     <div class="vs-label" style="font-weight:bold; color:#666;">VS</div>
-                    ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `<div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" onclick="marcarGanador(${i},'${p.j2Id}')">${p2.nombre}</div>`}
+                    ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `
+                    <div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" style="${!clickable?'cursor:default':''}" onclick="${clickable ? `marcarGanador(${i},'${p.j2Id}')`:''}">
+                        ${p2.nombre}
+                    </div>`}
                 </div>
             </div>`;
         }).join('');
@@ -518,6 +568,7 @@
     }
 
     window.reiniciarTorneo = async function() {
+        if(miRol !== "ORGANIZADOR") return;
         const batch = writeBatch(db);
         const snaps = await getDocs(collection(db, "jugadores"));
         snaps.forEach(d => batch.delete(d.ref));
@@ -528,6 +579,7 @@
 </script>
 </body>
 </html>
+
 
 
 
