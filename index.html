@@ -13,6 +13,7 @@
         
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
+        /* Ajuste de alineación central para la barra de estadísticas */
         .stats-bar { 
             background: #222; 
             padding: 15px; 
@@ -28,18 +29,22 @@
             text-align: center;
         }
         
+        /* Alineación vertical perfecta para CORTE: y el Select */
+        .stats-bar div { display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
         .stats-bar strong { color: var(--primary); font-size: 1.3em; }
 
         .input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #444; }
         
-        input, select { padding: 15px; border-radius: 8px; border: 1px solid #444; background: #2b2b2b; color: white; outline: none; font-size: 1.1em; text-transform: uppercase; }
+        input, select { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2b2b2b; color: white; outline: none; font-size: 1em; text-transform: uppercase; }
         
+        /* Estilo específico para que el select no se vea más grande que el texto */
+        #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
+
         button { padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 1.1em; text-transform: uppercase; }
         
         .btn-add { background: var(--primary); color: white; width: 100%; }
         .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
         
-        /* Botones de acción compactos */
         .btn-delete-node { background: var(--danger); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.2em; }
         .btn-plus { background: var(--success); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.4em; }
         .btn-confirm-green { background: var(--success) !important; }
@@ -85,7 +90,8 @@
         <div>INSCRITOS: <strong id="stat-count">0</strong></div>
         <div>RONDAS: <strong id="stat-rondas">0</strong></div>
         <div id="modalidad-container">
-            CORTE: <select id="select-top-final" style="margin:0; padding: 5px;" onchange="actualizarModalidadLocal()">
+            <span>CORTE:</span>
+            <select id="select-top-final" onchange="actualizarModalidadLocal()">
                 <option value="SUIZAS">SOLO SUIZAS</option>
                 <option value="TOP 4">TOP CUT 4</option>
                 <option value="TOP 8">TOP CUT 8</option>
