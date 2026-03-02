@@ -7,7 +7,7 @@
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #f0f0f0; padding: 10px; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #f0f0f0; padding: 10px; margin: 0; touch-action: manipulation; }
         
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
         
@@ -28,7 +28,6 @@
             text-align: center;
         }
         
-        .stats-bar div { display: flex; align-items: center; gap: 8px; }
         .stats-bar strong { color: var(--primary); font-size: 1.3em; }
 
         .input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #444; }
@@ -39,43 +38,32 @@
         
         .btn-add { background: var(--primary); color: white; width: 100%; }
         .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
-        .btn-delete-node { background: var(--danger); color: white; min-width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; }
+        
+        /* Botones de acción compactos */
+        .btn-delete-node { background: var(--danger); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.2em; }
+        .btn-plus { background: var(--success); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.4em; }
         .btn-confirm-green { background: var(--success) !important; }
 
         .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
         .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .match-info { color: var(--warning); font-weight: bold; font-size: 1.2em; text-align: center; width: 100%; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .match-players { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
-        .vs-label { font-weight: bold; color: #666; font-size: 1.2em; }
         
         .player-btn { flex: 1; padding: 20px 10px; border-radius: 10px; background: #333; cursor: pointer; text-align: center; font-size: 1.1em; border: 2px solid transparent; min-height: 60px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
         .player-btn.winner { background: var(--success) !important; border-color: #afffba; color: white; }
 
-        .historial-box { margin-top: 30px; padding: 20px; background: #151515; border-radius: 10px; border: 1px solid #333; }
-        .historial-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #222; align-items: center; font-size: 1.2em; }
-        .nombre-historial { text-transform: uppercase; }
+        .historial-box { margin-top: 30px; padding: 15px; background: #151515; border-radius: 10px; border: 1px solid #333; }
+        .historial-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; align-items: center; font-size: 1.1em; }
+        .nombre-historial { text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
         .nombre-inscrito { color: #2ecc71; font-weight: bold; }
-        .btn-re-inscribir { background: #444; color: #fff; font-size: 0.9em; padding: 12px 20px; }
 
-        /* MEJORAS EN TABLA STANDINGS */
         .table-wrapper { overflow-x: auto; margin-top: 30px; border-radius: 10px; border: 1px solid #333; }
         table { width: 100%; border-collapse: collapse; background: #151515; font-size: 1.1em; }
         th, td { padding: 15px 10px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; }
         th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.85em; font-weight: 900; }
         
-        .col-min { width: 1%; }
-        .col-name { text-align: left; white-space: normal; width: auto; font-weight: bold; }
-        .col-pts { font-size: 1.3em; color: var(--warning); font-weight: 900; }
-        
-        /* ESTILO DEL T-BREAK */
-        .col-tb { 
-            color: #00d4ff; 
-            font-family: 'Courier New', monospace; 
-            font-size: 1.2em; 
-            font-weight: bold;
-            background: rgba(0, 212, 255, 0.05);
-            letter-spacing: 1px;
-        }
+        .col-pts { font-size: 1.4em; color: var(--warning); font-weight: 900; }
+        .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.3em; font-weight: bold; background: rgba(0, 212, 255, 0.08); letter-spacing: 1px; }
 
         .confirming { background: var(--danger) !important; color: white !important; animation: blink 0.5s infinite; }
         @keyframes blink { 50% { opacity: 0.7; } }
@@ -134,13 +122,13 @@
             <table id="main-table">
                 <thead>
                     <tr>
-                        <th class="col-min">Pos</th>
-                        <th class="col-name">Duelista</th>
-                        <th class="col-min">Pts</th>
-                        <th class="col-min">OMW%</th>
-                        <th class="col-min">OOW%</th>
-                        <th class="col-min">DDD</th>
-                        <th class="col-min">T-BREAK (11-DIGIT)</th>
+                        <th>Pos</th>
+                        <th style="text-align:left;">Duelista</th>
+                        <th>Pts</th>
+                        <th>OMW%</th>
+                        <th>OOW%</th>
+                        <th>DDD</th>
+                        <th>T-BREAK (11-DIGIT)</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-body"></tbody>
@@ -172,9 +160,7 @@
 
     window.actualizarModalidadLocal = async function() {
         const nueva = document.getElementById('select-top-final').value;
-        if(torneo.activa) {
-            await updateDoc(doc(db, "torneo", "estado"), { usaTop: nueva });
-        }
+        if(torneo.activa) await updateDoc(doc(db, "torneo", "estado"), { usaTop: nueva });
     };
 
     window.validarBotonInscripcion = function() {
@@ -223,7 +209,7 @@
 
     function actualizarUI() {
         const n = jugadores.length;
-        let r = n >= 65 ? 7 : n >= 33 ? 6 : n >= 17 ? 5 : n >= 9 ? 4 : 3;
+        let r = n >= 2049 ? 12 : n >= 1025 ? 11 : n >= 513 ? 10 : n >= 257 ? 9 : n >= 129 ? 8 : n >= 65 ? 7 : n >= 33 ? 6 : n >= 17 ? 5 : n >= 9 ? 4 : 3;
         
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
@@ -232,27 +218,8 @@
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
             document.getElementById('standings-view').style.display = 'none';
-            
             const modoContainer = document.getElementById('modalidad-container');
             modoContainer.style.display = n >= 4 ? 'flex' : 'none';
-
-            const selectTop = document.getElementById('select-top-final');
-            const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
-            const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
-
-            if (n <= 8) {
-                optTop4.disabled = true;
-                optTop8.disabled = true;
-                selectTop.value = "SUIZAS";
-            } else if (n <= 16) {
-                optTop4.disabled = false;
-                optTop8.disabled = true;
-                if (selectTop.value === "TOP 8") selectTop.value = "TOP 4";
-            } else {
-                optTop4.disabled = false;
-                optTop8.disabled = false;
-            }
-
             document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
             
             document.getElementById('lista-jugadores').innerHTML = jugadores.map(j => `
@@ -265,7 +232,6 @@
             document.getElementById('view-registro').style.display = 'none';
             document.getElementById('view-torneo').style.display = 'block';
             document.getElementById('standings-view').style.display = 'block';
-            document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
             renderPareos();
             renderStandings();
         }
@@ -277,11 +243,10 @@
         const div = document.getElementById('lista-historial-global');
         div.innerHTML = historial.map(h => {
             const yaInscrito = jugadores.some(j => j.nombre.toUpperCase() === h.nombre.toUpperCase());
-            return `
-            <div class="historial-item">
+            return `<div class="historial-item">
                 <span class="nombre-historial ${yaInscrito ? 'nombre-inscrito' : ''}">${h.nombre}</span>
-                <div style="display:flex; gap:10px;">
-                    ${!yaInscrito ? `<button class="btn-re-inscribir" onclick="reInscribir('${h.nombre}')">Inscribir</button>` : ''}
+                <div style="display:flex; gap:8px;">
+                    ${!yaInscrito ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
                     <button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>
                 </div>
             </div>`;
@@ -370,7 +335,7 @@
                 const nuevosPareos = [];
                 for(let i=0; i < ganadores.length; i+=2) nuevosPareos.push({ j1Id: ganadores[i], j2Id: ganadores[i+1], ganador: null });
                 torneo.ronda++; torneo.rondaTopActual++; torneo.pareos = nuevosPareos; torneo.historicoPareos[torneo.ronda] = nuevosPareos;
-            } else { alert("Debes marcar ganadores."); return; }
+            }
         }
         batch.set(doc(db, "torneo", "estado"), torneo);
         await batch.commit();
@@ -420,12 +385,12 @@
         document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
             const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
             const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
-            return `<div class="match-card"><div class="match-info">MESA ${i+1}</div><div class="match-players"><div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div><div class="vs-label">VS</div>${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `<div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" onclick="marcarGanador(${i},'${p.j2Id}')">${p2.nombre}</div>`}</div></div>`;
+            return `<div class="match-card"><div class="match-info">MESA ${i+1}</div><div class="match-players"><div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div><div class="vs-label" style="font-weight:bold; color:#666;">VS</div>${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `<div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" onclick="marcarGanador(${i},'${p.j2Id}')">${p2.nombre}</div>`}</div></div>`;
         }).join('');
     }
 
     function renderStandings() {
-        let finalWinnerId = null; let finalLoserId = null;
+        let finalWinnerId = null, finalLoserId = null;
         if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) {
             finalWinnerId = torneo.pareos[0].ganador;
             finalLoserId = (finalWinnerId === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id;
@@ -454,7 +419,15 @@
         document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
             const isChamp = torneo.finalizado && ((finalWinnerId && j.id === finalWinnerId) || (!torneo.faseTop && i === 0 && j.puntos > 0));
             const isSecond = torneo.finalizado && ((finalLoserId && j.id === finalLoserId) || (!torneo.faseTop && i === 1 && j.puntos > 0));
-            return `<tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}"><td class="col-min">${isChamp ? '🏆' : i+1}</td><td class="col-name" style="${isChamp ? 'color: var(--success); font-weight: bold;' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre}</td><td class="col-min col-pts">${j.puntos}</td><td class="col-min">${(parseInt(j.tieBreaker.substring(3,6))/10).toFixed(1)}%</td><td class="col-min">${(parseInt(j.tieBreaker.substring(6,9))/10).toFixed(1)}%</td><td class="col-min">${j.ddd_val}</td><td class="col-min col-tb">${j.tieBreaker}</td></tr>`;
+            return `<tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
+                <td>${isChamp ? '🏆' : i+1}</td>
+                <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre}</td>
+                <td class="col-pts">${j.puntos}</td>
+                <td>${(parseInt(j.tieBreaker.substring(3,6))/10).toFixed(1)}%</td>
+                <td>${(parseInt(j.tieBreaker.substring(6,9))/10).toFixed(1)}%</td>
+                <td>${j.ddd_val}</td>
+                <td class="col-tb">${j.tieBreaker}</td>
+            </tr>`;
         }).join('');
     }
 
@@ -468,6 +441,7 @@
 </script>
 </body>
 </html>
+
 
 
 
