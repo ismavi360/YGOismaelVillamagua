@@ -47,7 +47,6 @@
         .btn-add { background: var(--primary); color: white; width: 100%; }
         .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
         
-        /* BOTONES DE HISTORIAL AJUSTADOS A 32PX PARA EVITAR DESPLAZAMIENTO */
         .btn-delete-node { background: var(--danger); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1em; }
         .btn-plus { background: var(--success); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.1em; }
         .btn-confirm-green { background: var(--success) !important; }
@@ -55,7 +54,6 @@
         .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
         .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; }
         
-        /* DISEÑO ESPECIAL FINAL */
         .match-card.is-final {
             grid-column: 1 / -1;
             border: 3px solid var(--gold);
@@ -131,7 +129,7 @@
     <div id="view-registro">
         <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">Lanzar Torneo</button>
         
-        <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 250px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
+        <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
         
         <div class="historial-box">
             <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">Historial Global</h3>
@@ -265,9 +263,14 @@
             }
 
             document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
-            document.getElementById('lista-jugadores').innerHTML = jugadores.map(j => `
+            
+            // LISTA NUMERADA (01, 02, etc.)
+            document.getElementById('lista-jugadores').innerHTML = jugadores.map((j, index) => `
                 <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
-                    <span style="font-size:1.1em; text-transform:uppercase;">${j.nombre}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="color:var(--primary); font-weight:bold; font-family:monospace; font-size:1.1em;">${(index + 1).toString().padStart(2, '0')}.</span>
+                        <span style="font-size:1.1em; text-transform:uppercase;">${j.nombre}</span>
+                    </div>
                     <button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>
                 </div>
             `).join('');
@@ -496,6 +499,7 @@
 </script>
 </body>
 </html>
+
 
 
 
