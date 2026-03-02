@@ -82,16 +82,17 @@
         .nombre-historial { text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
         .nombre-inscrito { color: #2ecc71; font-weight: bold; }
 
+        /* ESTILOS DE TABLA REDUCIDOS PARA MEJOR VISIBILIDAD */
         .table-wrapper { 
-            overflow-x: auto; margin-top: 30px; border-radius: 10px; border: 1px solid #333;
+            overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #333;
             touch-action: pan-x pan-y; 
         }
-        table { width: 100%; border-collapse: collapse; background: #151515; font-size: 1.1em; }
-        th, td { padding: 15px 10px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; }
-        th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.85em; font-weight: 900; }
+        table { width: 100%; border-collapse: collapse; background: #151515; font-size: 0.95em; } /* Reducción de fuente base */
+        th, td { padding: 10px 8px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; } /* Menos padding */
+        th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.8em; font-weight: 900; }
         
-        .col-pts { font-size: 1.4em; color: var(--warning); font-weight: 900; }
-        .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.3em; font-weight: bold; background: rgba(0, 212, 255, 0.08); letter-spacing: 1px; }
+        .col-pts { font-size: 1.2em; color: var(--warning); font-weight: 900; } /* Puntos un poco más pequeños */
+        .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.1em; font-weight: bold; background: rgba(0, 212, 255, 0.05); letter-spacing: 0px; }
 
         .confirming { background: var(--danger) !important; color: white !important; animation: blink 0.5s infinite; }
         @keyframes blink { 50% { opacity: 0.7; } }
@@ -100,6 +101,7 @@
             .stats-bar { flex-direction: row; justify-content: space-around; }
             .pairings-grid { grid-template-columns: repeat(2, 1fr); }
             .input-box { flex-direction: row; }
+            table { font-size: 1.05em; } /* En PC se ve un poco más grande */
         }
     </style>
 </head>
@@ -264,7 +266,6 @@
 
             document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
             
-            // LISTA NUMERADA (01, 02, etc.)
             document.getElementById('lista-jugadores').innerHTML = jugadores.map((j, index) => `
                 <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
                     <div style="display:flex; align-items:center; gap:10px;">
