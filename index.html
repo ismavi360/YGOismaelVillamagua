@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>YGO OFFICIAL TOURNAMENT</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; }
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; --gold: #ffd700; }
         
         html, body { 
             font-family: 'Segoe UI', sans-serif; 
@@ -13,7 +13,6 @@
             color: #f0f0f0; 
             padding: 10px; 
             margin: 0; 
-            /* CORRECCIÓN: Permite desplazar verticalmente (pan-y) pero bloquea zoom */
             touch-action: pan-y; 
             -webkit-text-size-adjust: 100%;
             overscroll-behavior: contain;
@@ -53,6 +52,25 @@
 
         .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
         .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        
+        /* DISEÑO ESPECIAL FINAL */
+        .match-card.is-final {
+            grid-column: 1 / -1;
+            border: 3px solid var(--gold);
+            background: linear-gradient(145deg, #1a1a1a, #2a2200);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+            transform: scale(1.02);
+            animation: pulse-gold 2s infinite;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); border-color: #aa9100; }
+            50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.5); border-color: var(--gold); }
+            100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); border-color: #aa9100; }
+        }
+        .match-card.is-final .match-info { color: var(--gold); font-size: 1.6em; text-shadow: 0 0 10px rgba(0,0,0,0.8); border-bottom-color: var(--gold); }
+
         .match-info { color: var(--warning); font-weight: bold; font-size: 1.2em; text-align: center; width: 100%; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .match-players { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
         
@@ -66,7 +84,6 @@
 
         .table-wrapper { 
             overflow-x: auto; margin-top: 30px; border-radius: 10px; border: 1px solid #333;
-            /* Permite scroll horizontal en la tabla y vertical en la pantalla */
             touch-action: pan-x pan-y; 
         }
         table { width: 100%; border-collapse: collapse; background: #151515; font-size: 1.1em; }
@@ -83,7 +100,6 @@
             .stats-bar { flex-direction: row; justify-content: space-around; }
             .pairings-grid { grid-template-columns: repeat(2, 1fr); }
             .input-box { flex-direction: row; }
-            .btn-add { width: auto; }
         }
     </style>
 </head>
@@ -122,9 +138,9 @@
     <div id="view-torneo" style="display:none;">
         <h2 id="txt-ronda-actual" style="color:var(--warning); text-align: center; text-transform: uppercase;">Ronda 1 / ?</h2>
         <div id="pairings-list" class="pairings-grid"></div>
-        <div style="display:flex; flex-direction: column; gap:15px; margin-top:30px;">
+        <div id="torneo-controls" style="display:flex; flex-direction: column; gap:15px; margin-top:30px;">
             <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'Siguiente Paso', terminarRonda)">Terminar Ronda / Siguiente</button>
-            <button style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
+            <button id="btn-retroceder" style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
         </div>
     </div>
 
@@ -149,24 +165,6 @@
         <button style="background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'TERMINAR TORNEO (TIER ERROR)', reiniciarTorneo)">Finalizar Evento</button>
     </div>
 </div>
-
-<script>
-    // BLOQUEO DE ZOOM PERO PERMITIENDO SCROLL
-    document.addEventListener('touchstart', function (event) {
-        if (event.touches.length > 1) {
-            event.preventDefault(); // Bloquea zoom de dos dedos
-        }
-    }, { passive: false });
-
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault(); // Bloquea doble toque para zoom
-        }
-        lastTouchEnd = now;
-    }, false);
-</script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -249,13 +247,11 @@
             document.getElementById('view-torneo').style.display = 'none';
             document.getElementById('standings-view').style.display = 'none';
             
-            const modoContainer = document.getElementById('modalidad-container');
-            modoContainer.style.display = n >= 4 ? 'flex' : 'none';
-
             const selectTop = document.getElementById('select-top-final');
             const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
             const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
 
+            // REGLA ESTRICTA: NO MODIFICAR SIN ORDEN DIRECTA
             if (n < 9) {
                 optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS";
             } else if (n < 17) {
@@ -266,7 +262,6 @@
             }
 
             document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
-            
             document.getElementById('lista-jugadores').innerHTML = jugadores.map(j => `
                 <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
                     <span style="font-size:1.1em; text-transform:uppercase;">${j.nombre}</span>
@@ -277,6 +272,7 @@
             document.getElementById('view-registro').style.display = 'none';
             document.getElementById('view-torneo').style.display = 'block';
             document.getElementById('standings-view').style.display = 'block';
+            document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
             renderPareos();
             renderStandings();
         }
@@ -346,6 +342,7 @@
     }
 
     window.marcarGanador = async function(idx, idWin) {
+        if(torneo.finalizado) return;
         torneo.pareos[idx].ganador = (torneo.pareos[idx].ganador === idWin) ? null : idWin;
         await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
     }
@@ -401,7 +398,7 @@
         if (torneo.ronda === 1 && !torneo.finalizado) return;
         const batch = writeBatch(db);
         const rAnt = torneo.ronda;
-        if (!torneo.finalizado) {
+        if (torneo.finalizado) { torneo.finalizado = false; } else {
             if (torneo.faseTop) {
                 if (torneo.rondaTopActual > 1) torneo.rondaTopActual--;
                 else { torneo.faseTop = false; torneo.rondaTopActual = 0; }
@@ -417,7 +414,6 @@
                 batch.update(doc(db, "jugadores", j.id), j);
             }
         });
-        torneo.finalizado = false;
         torneo.pareos = torneo.historicoPareos[torneo.ronda];
         torneo.pareos.forEach(p => { if(p.j2Id !== "BYE") p.ganador = null; });
         batch.set(doc(db, "torneo", "estado"), torneo);
@@ -425,12 +421,23 @@
     };
 
     function renderPareos() {
-        let labelRonda = !torneo.faseTop ? `SUIZAS - Ronda ${torneo.ronda} / ${torneo.totalRondas}` : (torneo.pareos.length === 1 ? `PLAYOFFS - FINAL` : `PLAYOFFS - ${torneo.rondaTopActual}`);
+        const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
+        let labelRonda = !torneo.faseTop ? `SUIZAS - Ronda ${torneo.ronda} / ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
+        
         document.getElementById('txt-ronda-actual').innerText = labelRonda;
         document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
             const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
             const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
-            return `<div class="match-card"><div class="match-info">MESA ${i+1}</div><div class="match-players"><div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div><div class="vs-label" style="font-weight:bold; color:#666;">VS</div>${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `<div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" onclick="marcarGanador(${i},'${p.j2Id}')">${p2.nombre}</div>`}</div></div>`;
+            const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
+            
+            return `<div class="${mesaClase}">
+                <div class="match-info">${esMesaFinal ? 'MESA FINAL' : 'MESA ' + (i+1)}</div>
+                <div class="match-players">
+                    <div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div>
+                    <div class="vs-label" style="font-weight:bold; color:#666;">VS</div>
+                    ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `<div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" onclick="marcarGanador(${i},'${p.j2Id}')">${p2.nombre}</div>`}
+                </div>
+            </div>`;
         }).join('');
     }
 
