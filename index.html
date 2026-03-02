@@ -46,8 +46,10 @@
         
         .btn-add { background: var(--primary); color: white; width: 100%; }
         .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
-        .btn-delete-node { background: var(--danger); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.2em; }
-        .btn-plus { background: var(--success); color: white; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.4em; }
+        
+        /* BOTONES DE HISTORIAL AJUSTADOS A 32PX PARA EVITAR DESPLAZAMIENTO */
+        .btn-delete-node { background: var(--danger); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1em; }
+        .btn-plus { background: var(--success); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.1em; }
         .btn-confirm-green { background: var(--success) !important; }
 
         .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
@@ -128,7 +130,9 @@
 
     <div id="view-registro">
         <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">Lanzar Torneo</button>
-        <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px;"></div>
+        
+        <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 250px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
+        
         <div class="historial-box">
             <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">Historial Global</h3>
             <div id="lista-historial-global"></div>
@@ -251,7 +255,6 @@
             const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
             const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
 
-            // REGLA ESTRICTA: NO MODIFICAR SIN ORDEN DIRECTA
             if (n < 9) {
                 optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS";
             } else if (n < 17) {
