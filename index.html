@@ -29,7 +29,6 @@
         .stats-bar div { display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
         .stats-bar strong { color: var(--primary); font-size: 1.3em; }
 
-        /* Contenedor de entrada de texto */
         .input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #444; }
         
         input, select { 
@@ -38,6 +37,11 @@
         }
         
         #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
+
+        /* Estilo para el buscador de mesa */
+        .search-box { background: #111; padding: 15px; border-radius: 10px; border: 2px solid var(--primary); margin-bottom: 20px; text-align: center; }
+        .search-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); font-size: 0.9em; }
+        .search-box select { width: 100%; max-width: 400px; border-color: var(--primary); }
 
         button { 
             padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; 
@@ -53,8 +57,21 @@
         .btn-confirm-green { background: var(--success) !important; }
 
         .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
-        .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; transition: 0.3s; }
         
+        /* Animación de pulsación para mesa encontrada */
+        .match-card.pulse-find {
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            animation: pulse-blue 1.5s infinite;
+            background: #1a2533;
+        }
+        @keyframes pulse-blue {
+            0% { transform: scale(1); box-shadow: 0 0 5px var(--primary); }
+            50% { transform: scale(1.03); box-shadow: 0 0 20px var(--primary); }
+            100% { transform: scale(1); box-shadow: 0 0 5px var(--primary); }
+        }
+
         .match-card.is-final {
             grid-column: 1 / -1;
             border: 3px solid var(--gold);
@@ -70,7 +87,6 @@
             50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.5); border-color: var(--gold); }
             100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); border-color: #aa9100; }
         }
-        .match-card.is-final .match-info { color: var(--gold); font-size: 1.6em; text-shadow: 0 0 10px rgba(0,0,0,0.8); border-bottom-color: var(--gold); }
 
         .match-info { color: var(--warning); font-weight: bold; font-size: 1.2em; text-align: center; width: 100%; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .match-players { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
@@ -83,16 +99,13 @@
         .nombre-historial { text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
         .nombre-inscrito { color: #2ecc71; font-weight: bold; }
 
-        .table-wrapper { 
-            overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #333;
-            touch-action: pan-x pan-y; 
-        }
+        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #333; touch-action: pan-x pan-y; }
         table { width: 100%; border-collapse: collapse; background: #151515; font-size: 0.95em; }
         th, td { padding: 10px 8px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; }
         th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.8em; font-weight: 900; }
         
         .col-pts { font-size: 1.2em; color: var(--warning); font-weight: 900; }
-        .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.1em; font-weight: bold; background: rgba(0, 212, 255, 0.05); letter-spacing: 0px; }
+        .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.1em; font-weight: bold; background: rgba(0, 212, 255, 0.05); }
 
         .confirming { background: var(--danger) !important; color: white !important; animation: blink 0.5s infinite; }
         @keyframes blink { 50% { opacity: 0.7; } }
@@ -101,7 +114,6 @@
             .stats-bar { flex-direction: row; justify-content: space-around; }
             .pairings-grid { grid-template-columns: repeat(2, 1fr); }
             .input-box { flex-direction: row; }
-            table { font-size: 1.05em; }
         }
     </style>
 </head>
@@ -123,6 +135,13 @@
         </div>
     </div>
 
+    <div id="view-buscador-mesa" class="search-box" style="display:none;">
+        <label>¿DÓNDE ESTOY JUGANDO?</label>
+        <select id="select-mi-nombre" onchange="guardarMiNombre(this.value)">
+            <option value="">-- SELECCIONA TU NOMBRE --</option>
+        </select>
+    </div>
+
     <div id="entry-section" class="input-box">
         <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
         <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
@@ -130,9 +149,7 @@
 
     <div id="view-registro">
         <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">Lanzar Torneo</button>
-        
         <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
-        
         <div class="historial-box">
             <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">Historial Global</h3>
             <div id="lista-historial-global"></div>
@@ -153,15 +170,7 @@
         <div class="table-wrapper">
             <table id="main-table">
                 <thead>
-                    <tr>
-                        <th>Pos</th>
-                        <th style="text-align:left;">Duelista</th>
-                        <th>Pts</th>
-                        <th>OMW%</th>
-                        <th>OOW%</th>
-                        <th>DDD</th>
-                        <th>T-BREAK (11-DIGIT)</th>
-                    </tr>
+                    <tr><th>Pos</th><th style="text-align:left;">Duelista</th><th>Pts</th><th>OMW%</th><th>OOW%</th><th>DDD</th><th>T-BREAK</th></tr>
                 </thead>
                 <tbody id="tabla-body"></tbody>
             </table>
@@ -189,6 +198,12 @@
     let jugadores = [];
     let historial = [];
     let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" };
+
+    // PERSISTENCIA LOCAL DEL BUSCADOR
+    window.guardarMiNombre = function(val) {
+        localStorage.setItem('ygo_mi_nombre_id', val);
+        renderPareos(); // Re-render para aplicar efecto
+    };
 
     window.actualizarModalidadLocal = async function() {
         const nueva = document.getElementById('select-top-final').value;
@@ -246,15 +261,12 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
-        // Lógica de visibilidad del input de entrada
         const entrySection = document.getElementById('entry-section');
-        if (torneo.faseTop) {
-            entrySection.style.display = 'none'; // Se oculta en Playoffs
-        } else {
-            entrySection.style.display = 'flex'; // Visible en registro y suizas
-        }
+        const buscadorMesa = document.getElementById('view-buscador-mesa');
 
         if (!torneo.activa && !torneo.finalizado) {
+            entrySection.style.display = 'flex';
+            buscadorMesa.style.display = 'none';
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
             document.getElementById('standings-view').style.display = 'none';
@@ -262,18 +274,11 @@
             const selectTop = document.getElementById('select-top-final');
             const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
             const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
-
-            if (n < 9) {
-                optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS";
-            } else if (n < 17) {
-                optTop4.disabled = false; optTop8.disabled = true;
-                if (selectTop.value === "TOP 8") selectTop.value = "TOP 4";
-            } else {
-                optTop4.disabled = false; optTop8.disabled = false;
-            }
+            if (n < 9) { optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS"; }
+            else if (n < 17) { optTop4.disabled = false; optTop8.disabled = true; if (selectTop.value === "TOP 8") selectTop.value = "TOP 4"; }
+            else { optTop4.disabled = false; optTop8.disabled = false; }
 
             document.getElementById('btn-iniciar-master').style.display = n >= 4 ? 'block' : 'none';
-            
             document.getElementById('lista-jugadores').innerHTML = jugadores.map((j, index) => `
                 <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -284,6 +289,17 @@
                 </div>
             `).join('');
         } else {
+            entrySection.style.display = (torneo.faseTop) ? 'none' : 'flex';
+            buscadorMesa.style.display = 'block';
+            
+            // Actualizar opciones del buscador de mesa
+            const selectMiNombre = document.getElementById('select-mi-nombre');
+            const miIdGuardado = localStorage.getItem('ygo_mi_nombre_id') || "";
+            selectMiNombre.innerHTML = '<option value="">-- SELECCIONA TU NOMBRE --</option>' + 
+                [...jugadores].sort((a,b) => a.nombre.localeCompare(b.nombre)).map(j => 
+                `<option value="${j.id}" ${j.id === miIdGuardado ? 'selected' : ''}>${j.nombre}</option>`
+            ).join('');
+
             document.getElementById('view-registro').style.display = 'none';
             document.getElementById('view-torneo').style.display = 'block';
             document.getElementById('standings-view').style.display = 'block';
@@ -297,7 +313,6 @@
 
     function renderHistorial() {
         const div = document.getElementById('lista-historial-global');
-        // También ocultamos la capacidad de reinscribir desde el historial si estamos en fase Top
         div.innerHTML = historial.map(h => {
             const yaInscrito = jugadores.some(j => j.nombre.toUpperCase() === h.nombre.toUpperCase());
             return `<div class="historial-item">
@@ -310,12 +325,7 @@
         }).join('');
     }
 
-    window.reInscribir = function(nombre) { 
-        if(torneo.faseTop) return; 
-        document.getElementById('nombreCompleto').value = nombre.toUpperCase(); 
-        registrarDuelista(); 
-    };
-
+    window.reInscribir = function(nombre) { if(torneo.faseTop) return; document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
     window.registrarDuelista = async function() {
         if(torneo.faseTop) return;
         const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
@@ -324,7 +334,6 @@
         if (!historial.find(h => h.nombre.toUpperCase() === full)) await setDoc(doc(db, "historial_global", id), { nombre: full });
         await setDoc(doc(db, "jugadores", id), { nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000" });
         document.getElementById('nombreCompleto').value = "";
-        validarBotonInscripcion();
     };
 
     window.borrarJugador = async function(id) { await deleteDoc(doc(db, "jugadores", id)); };
@@ -373,24 +382,17 @@
         torneo.pareos.forEach(p => {
             const j1 = jugadores.find(j => j.id === p.j1Id);
             const j2 = p.j2Id === "BYE" ? null : jugadores.find(j => j.id === p.j2Id);
-            if (p.ganador === p.j1Id) { 
-                j1.puntos += 3; j1.resultados.push('W'); if(j2) { j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); } 
-            } else if (j2 && p.ganador === p.j2Id) { 
-                j2.puntos += 3; j2.resultados.push('W'); j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); 
-            } else if (j2) { 
-                j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); 
-            } else if (p.j2Id === "BYE") { j1.puntos += 3; j1.resultados.push('W'); }
+            if (p.ganador === p.j1Id) { j1.puntos += 3; j1.resultados.push('W'); if(j2) { j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); } } 
+            else if (j2 && p.ganador === p.j2Id) { j2.puntos += 3; j2.resultados.push('W'); j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); } 
+            else if (j2) { j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); } 
+            else if (p.j2Id === "BYE") { j1.puntos += 3; j1.resultados.push('W'); }
             j1.oponentes.push(p.j2Id);
             if(j2) { j2.oponentes.push(j1.id); batch.update(doc(db, "jugadores", j2.id), j2); }
             batch.update(doc(db, "jugadores", j1.id), j1);
         });
         if (!torneo.faseTop) {
-            if (torneo.ronda < torneo.totalRondas) {
-                torneo.ronda++;
-                const nP = generarKTS(); torneo.pareos = nP; torneo.historicoPareos[torneo.ronda] = nP;
-            } else {
-                if (torneo.usaTop === "SUIZAS") torneo.finalizado = true; else iniciarTopCut();
-            }
+            if (torneo.ronda < torneo.totalRondas) { torneo.ronda++; const nP = generarKTS(); torneo.pareos = nP; torneo.historicoPareos[torneo.ronda] = nP; } 
+            else { if (torneo.usaTop === "SUIZAS") torneo.finalizado = true; else iniciarTopCut(); }
         } else {
             const ganadores = torneo.pareos.filter(p => p.ganador).map(p => p.ganador);
             if (torneo.pareos.length === 1 && ganadores.length === 1) torneo.finalizado = true;
@@ -406,7 +408,6 @@
 
     function iniciarTopCut() {
         torneo.faseTop = true; torneo.ronda++; torneo.rondaTopActual = 1;
-        renderStandings();
         const sorted = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
         const num = torneo.usaTop === "TOP 4" ? 4 : 8;
         const topPlayers = sorted.slice(0, num);
@@ -420,10 +421,7 @@
         const batch = writeBatch(db);
         const rAnt = torneo.ronda;
         if (torneo.finalizado) { torneo.finalizado = false; } else {
-            if (torneo.faseTop) {
-                if (torneo.rondaTopActual > 1) torneo.rondaTopActual--;
-                else { torneo.faseTop = false; torneo.rondaTopActual = 0; }
-            }
+            if (torneo.faseTop) { if (torneo.rondaTopActual > 1) torneo.rondaTopActual--; else { torneo.faseTop = false; torneo.rondaTopActual = 0; } }
             torneo.ronda--;
         }
         jugadores.forEach(j => {
@@ -443,6 +441,7 @@
 
     function renderPareos() {
         const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
+        const miId = localStorage.getItem('ygo_mi_nombre_id');
         let labelRonda = !torneo.faseTop ? `SUIZAS - Ronda ${torneo.ronda} / ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
         
         document.getElementById('txt-ronda-actual').innerText = labelRonda;
@@ -451,7 +450,11 @@
             const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
             const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
             
-            return `<div class="${mesaClase}">
+            // ¿Soy yo el que está en esta mesa?
+            const soyYoEnMesa = (p.j1Id === miId || p.j2Id === miId);
+            const extraClase = soyYoEnMesa ? 'pulse-find' : '';
+            
+            return `<div class="${mesaClase} ${extraClase}">
                 <div class="match-info">${esMesaFinal ? 'MESA FINAL' : 'MESA ' + (i+1)}</div>
                 <div class="match-players">
                     <div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" onclick="${p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">${p1.nombre}</div>
@@ -509,11 +512,13 @@
         const snaps = await getDocs(collection(db, "jugadores"));
         snaps.forEach(d => batch.delete(d.ref));
         batch.set(doc(db, "torneo", "estado"), { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" });
+        localStorage.removeItem('ygo_mi_nombre_id'); // Limpiar buscador local al reiniciar
         await batch.commit();
     };
 </script>
 </body>
 </html>
+
 
 
 
