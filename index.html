@@ -98,8 +98,9 @@
         .match-info { color: var(--warning); font-weight: bold; font-size: 1.2em; text-align: center; width: 100%; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .match-players { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
         
-        .player-btn { flex: 1; padding: 20px 10px; border-radius: 10px; background: #333; cursor: pointer; text-align: center; font-size: 1.1em; border: 2px solid transparent; min-height: 60px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
+        .player-btn { flex: 1; padding: 20px 10px; border-radius: 10px; background: #333; cursor: pointer; text-align: center; font-size: 1.1em; border: 2px solid transparent; min-height: 60px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; user-select: none; -webkit-user-select: none; }
         .player-btn.winner { background: var(--success) !important; border-color: #afffba; color: white; }
+        .player-btn.dropped { text-decoration: line-through; opacity: 0.5; background: #1a1a1a !important; border-color: var(--danger); }
 
         .historial-box { margin-top: 30px; padding: 15px; background: #151515; border-radius: 10px; border: 1px solid #333; }
         .historial-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; align-items: center; font-size: 1.1em; }
@@ -225,6 +226,7 @@
     let historial = [];
     let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" };
     let miRol = localStorage.getItem('ygo_rol') || "PLAYER";
+    let pressTimer;
 
     window.cambiarRol = function(val) {
         miRol = val;
@@ -382,8 +384,6 @@
         if(!full) return;
 
         const id = Date.now().toString();
-        
-        // 1) Crear el perfil del nuevo duelista con tiebreak en cero
         const nuevoJugador = { 
             id: id,
             nombre: full, 
@@ -391,43 +391,32 @@
             oponentes: [], 
             resultados: [], 
             rondasPerdidas: [], 
-            tieBreaker: "00000000000000" 
+            tieBreaker: "00000000000000",
+            retirado: false
         };
 
-        // Guardar en historial global si no existe
         if (!historial.find(h => h.nombre.toUpperCase() === full)) {
             await setDoc(doc(db, "historial_global", id), { nombre: full });
         }
 
-        // 2) Lógica de inserción en ronda activa
         if (torneo.activa && !torneo.finalizado) {
             let nuevosPareos = [...torneo.pareos];
             let byeEncontrado = nuevosPareos.find(p => p.j2Id === "BYE");
 
             if (byeEncontrado) {
-                // CASO B: Había un BYE. El nuevo duelista juega contra esa persona.
                 byeEncontrado.j2Id = id;
-                byeEncontrado.ganador = null; // Se quita el auto-win del BYE para que jueguen
+                byeEncontrado.ganador = null;
             } else {
-                // CASO A: Ronda par. El nuevo entra y recibe BYE WIN automáticamente.
-                nuevosPareos.push({ 
-                    j1Id: id, 
-                    j2Id: "BYE", 
-                    ganador: id 
-                });
+                nuevosPareos.push({ j1Id: id, j2Id: "BYE", ganador: id });
             }
             
-            // Actualizar el estado del torneo con los nuevos pareos
             await updateDoc(doc(db, "torneo", "estado"), { 
                 pareos: nuevosPareos,
-                // También actualizamos el histórico de la ronda actual para consistencia
                 [`historicoPareos.${torneo.ronda}`]: nuevosPareos 
             });
         }
 
-        // 3) Registrar al jugador en la base de datos
         await setDoc(doc(db, "jugadores", id), nuevoJugador);
-        
         document.getElementById('nombreCompleto').value = "";
     };
 
@@ -443,63 +432,66 @@
         await setDoc(doc(db, "torneo", "estado"), torneo);
     };
 
-function generarKTS() {
-        // ACTUALIZACIÓN CRÍTICA: Recalcular Tie Breakers antes de cualquier selección
-        // Esto asegura que comparamos los puntajes reales del momento.
-        calcularTieBreakersLocales();
+    // --- LÓGICA DE DROP TOGGLE (PULSACIÓN LARGA SIN ALERT) ---
+    window.startPress = (idx, id) => {
+        if((miRol !== "ORGANIZADOR" && miRol !== "JUDGE") || torneo.finalizado) return;
+        pressTimer = setTimeout(() => {
+            ejecutarToggleDrop(idx, id);
+        }, 3000); 
+    };
+    window.cancelPress = () => clearTimeout(pressTimer);
 
-        let pool = [...jugadores];
+    window.ejecutarToggleDrop = async (idx, id) => {
+        const jug = jugadores.find(j => j.id === id);
+        const m = torneo.pareos[idx];
+        const nuevoEstado = !jug.retirado;
+        
+        if (nuevoEstado) {
+            // ACTIVAR DROP: Oponente gana
+            const opId = (m.j1Id === id) ? m.j2Id : m.j1Id;
+            if(opId && opId !== "BYE") m.ganador = opId;
+        } else {
+            // QUITAR DROP: Mesa vuelve a cero
+            m.ganador = null;
+        }
+        
+        await updateDoc(doc(db, "jugadores", id), { retirado: nuevoEstado });
+        await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
+    };
+
+function generarKTS() {
+        calcularTieBreakersLocales();
+        let pool = jugadores.filter(j => !j.retirado);
         let pairs = [];
         let byeMatch = null;
 
-        // 1) Bye win si hay duelistas impares
         if (pool.length % 2 !== 0) {
-            // 4) Filtrar duelistas que NO han tenido BYE anteriormente
             let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
-
             if (candidatosParaBye.length > 0) {
                 let elegidoParaBye = null;
-
                 if (torneo.ronda === 1) {
-                    // Ronda 1: Selección aleatoria
                     elegidoParaBye = candidatosParaBye[Math.floor(Math.random() * candidatosParaBye.length)];
                 } else {
-                    // 2) Asignar al menor puntaje tie break (AABBBCCCDDD)
-                    // Ordenamos de forma ascendente: el menor tieBreaker queda en el índice 0
                     candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
-                    
-                    // Identificamos el valor más bajo absoluto entre los candidatos aptos
                     const menorTieBreak = candidatosParaBye[0].tieBreaker;
-
-                    // 3) Identificar a TODOS los que tienen ese mismo menor puntaje (Empate técnico)
                     let empatadosEnElFondo = candidatosParaBye.filter(j => j.tieBreaker === menorTieBreak);
-                    
-                    // Selección aleatoria entre los empatados en el fondo
                     elegidoParaBye = empatadosEnElFondo[Math.floor(Math.random() * empatadosEnElFondo.length)];
                 }
-
                 if (elegidoParaBye) {
                     byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
-                    // Quitar al jugador elegido del pool de emparejamiento suizo
                     pool = pool.filter(j => j.id !== elegidoParaBye.id);
                 }
             }
         }
 
-        // Emparejamiento Suizo normal para el resto
-        // Ordenamos de mayor a menor para emparejar niveles similares
         pool.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
-
         while (pool.length > 0) {
             let j1 = pool.shift();
-            // Buscar oponente con quien no haya jugado antes
             let idx = pool.findIndex(o => !j1.oponentes.includes(o.id));
             if (idx === -1) idx = 0;
-            
             pairs.push({ j1Id: j1.id, j2Id: pool[idx].id, ganador: null });
             pool.splice(idx, 1);
         }
-
         if (byeMatch) pairs.push(byeMatch);
         return pairs;
     }
@@ -533,8 +525,8 @@ function generarKTS() {
             else if (ganadores.length === torneo.pareos.length) {
                 const nuevosPareos = [];
                 if (ganadores.length === 4) {
-                    nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[3], ganador: null }); // Winner M1 vs Winner M4
-                    nuevosPareos.push({ j1Id: ganadores[1], j2Id: ganadores[2], ganador: null }); // Winner M2 vs Winner M3
+                    nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[3], ganador: null }); 
+                    nuevosPareos.push({ j1Id: ganadores[1], j2Id: ganadores[2], ganador: null }); 
                 } else if (ganadores.length === 2) {
                     nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[1], ganador: null });
                 }
@@ -570,7 +562,7 @@ function generarKTS() {
 
     function iniciarTopCut() {
         torneo.faseTop = true; torneo.ronda++; torneo.rondaTopActual = 1;
-        const sorted = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
+        const sorted = [...jugadores].filter(j => !j.retirado).sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
         const num = torneo.usaTop === "TOP 4" ? 4 : 8;
         const topPlayers = sorted.slice(0, num);
         const pairs = [];
@@ -611,21 +603,30 @@ function generarKTS() {
             const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
             const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
             const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
-            const soyYoEnMesa = (p.j1Id === miId || p.j2Id === miId);
-            const extraClase = soyYoEnMesa ? 'pulse-find' : '';
-            const clickable = miRol !== "PLAYER";
+            const extraClase = (p.j1Id === miId || p.j2Id === miId) ? 'pulse-find' : '';
+
+            const btnPlayer = (jug, id, opId) => {
+                const win = p.ganador === id;
+                const isDropped = jug.retirado;
+                // Permitir marcar ganador solo si no hay drop en la mesa
+                const op = jugadores.find(j => j.id === opId);
+                const mesaConDrop = isDropped || (op && op.retirado);
+                const clickAction = !mesaConDrop && p.j2Id !== 'BYE' && miRol !== 'PLAYER' ? `marcarGanador(${i},'${id}')` : '';
+                
+                return `<div class="player-btn ${win ? 'winner' : ''} ${isDropped ? 'dropped' : ''}" 
+                    onmousedown="startPress(${i},'${id}')" onmouseup="cancelPress()" onmouseleave="cancelPress()"
+                    ontouchstart="startPress(${i},'${id}')" ontouchend="cancelPress()"
+                    onclick="${clickAction}">
+                    ${jug.nombre} ${isDropped ? '(DROP)' : ''}
+                </div>`;
+            };
 
             return `<div class="${mesaClase} ${extraClase}">
                 <div class="match-info">${esMesaFinal ? 'MESA FINAL' : 'MESA ' + (i+1)}</div>
                 <div class="match-players">
-                    <div class="player-btn ${p.ganador === p.j1Id ? 'winner' : ''}" style="${!clickable?'cursor:default':''}" onclick="${clickable && p.j2Id !== 'BYE' ? `marcarGanador(${i},'${p.j1Id}')`:''}">
-                        ${p1.nombre}
-                    </div>
-                    <div class="vs-label" style="font-weight:bold; color:#666;">VS</div>
-                    ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : `
-                    <div class="player-btn ${p.ganador === p.j2Id ? 'winner' : ''}" style="${!clickable?'cursor:default':''}" onclick="${clickable ? `marcarGanador(${i},'${p.j2Id}')`:''}">
-                        ${p2.nombre}
-                    </div>`}
+                    ${btnPlayer(p1, p.j1Id, p.j2Id)}
+                    <div style="font-weight:bold; color:#666;">VS</div>
+                    ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : btnPlayer(p2, p.j2Id, p.j1Id)}
                 </div>
             </div>`;
         }).join('');
@@ -644,7 +645,9 @@ function generarKTS() {
             const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
             return `<tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
                 <td>${isChamp ? '🏆' : i+1}</td>
-                <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre}</td>
+                <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">
+                    ${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}
+                </td>
                 <td class="col-pts">${j.puntos}</td>
                 <td>${(parseInt(j.tieBreaker.substring(3,7))/10).toFixed(1)}%</td>
                 <td>${(parseInt(j.tieBreaker.substring(7,11))/10).toFixed(1)}%</td>
