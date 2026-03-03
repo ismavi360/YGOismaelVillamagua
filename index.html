@@ -133,9 +133,9 @@
     <span class="section-label">Acceso de Usuario:</span>
     <div class="access-panel">
         <select id="select-rol" onchange="cambiarRol(this.value)">
-            <option value="PLAYER">DUELISTA (LECTURA)</option>
-            <option value="JUDGE">JUDGE (REPORTAR)</option>
-            <option value="ORGANIZADOR">ORGANIZADOR (TOTAL)</option>
+            <option value="PLAYER">DUELISTA</option>
+            <option value="JUDGE">JUDGE</option>
+            <option value="ORGANIZADOR">ORGANIZADOR</option>
         </select>
         <div id="badge-rol" class="role-badge role-player">DUELISTA</div>
     </div>
@@ -145,9 +145,9 @@
         <div>INSCRITOS: <strong id="stat-count">0</strong></div>
         <div>RONDAS: <strong id="stat-rondas">0</strong></div>
         <div id="modalidad-container">
-            <span>CORTE:</span>
+            <span>MODALIDAD:</span>
             <select id="select-top-final" onchange="actualizarModalidadLocal()">
-                <option value="SUIZAS">SOLO SUIZAS</option>
+                <option value="SUIZAS">RONDAS SUIZAS</option>
                 <option value="TOP 4">TOP CUT 4</option>
                 <option value="TOP 8">TOP CUT 8</option>
             </select>
@@ -162,7 +162,7 @@
     </div>
 
     <div id="entry-container" style="display:none;">
-        <span id="label-ingreso" class="section-label">Ingrese Nuevo Duelista:</span>
+        <span id="label-ingreso" class="section-label">REGISTRAR DUELISTA:</span>
         <div id="entry-section" class="input-box">
             <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
             <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
@@ -170,13 +170,13 @@
     </div>
 
     <div id="view-registro">
-        <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">Lanzar Torneo</button>
+        <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">INICIAR TORNEO</button>
         
         <span class="section-label">Duelistas Registrados:</span>
         <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
         
         <div class="historial-box">
-            <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">Historial Global</h3>
+            <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">DUELISTAS PRE-REGISTRADOS</h3>
             <div id="lista-historial-global"></div>
         </div>
     </div>
@@ -186,7 +186,7 @@
         <div id="pairings-list" class="pairings-grid"></div>
         
         <div id="torneo-controls" style="display:none; flex-direction: column; gap:15px; margin-top:30px;">
-            <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'Siguiente Paso', terminarRonda)">Terminar Ronda / Siguiente</button>
+            <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'TERMINAR RONDA', terminarRonda)">TERMINAR RONDA</button>
             <button id="btn-retroceder" style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
         </div>
     </div>
@@ -196,13 +196,13 @@
         <div class="table-wrapper">
             <table id="main-table">
                 <thead>
-                    <tr><th>Pos</th><th style="text-align:left;">Duelista</th><th>Pts</th><th>OMW%</th><th>OOW%</th><th>DDD</th><th>T-BREAK</th></tr>
+                    <tr><th>Pos</th><th style="text-align:left;">Duelista</th><th>PUNTOS</th><th>OMW%</th><th>OOW%</th><th>LRS</th><th>TIE BREAK</th></tr>
                 </thead>
                 <tbody id="tabla-body"></tbody>
             </table>
         </div>
         
-        <button id="btn-finalizar-evento" style="display:none; background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'TERMINAR TORNEO (TIER ERROR)', reiniciarTorneo)">Finalizar Evento</button>
+        <button id="btn-finalizar-evento" style="display:none; background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'FINALIZAR EVENTO', reiniciarTorneo)">Finalizar Evento</button>
     </div>
 </div>
 
@@ -496,7 +496,7 @@
     function renderPareos() {
         const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
         const miId = localStorage.getItem('ygo_mi_nombre_id');
-        let labelRonda = !torneo.faseTop ? `SUIZAS - Ronda ${torneo.ronda} / ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
+        let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
         
         document.getElementById('txt-ronda-actual').innerText = labelRonda;
         document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
@@ -579,6 +579,7 @@
 </script>
 </body>
 </html>
+
 
 
 
