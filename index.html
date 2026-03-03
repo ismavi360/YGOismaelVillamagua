@@ -376,13 +376,58 @@
     }
 
     window.reInscribir = function(nombre) { if(torneo.faseTop || miRol !== "ORGANIZADOR") return; document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
-    window.registrarDuelista = async function() {
+   window.registrarDuelista = async function() {
         if(torneo.faseTop || miRol !== "ORGANIZADOR") return;
         const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
         if(!full) return;
+
         const id = Date.now().toString();
-        if (!historial.find(h => h.nombre.toUpperCase() === full)) await setDoc(doc(db, "historial_global", id), { nombre: full });
-        await setDoc(doc(db, "jugadores", id), { nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000000" });
+        
+        // 1) Crear el perfil del nuevo duelista con tiebreak en cero
+        const nuevoJugador = { 
+            id: id,
+            nombre: full, 
+            puntos: 0, 
+            oponentes: [], 
+            resultados: [], 
+            rondasPerdidas: [], 
+            tieBreaker: "00000000000000" 
+        };
+
+        // Guardar en historial global si no existe
+        if (!historial.find(h => h.nombre.toUpperCase() === full)) {
+            await setDoc(doc(db, "historial_global", id), { nombre: full });
+        }
+
+        // 2) Lógica de inserción en ronda activa
+        if (torneo.activa && !torneo.finalizado) {
+            let nuevosPareos = [...torneo.pareos];
+            let byeEncontrado = nuevosPareos.find(p => p.j2Id === "BYE");
+
+            if (byeEncontrado) {
+                // CASO B: Había un BYE. El nuevo duelista juega contra esa persona.
+                byeEncontrado.j2Id = id;
+                byeEncontrado.ganador = null; // Se quita el auto-win del BYE para que jueguen
+            } else {
+                // CASO A: Ronda par. El nuevo entra y recibe BYE WIN automáticamente.
+                nuevosPareos.push({ 
+                    j1Id: id, 
+                    j2Id: "BYE", 
+                    ganador: id 
+                });
+            }
+            
+            // Actualizar el estado del torneo con los nuevos pareos
+            await updateDoc(doc(db, "torneo", "estado"), { 
+                pareos: nuevosPareos,
+                // También actualizamos el histórico de la ronda actual para consistencia
+                [`historicoPareos.${torneo.ronda}`]: nuevosPareos 
+            });
+        }
+
+        // 3) Registrar al jugador en la base de datos
+        await setDoc(doc(db, "jugadores", id), nuevoJugador);
+        
         document.getElementById('nombreCompleto').value = "";
     };
 
