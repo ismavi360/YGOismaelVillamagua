@@ -398,26 +398,63 @@
         await setDoc(doc(db, "torneo", "estado"), torneo);
     };
 
-    function generarKTS() {
-        let pool = [...jugadores].sort((a, b) => b.puntos - a.puntos || Math.random() - 0.5);
+function generarKTS() {
+        // ACTUALIZACIÓN CRÍTICA: Recalcular Tie Breakers antes de cualquier selección
+        // Esto asegura que comparamos los puntajes reales del momento.
+        calcularTieBreakersLocales();
+
+        let pool = [...jugadores];
         let pairs = [];
         let byeMatch = null;
+
+        // 1) Bye win si hay duelistas impares
         if (pool.length % 2 !== 0) {
-            for (let i = pool.length - 1; i >= 0; i--) {
-                if (!pool[i].oponentes.includes("BYE")) {
-                    let bP = pool.splice(i, 1)[0];
-                    byeMatch = { j1Id: bP.id, j2Id: "BYE", ganador: bP.id };
-                    break;
+            // 4) Filtrar duelistas que NO han tenido BYE anteriormente
+            let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
+
+            if (candidatosParaBye.length > 0) {
+                let elegidoParaBye = null;
+
+                if (torneo.ronda === 1) {
+                    // Ronda 1: Selección aleatoria
+                    elegidoParaBye = candidatosParaBye[Math.floor(Math.random() * candidatosParaBye.length)];
+                } else {
+                    // 2) Asignar al menor puntaje tie break (AABBBCCCDDD)
+                    // Ordenamos de forma ascendente: el menor tieBreaker queda en el índice 0
+                    candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
+                    
+                    // Identificamos el valor más bajo absoluto entre los candidatos aptos
+                    const menorTieBreak = candidatosParaBye[0].tieBreaker;
+
+                    // 3) Identificar a TODOS los que tienen ese mismo menor puntaje (Empate técnico)
+                    let empatadosEnElFondo = candidatosParaBye.filter(j => j.tieBreaker === menorTieBreak);
+                    
+                    // Selección aleatoria entre los empatados en el fondo
+                    elegidoParaBye = empatadosEnElFondo[Math.floor(Math.random() * empatadosEnElFondo.length)];
+                }
+
+                if (elegidoParaBye) {
+                    byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
+                    // Quitar al jugador elegido del pool de emparejamiento suizo
+                    pool = pool.filter(j => j.id !== elegidoParaBye.id);
                 }
             }
         }
+
+        // Emparejamiento Suizo normal para el resto
+        // Ordenamos de mayor a menor para emparejar niveles similares
+        pool.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
+
         while (pool.length > 0) {
             let j1 = pool.shift();
+            // Buscar oponente con quien no haya jugado antes
             let idx = pool.findIndex(o => !j1.oponentes.includes(o.id));
             if (idx === -1) idx = 0;
+            
             pairs.push({ j1Id: j1.id, j2Id: pool[idx].id, ganador: null });
             pool.splice(idx, 1);
         }
+
         if (byeMatch) pairs.push(byeMatch);
         return pairs;
     }
@@ -584,3 +621,4 @@
 </script>
 </body>
 </html>
+
