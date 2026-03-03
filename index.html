@@ -21,7 +21,6 @@
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
-        /* Panel de Acceso */
         .access-panel { background: #222; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .access-panel select { width: 100%; max-width: 300px; border-color: var(--warning); }
         .role-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
@@ -175,7 +174,7 @@
         <span class="section-label">Duelistas Registrados:</span>
         <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
         
-        <div class="historial-box">
+        <div id="historial-container" class="historial-box" style="display:none;">
             <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">DUELISTAS PRE-REGISTRADOS</h3>
             <div id="lista-historial-global"></div>
         </div>
@@ -295,17 +294,17 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
-        // Actualizar Badge de Rol
         const badge = document.getElementById('badge-rol');
         document.getElementById('select-rol').value = miRol;
         badge.innerText = miRol;
         badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : 'role-player');
 
+        document.getElementById('historial-container').style.display = (miRol === "ORGANIZADOR") ? "block" : "none";
+
         const entryContainer = document.getElementById('entry-container');
         const buscadorMesa = document.getElementById('view-buscador-mesa');
         const selectTop = document.getElementById('select-top-final');
 
-        // Restricción de Corte Final
         selectTop.disabled = (miRol !== "ORGANIZADOR");
 
         if (!torneo.activa && !torneo.finalizado) {
@@ -349,7 +348,6 @@
             document.getElementById('view-torneo').style.display = 'block';
             document.getElementById('standings-view').style.display = 'block';
             
-            // Controles de Organizador
             document.getElementById('torneo-controls').style.display = (miRol === "ORGANIZADOR") ? 'flex' : 'none';
             document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
             document.getElementById('btn-finalizar-evento').style.display = (miRol === "ORGANIZADOR") ? 'block' : 'none';
@@ -384,7 +382,7 @@
         if(!full) return;
         const id = Date.now().toString();
         if (!historial.find(h => h.nombre.toUpperCase() === full)) await setDoc(doc(db, "historial_global", id), { nombre: full });
-        await setDoc(doc(db, "jugadores", id), { nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000" });
+        await setDoc(doc(db, "jugadores", id), { nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000000" });
         document.getElementById('nombreCompleto').value = "";
     };
 
@@ -425,7 +423,7 @@
     }
 
     window.marcarGanador = async function(idx, idWin) {
-        if(torneo.finalizado || miRol === "PLAYER") return; // Solo Org y Judge
+        if(torneo.finalizado || miRol === "PLAYER") return; 
         torneo.pareos[idx].ganador = (torneo.pareos[idx].ganador === idWin) ? null : idWin;
         await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
     }
@@ -446,19 +444,47 @@
         });
         if (!torneo.faseTop) {
             if (torneo.ronda < torneo.totalRondas) { torneo.ronda++; const nP = generarKTS(); torneo.pareos = nP; torneo.historicoPareos[torneo.ronda] = nP; } 
-            else { if (torneo.usaTop === "SUIZAS") torneo.finalizado = true; else iniciarTopCut(); }
+            else { if (torneo.usaTop === "SUIZAS") torneo.finalizado = true; else { calcularTieBreakersLocales(); iniciarTopCut(); } }
         } else {
             const ganadores = torneo.pareos.filter(p => p.ganador).map(p => p.ganador);
             if (torneo.pareos.length === 1 && ganadores.length === 1) torneo.finalizado = true;
             else if (ganadores.length === torneo.pareos.length) {
                 const nuevosPareos = [];
-                for(let i=0; i < ganadores.length; i+=2) nuevosPareos.push({ j1Id: ganadores[i], j2Id: ganadores[i+1], ganador: null });
+                if (ganadores.length === 4) {
+                    nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[3], ganador: null }); // Winner M1 vs Winner M4
+                    nuevosPareos.push({ j1Id: ganadores[1], j2Id: ganadores[2], ganador: null }); // Winner M2 vs Winner M3
+                } else if (ganadores.length === 2) {
+                    nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[1], ganador: null });
+                }
                 torneo.ronda++; torneo.rondaTopActual++; torneo.pareos = nuevosPareos; torneo.historicoPareos[torneo.ronda] = nuevosPareos;
             }
         }
         batch.set(doc(db, "torneo", "estado"), torneo);
         await batch.commit();
     };
+
+    function calcularTieBreakersLocales(ganadorFinalId = null, perdedorFinalId = null) {
+        jugadores.forEach(j => {
+            let sumWinRates = 0; const opsValidos = j.oponentes.filter(o => o !== "BYE");
+            opsValidos.forEach(oid => {
+                const op = jugadores.find(x => x.id === oid);
+                if(op) sumWinRates += Math.max(0.33, op.puntos / (Math.max(1, op.resultados.length) * 3));
+            });
+            j.omw_raw = opsValidos.length ? (sumWinRates / opsValidos.length) : 0.33;
+        });
+        jugadores.forEach(j => {
+            let sumOppOMW = 0; const opsValidos = j.oponentes.filter(o => o !== "BYE");
+            opsValidos.forEach(oid => { const op = jugadores.find(x => x.id === oid); if(op) sumOppOMW += op.omw_raw; });
+            const AA = j.puntos.toString().padStart(2, '0');
+            const BBB = Math.floor(j.omw_raw * 1000).toString().padStart(4, '0');
+            const oow_raw = opsValidos.length ? (sumOppOMW / opsValidos.length) : 0.33;
+            const CCC = Math.floor(oow_raw * 1000).toString().padStart(4, '0');
+            const DDD = j.rondasPerdidas.reduce((acc, r) => acc + (r * r), 0).toString().padStart(3, '0');
+            let PRIO = (ganadorFinalId && j.id === ganadorFinalId) ? "9" : (perdedorFinalId && j.id === perdedorFinalId) ? "8" : "0";
+            j.tieBreaker = `${PRIO}${AA}${BBB}${CCC}${DDD}`;
+            j.ddd_val = DDD;
+        });
+    }
 
     function iniciarTopCut() {
         torneo.faseTop = true; torneo.ronda++; torneo.rondaTopActual = 1;
@@ -505,8 +531,6 @@
             const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
             const soyYoEnMesa = (p.j1Id === miId || p.j2Id === miId);
             const extraClase = soyYoEnMesa ? 'pulse-find' : '';
-            
-            // Si es Duelista, los botones no tienen cursor pointer (CSS se encarga pero aquí evitamos la función)
             const clickable = miRol !== "PLAYER";
 
             return `<div class="${mesaClase} ${extraClase}">
@@ -526,41 +550,22 @@
     }
 
     function renderStandings() {
-        let finalWinnerId = null, finalLoserId = null;
+        let fW = null, fL = null;
         if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) {
-            finalWinnerId = torneo.pareos[0].ganador;
-            finalLoserId = (finalWinnerId === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id;
+            fW = torneo.pareos[0].ganador;
+            fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id;
         }
-        jugadores.forEach(j => {
-            let sumWinRates = 0; const opsValidos = j.oponentes.filter(o => o !== "BYE");
-            opsValidos.forEach(oid => {
-                const op = jugadores.find(x => x.id === oid);
-                if(op) sumWinRates += Math.max(0.33, op.puntos / (Math.max(1, op.resultados.length) * 3));
-            });
-            j.omw_raw = opsValidos.length ? (sumWinRates / opsValidos.length) : 0.33;
-        });
-        jugadores.forEach(j => {
-            let sumOppOMW = 0; const opsValidos = j.oponentes.filter(o => o !== "BYE");
-            opsValidos.forEach(oid => { const op = jugadores.find(x => x.id === oid); if(op) sumOppOMW += op.omw_raw; });
-            const AA = j.puntos.toString().padStart(2, '0');
-            const BBB = Math.floor(j.omw_raw * 1000).toString().padStart(3, '0');
-            const oow_raw = opsValidos.length ? (sumOppOMW / opsValidos.length) : 0.33;
-            const CCC = Math.floor(oow_raw * 1000).toString().padStart(3, '0');
-            const DDD = j.rondasPerdidas.reduce((acc, r) => acc + (r * r), 0).toString().padStart(2, '0');
-            let PRIO = (finalWinnerId && j.id === finalWinnerId) ? "9" : (finalLoserId && j.id === finalLoserId) ? "8" : "0";
-            j.tieBreaker = `${PRIO}${AA}${BBB}${CCC}${DDD}`;
-            j.ddd_val = DDD;
-        });
+        calcularTieBreakersLocales(fW, fL);
         jugadores.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
         document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
-            const isChamp = torneo.finalizado && ((finalWinnerId && j.id === finalWinnerId) || (!torneo.faseTop && i === 0 && j.puntos > 0));
-            const isSecond = torneo.finalizado && ((finalLoserId && j.id === finalLoserId) || (!torneo.faseTop && i === 1 && j.puntos > 0));
+            const isChamp = torneo.finalizado && ((fW && j.id === fW) || (!torneo.faseTop && i === 0 && j.puntos > 0));
+            const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
             return `<tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
                 <td>${isChamp ? '🏆' : i+1}</td>
                 <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre}</td>
                 <td class="col-pts">${j.puntos}</td>
-                <td>${(parseInt(j.tieBreaker.substring(3,6))/10).toFixed(1)}%</td>
-                <td>${(parseInt(j.tieBreaker.substring(6,9))/10).toFixed(1)}%</td>
+                <td>${(parseInt(j.tieBreaker.substring(3,7))/10).toFixed(1)}%</td>
+                <td>${(parseInt(j.tieBreaker.substring(7,11))/10).toFixed(1)}%</td>
                 <td>${j.ddd_val}</td>
                 <td class="col-tb">${j.tieBreaker}</td>
             </tr>`;
@@ -579,15 +584,3 @@
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
