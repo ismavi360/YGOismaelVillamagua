@@ -21,7 +21,6 @@
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
-        /* --- NUEVAS REGLAS CSS PARA EL EFECTO PALPITANTE --- */
         @keyframes palpitar {
             0% { opacity: 1; }
             50% { opacity: 0.4; }
@@ -32,7 +31,11 @@
             animation: palpitar 1.5s infinite ease-in-out;
             font-weight: bold;
         }
-        /* -------------------------------------------------- */
+
+        .fila-activa { 
+            animation: palpitar 1.5s infinite ease-in-out; 
+            background: rgba(0, 123, 255, 0.2) !important; 
+        }
 
         .access-panel { background: #222; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .access-panel select { width: 100%; max-width: 300px; border-color: var(--warning); }
@@ -294,6 +297,7 @@
     window.guardarMiNombre = function(val) {
         localStorage.setItem('ygo_mi_nombre_id', val);
         renderPareos();
+        renderStandings();
     };
 
     window.actualizarModalidadLocal = async function() {
@@ -367,11 +371,9 @@
         badge.innerText = miRol;
         badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : miRol === 'PLAYER' ? 'role-player' : 'role-guest');
 
-        // --- LÓGICA DE ESTADOS Y CLASES VISUALES (MODIFICADA) ---
         const estadoInvitadoCont = document.getElementById('estado-torneo-invitado');
         const txtEstadoInvitado = document.getElementById('txt-estado-invitado');
         
-        // Resetear clases y estilos previos
         estadoInvitadoCont.classList.remove('texto-palpitante');
         estadoInvitadoCont.style.color = "";
         estadoInvitadoCont.style.borderColor = "";
@@ -387,7 +389,7 @@
                 estadoInvitadoCont.style.display = "block";
                 txtEstadoInvitado.innerText = "ESTADO: TORNEO EN CURSO";
                 estadoInvitadoCont.classList.add('texto-palpitante');
-                estadoInvitadoCont.style.color = "#2ecc71"; // Verde fuerte solicitado
+                estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
             } else {
                 estadoInvitadoCont.style.display = "none";
@@ -395,7 +397,6 @@
         } else {
             estadoInvitadoCont.style.display = "none";
         }
-        // -------------------------------------------------------
 
         const pinCont = document.getElementById('pins-display');
         const pinJ = document.getElementById('pin-judge-label');
@@ -466,7 +467,11 @@
             ).join('');
 
             document.getElementById('view-registro').style.display = 'none';
-            document.getElementById('view-torneo').style.display = 'block';
+            
+            /* MODIFICACIÓN SOLICITADA: Restringir visibilidad de mesas si es INVITADO */
+            document.getElementById('view-torneo').style.display = (miRol === "INVITADO") ? 'none' : 'block';
+            
+            /* Los standings siempre son visibles para todos */
             document.getElementById('standings-view').style.display = 'block';
             
             document.getElementById('torneo-controls').style.display = esOrg ? 'flex' : 'none';
@@ -723,6 +728,7 @@
     }
 
     function renderStandings() {
+        const miId = localStorage.getItem('ygo_mi_nombre_id');
         let fW = null, fL = null;
         if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) { fW = torneo.pareos[0].ganador; fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id; }
         calcularTieBreakersLocales(fW, fL);
@@ -730,7 +736,9 @@
         document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
             const isChamp = torneo.finalizado && ((fW && j.id === fW) || (!torneo.faseTop && i === 0 && j.puntos > 0));
             const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
-            return `<tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
+            const esUsuarioActivo = (j.id === miId);
+
+            return `<tr class="${esUsuarioActivo ? 'fila-activa' : ''}" style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
                 <td>${isChamp ? '🏆' : i+1}</td>
                 <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}</td>
                 <td class="col-pts">${j.puntos}</td>
@@ -756,5 +764,6 @@
 </script>
 </body>
 </html>
+
 
 
