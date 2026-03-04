@@ -145,9 +145,27 @@
             </a>
         </div>
     </div>
+<script>
+    // Bloquea el zoom de pinza (Pinch-to-zoom)
+    document.addEventListener('touchstart', function (event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
 
+    // Bloquea el zoom de doble toque (opcional pero recomendado)
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+</script>
 </body>
 </html>
+
 
 
 
