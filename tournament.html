@@ -428,7 +428,15 @@
                 estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
             } else if (torneo.finalizado) {
+                // Cálculo del Campeón basado en los Standings actuales
+                let fW = null, fL = null;
+                if (torneo.faseTop && torneo.pareos.length === 1) { 
+                    fW = torneo.pareos[0].ganador; 
+                    fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id; 
+                }
+                calcularTieBreakersLocales(fW, fL);
                 const ganador = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker))[0];
+                
                 estadoInvitadoCont.style.display = "block";
                 txtEstadoInvitado.innerText = `🏆 CAMPEÓN: ${ganador ? ganador.nombre : "---"}`;
                 estadoInvitadoCont.className = "campeon-gold"; 
@@ -608,7 +616,7 @@
         if (pool.length % 2 !== 0) {
             let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
             if (candidatosParaBye.length === 0) candidatosParaBye = [...pool];
-            candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
+            candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(a.tieBreaker));
             let elegidoParaBye = candidatosParaBye[0];
             byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
             pool = pool.filter(j => j.id !== elegidoParaBye.id);
