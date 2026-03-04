@@ -2,766 +2,150 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>YGO OFFICIAL TOURNAMENT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YGO AI-Duelist | Home</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; --gold: #ffd700; --judge: #9b59b6; }
-        
-        html, body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg); 
-            color: #f0f0f0; 
-            padding: 10px; 
-            margin: 0; 
-            touch-action: pan-y; 
-            -webkit-text-size-adjust: 100%;
-            overscroll-behavior: contain;
-        }
-        
-        .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
-        .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        
-        @keyframes palpitar {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
+        :root {
+            --primary: #007bff;
+            --bg: #0f0f0f;
+            --card: #1a1a1a;
+            --text: #f0f0f0;
+            --accent: #00d4ff;
         }
 
-        .texto-palpitante {
-            animation: palpitar 1.5s infinite ease-in-out;
-            font-weight: bold;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
 
-        .fila-activa { 
-            animation: palpitar 1.5s infinite ease-in-out; 
-            background: rgba(0, 123, 255, 0.2) !important; 
+        /* Contenedor principal con efecto de entrada */
+        .hero {
+            text-align: center;
+            animation: fadeIn 1.2s ease-out;
+            padding: 20px;
         }
 
-        .access-panel { background: #222; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .access-panel select { width: 100%; max-width: 300px; border-color: var(--warning); }
-        .role-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
-        .role-org { background: var(--danger); color: white; }
-        .role-judge { background: var(--judge); color: white; }
-        .role-player { background: #555; color: white; }
-        .role-guest { background: #333; color: #aaa; }
-
-        .section-label { font-size: 0.75em; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; display: block; }
-
-        .stats-bar { 
-            background: #222; padding: 15px; border-radius: 10px; margin-bottom: 25px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            border-left: 5px solid var(--primary); gap: 15px; font-size: 1.1em; text-align: center;
-        }
-        .stats-bar div { display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1; }
-        .stats-bar strong { color: var(--primary); font-size: 1.3em; }
-
-        .input-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #444; }
-        
-        input, select { 
-            padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2b2b2b; 
-            color: white; outline: none; font-size: 16px; text-transform: uppercase; 
-        }
-        
-        #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
-
-        .search-box { background: #111; padding: 15px; border-radius: 10px; border: 2px solid var(--primary); margin-bottom: 20px; text-align: center; }
-        .search-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); font-size: 0.9em; }
-        .search-box select { width: 100%; max-width: 400px; border-color: var(--primary); }
-
-        button { 
-            padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; 
-            font-weight: bold; transition: 0.2s; font-size: 1.1em; text-transform: uppercase;
-            touch-action: manipulation;
-        }
-        
-        .btn-add { background: var(--primary); color: white; width: 100%; }
-        .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
-        
-        .btn-delete-node { background: var(--danger); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1em; }
-        .btn-plus { background: var(--success); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.1em; }
-        .btn-confirm-green { background: var(--success) !important; }
-
-        .pairings-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
-        .match-card { background: #222; padding: 20px; border-radius: 12px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; gap: 15px; transition: 0.3s; }
-        
-        .match-card.pulse-find {
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 15px var(--primary);
-            animation: pulse-blue 1.5s infinite;
-            background: #1a2533;
-        }
-        @keyframes pulse-blue {
-            0% { transform: scale(1); box-shadow: 0 0 5px var(--primary); }
-            50% { transform: scale(1.03); box-shadow: 0 0 20px var(--primary); }
-            100% { transform: scale(1); box-shadow: 0 0 5px var(--primary); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .match-card.is-final {
-            grid-column: 1 / -1;
-            border: 3px solid var(--gold);
-            background: linear-gradient(145deg, #1a1a1a, #2a2200);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
-            transform: scale(1.02);
-            animation: pulse-gold 2s infinite;
-            max-width: 600px;
-            margin: 20px auto;
-        }
-        @keyframes pulse-gold {
-            0% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); border-color: #aa9100; }
-            50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.5); border-color: var(--gold); }
-            100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); border-color: #aa9100; }
+        /* Título Estilo YGO AI-Duelist */
+        .main-title {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin: 0;
+            text-transform: uppercase;
         }
 
-        .match-info { color: var(--warning); font-weight: bold; font-size: 1.2em; text-align: center; width: 100%; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .match-players { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; }
-        
-        .player-btn { flex: 1; padding: 20px 10px; border-radius: 10px; background: #333; cursor: pointer; text-align: center; font-size: 1.1em; border: 2px solid transparent; min-height: 60px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; user-select: none; -webkit-user-select: none; }
-        .player-btn.winner { background: var(--success) !important; border-color: #afffba; color: white; }
-        .player-btn.dropped { text-decoration: line-through; opacity: 0.5; background: #1a1a1a !important; border-color: var(--danger); }
+        .main-title b {
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
+        }
 
-        .historial-box { margin-top: 30px; padding: 15px; background: #151515; border-radius: 10px; border: 1px solid #333; }
-        .historial-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; align-items: center; font-size: 1.1em; }
-        .nombre-historial { text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
-        .nombre-inscrito { color: #2ecc71; font-weight: bold; }
+        .subtitle {
+            font-size: 0.8rem;
+            color: #888;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 50px;
+            margin-top: 10px;
+        }
 
-        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #333; touch-action: pan-x pan-y; }
-        table { width: 100%; border-collapse: collapse; background: #151515; font-size: 0.95em; }
-        th, td { padding: 10px 8px; border-bottom: 1px solid #222; white-space: nowrap; text-align: center; }
-        th { background: #1a1a1a; color: var(--primary); text-transform: uppercase; font-size: 0.8em; font-weight: 900; }
-        
-        .col-pts { font-size: 1.2em; color: var(--warning); font-weight: 900; }
-        .col-tb { color: #00d4ff; font-family: 'Courier New', monospace; font-size: 1.1em; font-weight: bold; background: rgba(0, 212, 255, 0.05); }
+        /* Contenedor de Opciones */
+        .menu-grid {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
 
-        .confirming { background: var(--danger) !important; color: white !important; animation: blink 0.5s infinite; }
-        @keyframes blink { 50% { opacity: 0.7; } }
+        .menu-card {
+            background: var(--card);
+            border: 1px solid #333;
+            padding: 40px;
+            width: 280px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-        @media (min-width: 768px) {
-            .stats-bar { flex-direction: row; justify-content: space-around; }
-            .pairings-grid { grid-template-columns: repeat(2, 1fr); }
-            .input-box { flex-direction: row; }
+        .menu-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-card:hover::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: var(--primary);
+        }
+
+        .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .menu-card h2 {
+            margin: 10px 0;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+
+        .menu-card p {
+            font-size: 0.85rem;
+            color: #aaa;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Responsivo */
+        @media (max-width: 600px) {
+            .main-title { font-size: 2rem; letter-spacing: 4px; }
+            .menu-card { width: 100%; padding: 30px; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 class="main-title">YGO OFFICIAL TOURNAMENT</h1>
+    <div class="hero">
+        <h1 class="main-title">YGO <b>AI-DUELIST</b></h1>
+        <div class="subtitle">Advanced Tournament & Strategy Engine</div>
 
-    <span class="section-label">Acceso de Usuario:</span>
-    <div class="access-panel">
-        <select id="select-rol" onchange="cambiarRol(this.value)">
-            </select>
-        <div id="badge-rol" class="role-badge role-guest">INVITADO</div>
-    </div>
+        <div class="menu-grid">
+            <a href="deckbuilder.html" class="menu-card">
+                <div class="icon">🎴</div>
+                <h2>DECK BUILDER</h2>
+                <p>Crea, optimiza y analiza tus recetas para el meta actual.</p>
+            </a>
 
-    <span class="section-label">Detalles del Torneo:</span>
-    <div class="stats-bar">
-        <div>INSCRITOS: <strong id="stat-count">0</strong></div>
-        <div>RONDAS: <strong id="stat-rondas">0</strong></div>
-        <div id="modalidad-container">
-            <span>MODALIDAD:</span>
-            <select id="select-top-final" onchange="actualizarModalidadLocal()">
-                <option value="SUIZAS">RONDAS SUIZAS</option>
-                <option value="TOP 4">TOP CUT 4</option>
-                <option value="TOP 8">TOP CUT 8</option>
-            </select>
-        </div>
-        <div id="estado-torneo-invitado" style="display:none; font-weight:bold; border: 1px solid var(--warning); padding: 5px 10px; border-radius: 5px;">
-            <span id="txt-estado-invitado"></span>
-        </div>
-        <div id="pins-display" style="display:none; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; border: 1px solid #444;">
-            <span id="pin-judge-label" style="display:none; margin-right: 10px;">JUDGE PIN: <strong id="txt-pin-judge" style="color:var(--judge)">-</strong></span>
-            <span id="pin-player-label" style="display:none;">PLAYER PIN: <strong id="txt-pin-player" style="color:var(--success)">-</strong></span>
+            <a href="tournament.html" class="menu-card">
+                <div class="icon">🏆</div>
+                <h2>TOURNAMENT</h2>
+                <p>Gestión de rondas suizas, standings y desempates en tiempo real.</p>
+            </a>
         </div>
     </div>
 
-    <div id="main-content-wrapper" style="display:none;">
-        <div id="view-buscador-mesa" class="search-box" style="display:none;">
-            <label>¿DÓNDE ESTOY JUGANDO?</label>
-            <select id="select-mi-nombre" onchange="guardarMiNombre(this.value)">
-                <option value="">-- SELECCIONA TU NOMBRE --</option>
-            </select>
-        </div>
-
-        <div id="entry-container" style="display:none;">
-            <span id="label-ingreso" class="section-label">REGISTRAR DUELISTA:</span>
-            <div id="entry-section" class="input-box">
-                <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
-                <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
-            </div>
-        </div>
-
-        <div id="view-registro">
-            <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'INICIAR TORNEO', iniciarTorneo)">INICIAR TORNEO</button>
-            
-            <span class="section-label">Duelistas Registrados:</span>
-            <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
-            
-            <div id="historial-container" class="historial-box" style="display:none;">
-                <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">DUELISTAS PRE-REGISTRADOS</h3>
-                <div id="lista-historial-global"></div>
-            </div>
-        </div>
-
-        <div id="view-torneo" style="display:none;">
-            <h2 id="txt-ronda-actual" style="color:var(--warning); text-align: center; text-transform: uppercase;">Ronda 1 / ?</h2>
-            <div id="pairings-list" class="pairings-grid"></div>
-            
-            <div id="torneo-controls" style="display:none; flex-direction: column; gap:15px; margin-top:30px;">
-                <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'TERMINAR RONDA', terminarRonda)">TERMINAR RONDA</button>
-                <button id="btn-retroceder" style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
-            </div>
-        </div>
-
-        <div id="standings-view" style="display:none;">
-            <h2 style="margin-top:40px; border-left: 4px solid var(--success); padding-left:10px; text-transform: uppercase;">Standings Oficiales</h2>
-            <div class="table-wrapper">
-                <table id="main-table">
-                    <thead>
-                        <tr><th>Pos</th><th style="text-align:left;">Duelista</th><th>PUNTOS</th><th>OMW%</th><th>OOW%</th><th>LRS</th><th>TIE BREAK</th></tr>
-                    </thead>
-                    <tbody id="tabla-body"></tbody>
-                </table>
-            </div>
-            
-            <button id="btn-finalizar-evento" style="display:none; background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'FINALIZAR EVENTO', reiniciarTorneo)">Finalizar Evento</button>
-        </div>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
-        authDomain: "ygoismaelvillamagua.firebaseapp.com",
-        projectId: "ygoismaelvillamagua",
-        storageBucket: "ygoismaelvillamagua.firebasestorage.app",
-        messagingSenderId: "624990862859",
-        appId: "1:624990862859:web:170630e1e94d29fb3d910e"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let jugadores = [];
-    let historial = [];
-    let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS", pinJudge: "", pinPlayer: "" };
-    let miRol = sessionStorage.getItem('ygo_rol') || "INVITADO";
-    let pressTimer;
-
-    window.cambiarRol = function(val) {
-        const resetRol = () => {
-            miRol = "INVITADO";
-            document.getElementById('select-rol').value = "INVITADO";
-        };
-
-        if (val === "ORGANIZADOR") {
-            const pin = prompt("INGRESE PIN DE ACCESO ORGANIZADOR:");
-            if (pin === "19291967") {
-                sessionStorage.setItem('ygo_auth', 'true');
-                miRol = "ORGANIZADOR";
-            } else {
-                alert("PIN INCORRECTO - ACCESO DENEGADO");
-                resetRol();
-            }
-        } else if (val === "JUDGE") {
-            const pin = prompt("INGRESE PIN DE ACCESO JUDGE (6 DÍGITOS):");
-            if (pin && pin === torneo.pinJudge) {
-                sessionStorage.setItem('ygo_auth_judge', 'true');
-                miRol = "JUDGE";
-            } else {
-                alert("PIN INCORRECTO");
-                resetRol();
-            }
-        } else if (val === "PLAYER") {
-            const pin = prompt("INGRESE PIN DE ACCESO DUELISTA (4 DÍGITOS):");
-            if (pin && pin === torneo.pinPlayer) {
-                sessionStorage.setItem('ygo_auth_player', 'true');
-                miRol = "PLAYER";
-            } else {
-                alert("PIN INCORRECTO");
-                resetRol();
-            }
-        } else {
-            miRol = val;
-            sessionStorage.removeItem('ygo_auth');
-            sessionStorage.removeItem('ygo_auth_judge');
-            sessionStorage.removeItem('ygo_auth_player');
-        }
-        sessionStorage.setItem('ygo_rol', miRol);
-        actualizarUI();
-    };
-
-    window.guardarMiNombre = function(val) {
-        localStorage.setItem('ygo_mi_nombre_id', val);
-        renderPareos();
-        renderStandings();
-    };
-
-    window.actualizarModalidadLocal = async function() {
-        if(miRol !== "ORGANIZADOR") return;
-        const nueva = document.getElementById('select-top-final').value;
-        if(torneo.activa) await updateDoc(doc(db, "torneo", "estado"), { usaTop: nueva });
-    };
-
-    window.validarBotonInscripcion = function() {
-        const input = document.getElementById('nombreCompleto');
-        const valor = input.value.trim().toUpperCase();
-        input.value = input.value.toUpperCase(); 
-        const btn = document.getElementById('btn-registrar');
-        const yaExiste = jugadores.some(j => j.nombre === valor);
-        btn.style.display = (miRol === "ORGANIZADOR" && !yaExiste && valor !== "") ? 'block' : 'none';
-    };
-
-    window.confirmAction = function(btn, callback) {
-        if (btn.dataset.confirmed === "true") { callback(); } 
-        else {
-            btn.classList.add("btn-confirm-green"); btn.innerText = "OK"; btn.dataset.confirmed = "true";
-            setTimeout(() => { btn.classList.remove("btn-confirm-green"); btn.innerText = "X"; btn.dataset.confirmed = "false"; }, 3000);
-        }
-    };
-
-    window.handleDoubleConfirm = function(btn, originalText, callback) {
-        if (btn.dataset.status === "confirming") {
-            callback(); btn.dataset.status = "idle"; btn.innerText = originalText; btn.classList.remove("confirming");
-        } else {
-            btn.dataset.status = "confirming"; btn.innerText = "CONFIRMAR"; btn.classList.add("confirming");
-            setTimeout(() => { btn.dataset.status = "idle"; btn.innerText = originalText; btn.classList.remove("confirming"); }, 2000);
-        }
-    };
-
-    onSnapshot(collection(db, "jugadores"), (snap) => {
-        jugadores = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        actualizarUI();
-    });
-
-    onSnapshot(collection(db, "historial_global"), (snap) => {
-        historial = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderHistorial();
-    });
-
-    onSnapshot(doc(db, "torneo", "estado"), (snap) => {
-        if (snap.exists()) { 
-            torneo = snap.data(); 
-            if(torneo.usaTop) document.getElementById('select-top-final').value = torneo.usaTop;
-            actualizarUI(); 
-        }
-    });
-
-    function actualizarUI() {
-        const n = jugadores.length;
-        let r = n >= 2049 ? 12 : n >= 1025 ? 11 : n >= 513 ? 10 : n >= 257 ? 9 : n >= 129 ? 8 : n >= 65 ? 7 : n >= 33 ? 6 : n >= 17 ? 5 : n >= 9 ? 4 : 3;
-        
-        document.getElementById('stat-count').innerText = n;
-        document.getElementById('stat-rondas').innerText = r;
-
-        const selectRol = document.getElementById('select-rol');
-        let optionsHTML = `<option value="INVITADO" ${miRol === 'INVITADO' ? 'selected' : ''}>INVITADO</option>`;
-        
-        if (torneo.activa) {
-            optionsHTML += `<option value="PLAYER" ${miRol === 'PLAYER' ? 'selected' : ''}>DUELISTA</option>`;
-            optionsHTML += `<option value="JUDGE" ${miRol === 'JUDGE' ? 'selected' : ''}>JUDGE</option>`;
-        }
-        optionsHTML += `<option value="ORGANIZADOR" ${miRol === 'ORGANIZADOR' ? 'selected' : ''}>ORGANIZADOR</option>`;
-        selectRol.innerHTML = optionsHTML;
-
-        const badge = document.getElementById('badge-rol');
-        badge.innerText = miRol;
-        badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : miRol === 'PLAYER' ? 'role-player' : 'role-guest');
-
-        const estadoInvitadoCont = document.getElementById('estado-torneo-invitado');
-        const txtEstadoInvitado = document.getElementById('txt-estado-invitado');
-        
-        estadoInvitadoCont.classList.remove('texto-palpitante');
-        estadoInvitadoCont.style.color = "";
-        estadoInvitadoCont.style.borderColor = "";
-
-        if (miRol === "INVITADO") {
-            if (!torneo.activa && !torneo.finalizado) {
-                estadoInvitadoCont.style.display = "block";
-                txtEstadoInvitado.innerText = "TORNEO EN ETAPA DE REGISTRO";
-                estadoInvitadoCont.classList.add('texto-palpitante');
-                estadoInvitadoCont.style.color = "var(--warning)";
-                estadoInvitadoCont.style.borderColor = "var(--warning)";
-            } else if (torneo.activa) {
-                estadoInvitadoCont.style.display = "block";
-                txtEstadoInvitado.innerText = "TORNEO EN CURSO";
-                estadoInvitadoCont.classList.add('texto-palpitante');
-                estadoInvitadoCont.style.color = "#2ecc71"; 
-                estadoInvitadoCont.style.borderColor = "#2ecc71";
-            } else {
-                estadoInvitadoCont.style.display = "none";
-            }
-        } else {
-            estadoInvitadoCont.style.display = "none";
-        }
-
-        const pinCont = document.getElementById('pins-display');
-        const pinJ = document.getElementById('pin-judge-label');
-        const pinP = document.getElementById('pin-player-label');
-        
-        if (torneo.activa && (miRol === "ORGANIZADOR" || miRol === "JUDGE")) {
-            pinCont.style.display = "flex";
-            if (miRol === "ORGANIZADOR") {
-                pinJ.style.display = "inline";
-                document.getElementById('txt-pin-judge').innerText = torneo.pinJudge || "-";
-                pinP.style.display = "inline";
-                document.getElementById('txt-pin-player').innerText = torneo.pinPlayer || "-";
-            } else if (miRol === "JUDGE") {
-                pinJ.style.display = "none";
-                pinP.style.display = "inline";
-                document.getElementById('txt-pin-player').innerText = torneo.pinPlayer || "-";
-            }
-        } else {
-            pinCont.style.display = "none";
-        }
-
-        const mainWrapper = document.getElementById('main-content-wrapper');
-        const esOrg = miRol === "ORGANIZADOR" && sessionStorage.getItem('ygo_auth') === 'true';
-        mainWrapper.style.display = 'block';
-        document.getElementById('historial-container').style.display = esOrg ? "block" : "none";
-
-        const entryContainer = document.getElementById('entry-container');
-        const buscadorMesa = document.getElementById('view-buscador-mesa');
-        const selectTop = document.getElementById('select-top-final');
-
-        selectTop.disabled = !esOrg;
-
-        if (!torneo.activa && !torneo.finalizado) {
-            entryContainer.style.display = esOrg ? 'block' : 'none';
-            buscadorMesa.style.display = 'none';
-            document.getElementById('view-registro').style.display = 'block';
-            document.getElementById('view-torneo').style.display = 'none';
-            document.getElementById('standings-view').style.display = 'none';
-            
-            const optTop4 = selectTop.querySelector('option[value="TOP 4"]');
-            const optTop8 = selectTop.querySelector('option[value="TOP 8"]');
-            if (n < 9) { optTop4.disabled = true; optTop8.disabled = true; selectTop.value = "SUIZAS"; }
-            else if (n < 17) { optTop4.disabled = false; optTop8.disabled = true; if (selectTop.value === "TOP 8") selectTop.value = "TOP 4"; }
-            else { optTop4.disabled = false; optTop8.disabled = false; }
-
-            document.getElementById('btn-iniciar-master').style.display = (n >= 4 && esOrg) ? 'block' : 'none';
-            
-            document.getElementById('lista-jugadores').innerHTML = jugadores.map((j, index) => `
-                <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="color:var(--primary); font-weight:bold; font-family:monospace; font-size:1.1em;">${(index + 1).toString().padStart(2, '0')}.</span>
-                        <span style="font-size:1.1em; text-transform:uppercase;">${j.nombre}</span>
-                    </div>
-                    ${esOrg ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>` : ''}
-                </div>
-            `).join('');
-        } else {
-            entryContainer.style.display = (torneo.faseTop || !esOrg) ? 'none' : 'block';
-            buscadorMesa.style.display = (miRol === "INVITADO") ? 'none' : 'block';
-            
-            const selectMiNombre = document.getElementById('select-mi-nombre');
-            const miIdGuardado = localStorage.getItem('ygo_mi_nombre_id') || "";
-            const jugadoresOrdenados = [...jugadores].sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-            selectMiNombre.innerHTML = '<option value="">-- SELECCIONA TU NOMBRE --</option>' + 
-                jugadoresOrdenados.map(j => 
-                `<option value="${j.id}" ${j.id === miIdGuardado ? 'selected' : ''}>${j.nombre}</option>`
-            ).join('');
-
-            document.getElementById('view-registro').style.display = 'none';
-            
-            /* MODIFICACIÓN SOLICITADA: Restringir visibilidad de mesas si es INVITADO */
-            document.getElementById('view-torneo').style.display = (miRol === "INVITADO") ? 'none' : 'block';
-            
-            /* Los standings siempre son visibles para todos */
-            document.getElementById('standings-view').style.display = 'block';
-            
-            document.getElementById('torneo-controls').style.display = esOrg ? 'flex' : 'none';
-            document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
-            document.getElementById('btn-finalizar-evento').style.display = esOrg ? 'block' : 'none';
-            
-            renderPareos();
-            renderStandings();
-        }
-        validarBotonInscripcion();
-        renderHistorial();
-    }
-
-    function renderHistorial() {
-        const div = document.getElementById('lista-historial-global');
-        const esOrg = miRol === "ORGANIZADOR" && sessionStorage.getItem('ygo_auth') === 'true';
-        const historialOrdenado = [...historial].sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-        div.innerHTML = historialOrdenado.map(h => {
-            const yaInscrito = jugadores.some(j => j.nombre.toUpperCase() === h.nombre.toUpperCase());
-            return `<div class="historial-item">
-                <span class="nombre-historial ${yaInscrito ? 'nombre-inscrito' : ''}">${h.nombre}</span>
-                <div style="display:flex; gap:8px;">
-                    ${(!yaInscrito && !torneo.faseTop && esOrg) ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
-                    ${esOrg ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>` : ''}
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    window.reInscribir = function(nombre) { if(torneo.faseTop || miRol !== "ORGANIZADOR") return; document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
-    window.registrarDuelista = async function() {
-        if(torneo.faseTop || miRol !== "ORGANIZADOR") return;
-        const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
-        if(!full) return;
-        const id = Date.now().toString();
-        const nuevoJugador = { id, nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000000", retirado: false };
-        if (!historial.find(h => h.nombre.toUpperCase() === full)) await setDoc(doc(db, "historial_global", id), { nombre: full });
-        if (torneo.activa && !torneo.finalizado) {
-            let nuevosPareos = [...torneo.pareos];
-            let byeEncontrado = nuevosPareos.find(p => p.j2Id === "BYE");
-            if (byeEncontrado) { byeEncontrado.j2Id = id; byeEncontrado.ganador = null; } 
-            else { nuevosPareos.push({ j1Id: id, j2Id: "BYE", ganador: id }); }
-            await updateDoc(doc(db, "torneo", "estado"), { pareos: nuevosPareos, [`historicoPareos.${torneo.ronda}`]: nuevosPareos });
-        }
-        await setDoc(doc(db, "jugadores", id), nuevoJugador);
-        document.getElementById('nombreCompleto').value = "";
-    };
-
-    window.borrarJugador = async function(id) { if(miRol === "ORGANIZADOR") await deleteDoc(doc(db, "jugadores", id)); };
-    window.borrarDelHistorial = async function(id) { if(miRol === "ORGANIZADOR") await deleteDoc(doc(db, "historial_global", id)); };
-
-    window.iniciarTorneo = async function() {
-        if(miRol !== "ORGANIZADOR") return;
-        
-        const pJudge = prompt("DEFINA PIN PARA JUDGE (6 DÍGITOS):");
-        if(!pJudge || pJudge.length !== 6) { alert("PIN DE JUDGE INVÁLIDO"); return; }
-        
-        const pPlayer = prompt("DEFINA PIN PARA DUELISTA (4 DÍGITOS):");
-        if(!pPlayer || pPlayer.length !== 4) { alert("PIN DE DUELISTA INVÁLIDO"); return; }
-
-        const r = parseInt(document.getElementById('stat-rondas').innerText);
-        const p1 = generarKTS();
-        const mod = document.getElementById('select-top-final').value;
-        
-        torneo = { 
-            activa: true, 
-            ronda: 1, 
-            totalRondas: r, 
-            usaTop: mod, 
-            pareos: p1, 
-            historicoPareos: { 1: p1 }, 
-            finalizado: false, 
-            faseTop: false, 
-            rondaTopActual: 0,
-            pinJudge: pJudge,
-            pinPlayer: pPlayer
-        };
-        await setDoc(doc(db, "torneo", "estado"), torneo);
-    };
-
-    window.startPress = (idx, id) => {
-        if((miRol !== "ORGANIZADOR" && miRol !== "JUDGE") || torneo.finalizado) return;
-        pressTimer = setTimeout(() => { ejecutarToggleDrop(idx, id); }, 3000); 
-    };
-    window.cancelPress = () => clearTimeout(pressTimer);
-
-    window.ejecutarToggleDrop = async (idx, id) => {
-        const jug = jugadores.find(j => j.id === id);
-        const m = torneo.pareos[idx];
-        const nuevoEstado = !jug.retirado;
-        if (nuevoEstado) {
-            const opId = (m.j1Id === id) ? m.j2Id : m.j1Id;
-            if(opId && opId !== "BYE") m.ganador = opId;
-        } else { m.ganador = null; }
-        await updateDoc(doc(db, "jugadores", id), { retirado: nuevoEstado });
-        await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
-    };
-
-    function generarKTS() {
-        calcularTieBreakersLocales();
-        let pool = jugadores.filter(j => !j.retirado);
-        let pairs = [];
-        let byeMatch = null;
-        if (pool.length % 2 !== 0) {
-            let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
-            if (candidatosParaBye.length === 0) candidatosParaBye = [...pool];
-            candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
-            let elegidoParaBye = candidatosParaBye[0];
-            byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
-            pool = pool.filter(j => j.id !== elegidoParaBye.id);
-        }
-        pool.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
-        while (pool.length > 0) {
-            let j1 = pool.shift();
-            let encontrado = false;
-            for (let i = 0; i < pool.length; i++) {
-                if (!j1.oponentes.includes(pool[i].id)) {
-                    pairs.push({ j1Id: j1.id, j2Id: pool[i].id, ganador: null });
-                    pool.splice(i, 1);
-                    encontrado = true;
-                    break;
-                }
-            }
-            if (!encontrado && pool.length > 0) { pairs.push({ j1Id: j1.id, j2Id: pool[0].id, ganador: null }); pool.shift(); }
-        }
-        if (byeMatch) pairs.push(byeMatch);
-        return pairs;
-    }
-
-    window.marcarGanador = async function(idx, idWin) {
-        if(torneo.finalizado || miRol === "PLAYER" || miRol === "INVITADO") return; 
-        torneo.pareos[idx].ganador = (torneo.pareos[idx].ganador === idWin) ? null : idWin;
-        await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
-    }
-
-    window.terminarRonda = async function() {
-        if(miRol !== "ORGANIZADOR") return;
-        const batch = writeBatch(db);
-        torneo.pareos.forEach(p => {
-            const j1 = jugadores.find(j => j.id === p.j1Id);
-            const j2 = p.j2Id === "BYE" ? null : jugadores.find(j => j.id === p.j2Id);
-            if (p.ganador === p.j1Id) { j1.puntos += 3; j1.resultados.push('W'); if(j2) { j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); } } 
-            else if (j2 && p.ganador === p.j2Id) { j2.puntos += 3; j2.resultados.push('W'); j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); } 
-            else if (j2) { j1.resultados.push('L'); j1.rondasPerdidas.push(torneo.ronda); j2.resultados.push('L'); j2.rondasPerdidas.push(torneo.ronda); } 
-            else if (p.j2Id === "BYE") { j1.puntos += 3; j1.resultados.push('W'); }
-            j1.oponentes.push(p.j2Id);
-            if(j2) { j2.oponentes.push(j1.id); batch.update(doc(db, "jugadores", j2.id), j2); }
-            batch.update(doc(db, "jugadores", j1.id), j1);
-        });
-        if (!torneo.faseTop) {
-            if (torneo.ronda < torneo.totalRondas) { torneo.ronda++; const nP = generarKTS(); torneo.pareos = nP; torneo.historicoPareos[torneo.ronda] = nP; } 
-            else { if (torneo.usaTop === "SUIZAS") torneo.finalizado = true; else { calcularTieBreakersLocales(); iniciarTopCut(); } }
-        } else {
-            const ganadores = torneo.pareos.filter(p => p.ganador).map(p => p.ganador);
-            if (torneo.pareos.length === 1 && ganadores.length === 1) torneo.finalizado = true;
-            else if (ganadores.length === torneo.pareos.length) {
-                const nuevosPareos = [];
-                if (ganadores.length === 4) { nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[3], ganador: null }); nuevosPareos.push({ j1Id: ganadores[1], j2Id: ganadores[2], ganador: null }); } 
-                else if (ganadores.length === 2) { nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[1], ganador: null }); }
-                torneo.ronda++; torneo.rondaTopActual++; torneo.pareos = nuevosPareos; torneo.historicoPareos[torneo.ronda] = nuevosPareos;
-            }
-        }
-        batch.set(doc(db, "torneo", "estado"), torneo);
-        await batch.commit();
-    };
-
-    function calcularTieBreakersLocales(ganadorFinalId = null, perdedorFinalId = null) {
-        jugadores.forEach(j => {
-            let sumWinRates = 0; const opsValidos = j.oponentes.filter(o => o !== "BYE");
-            opsValidos.forEach(oid => {
-                const op = jugadores.find(x => x.id === oid);
-                if(op) sumWinRates += Math.max(0.33, op.puntos / (Math.max(1, op.resultados.length) * 3));
-            });
-            j.omw_raw = opsValidos.length ? (sumWinRates / opsValidos.length) : 0.33;
-        });
-        jugadores.forEach(j => {
-            let sumOppOMW = 0; const opsValidos = j.oponentes.filter(o => o !== "BYE");
-            opsValidos.forEach(oid => { const op = jugadores.find(x => x.id === oid); if(op) sumOppOMW += op.omw_raw; });
-            const AA = j.puntos.toString().padStart(2, '0');
-            const BBB = Math.floor(j.omw_raw * 1000).toString().padStart(4, '0');
-            const oow_raw = opsValidos.length ? (sumOppOMW / opsValidos.length) : 0.33;
-            const CCC = Math.floor(oow_raw * 1000).toString().padStart(4, '0');
-            const DDD = j.rondasPerdidas.reduce((acc, r) => acc + (r * r), 0).toString().padStart(3, '0');
-            let PRIO = (ganadorFinalId && j.id === ganadorFinalId) ? "9" : (perdedorFinalId && j.id === perdedorFinalId) ? "8" : "0";
-            j.tieBreaker = `${PRIO}${AA}${BBB}${CCC}${DDD}`;
-            j.ddd_val = DDD;
-        });
-    }
-
-    function iniciarTopCut() {
-        torneo.faseTop = true; torneo.ronda++; torneo.rondaTopActual = 1;
-        const sorted = [...jugadores].filter(j => !j.retirado).sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
-        const num = torneo.usaTop === "TOP 4" ? 4 : 8;
-        const topPlayers = sorted.slice(0, num);
-        const pairs = [];
-        for(let i=0; i < num/2; i++) pairs.push({ j1Id: topPlayers[i].id, j2Id: topPlayers[num - 1 - i].id, ganador: null });
-        torneo.pareos = pairs; torneo.historicoPareos[torneo.ronda] = pairs;
-    }
-
-    window.retrocederRonda = async function() {
-        if (miRol !== "ORGANIZADOR" || (torneo.ronda === 1 && !torneo.finalizado)) return;
-        const batch = writeBatch(db);
-        const rAnt = torneo.ronda;
-        if (torneo.finalizado) { torneo.finalizado = false; } else {
-            if (torneo.faseTop) { if (torneo.rondaTopActual > 1) torneo.rondaTopActual--; else { torneo.faseTop = false; torneo.rondaTopActual = 0; } }
-            torneo.ronda--;
-        }
-        jugadores.forEach(j => {
-            if (j.resultados.length >= 1) {
-                const ultimoRes = j.resultados.pop();
-                if (ultimoRes === 'W') j.puntos -= 3;
-                if (j.oponentes.length > 0) j.oponentes.pop();
-                j.rondasPerdidas = j.rondasPerdidas.filter(r => r !== rAnt);
-                batch.update(doc(db, "jugadores", j.id), j);
-            }
-        });
-        torneo.pareos = torneo.historicoPareos[torneo.ronda];
-        torneo.pareos.forEach(p => { if(p.j2Id !== "BYE") p.ganador = null; });
-        batch.set(doc(db, "torneo", "estado"), torneo);
-        await batch.commit();
-    };
-
-    function renderPareos() {
-        const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
-        const miId = localStorage.getItem('ygo_mi_nombre_id');
-        let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
-        document.getElementById('txt-ronda-actual').innerText = labelRonda;
-        document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
-            const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
-            const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
-            const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
-            const extraClase = (p.j1Id === miId || p.j2Id === miId) ? 'pulse-find' : '';
-            const btnPlayer = (jug, id, opId) => {
-                const win = p.ganador === id;
-                const isDropped = jug.retirado;
-                const op = jugadores.find(j => j.id === opId);
-                const mesaConDrop = isDropped || (op && op.retirado);
-                const clickAction = !mesaConDrop && p.j2Id !== 'BYE' && (miRol === 'ORGANIZADOR' || miRol === 'JUDGE') ? `marcarGanador(${i},'${id}')` : '';
-                return `<div class="player-btn ${win ? 'winner' : ''} ${isDropped ? 'dropped' : ''}" 
-                    onmousedown="startPress(${i},'${id}')" onmouseup="cancelPress()" onmouseleave="cancelPress()"
-                    ontouchstart="startPress(${i},'${id}')" ontouchend="cancelPress()"
-                    onclick="${clickAction}">${jug.nombre} ${isDropped ? '(DROP)' : ''}</div>`;
-            };
-            return `<div class="${mesaClase} ${extraClase}">
-                <div class="match-info">${esMesaFinal ? 'MESA FINAL' : 'MESA ' + (i+1)}</div>
-                <div class="match-players">
-                    ${btnPlayer(p1, p.j1Id, p.j2Id)}
-                    <div style="font-weight:bold; color:#666;">VS</div>
-                    ${p.j2Id === "BYE" ? `<div class="player-btn winner">BYE</div>` : btnPlayer(p2, p.j2Id, p.j1Id)}
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    function renderStandings() {
-        const miId = localStorage.getItem('ygo_mi_nombre_id');
-        let fW = null, fL = null;
-        if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) { fW = torneo.pareos[0].ganador; fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id; }
-        calcularTieBreakersLocales(fW, fL);
-        jugadores.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
-        document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
-            const isChamp = torneo.finalizado && ((fW && j.id === fW) || (!torneo.faseTop && i === 0 && j.puntos > 0));
-            const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
-            const esUsuarioActivo = (j.id === miId);
-
-            return `<tr class="${esUsuarioActivo ? 'fila-activa' : ''}" style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
-                <td>${isChamp ? '🏆' : i+1}</td>
-                <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}</td>
-                <td class="col-pts">${j.puntos}</td>
-                <td>${(parseInt(j.tieBreaker.substring(3,7))/10).toFixed(1)}%</td>
-                <td>${(parseInt(j.tieBreaker.substring(7,11))/10).toFixed(1)}%</td>
-                <td>${j.ddd_val}</td>
-                <td class="col-tb">${j.tieBreaker}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    window.reiniciarTorneo = async function() {
-        if(miRol !== "ORGANIZADOR") return;
-        const batch = writeBatch(db);
-        const snaps = await getDocs(collection(db, "jugadores"));
-        snaps.forEach(d => batch.delete(d.ref));
-        batch.set(doc(db, "torneo", "estado"), { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS", pinJudge: "", pinPlayer: "" });
-        localStorage.removeItem('ygo_mi_nombre_id');
-        await batch.commit();
-    };
-
-    actualizarUI();
-</script>
 </body>
 </html>
 
