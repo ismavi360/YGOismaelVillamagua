@@ -21,6 +21,19 @@
         .main-title { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; border-bottom: 2px solid #333; padding-bottom: 15px; font-size: 1.8em; }
         .container { max-width: 1100px; margin: auto; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
         
+        /* --- NUEVAS REGLAS CSS PARA EL EFECTO PALPITANTE --- */
+        @keyframes palpitar {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .texto-palpitante {
+            animation: palpitar 1.5s infinite ease-in-out;
+            font-weight: bold;
+        }
+        /* -------------------------------------------------- */
+
         .access-panel { background: #222; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .access-panel select { width: 100%; max-width: 300px; border-color: var(--warning); }
         .role-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
@@ -150,6 +163,9 @@
                 <option value="TOP 8">TOP CUT 8</option>
             </select>
         </div>
+        <div id="estado-torneo-invitado" style="display:none; font-weight:bold; border: 1px solid var(--warning); padding: 5px 10px; border-radius: 5px;">
+            <span id="txt-estado-invitado"></span>
+        </div>
         <div id="pins-display" style="display:none; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; border: 1px solid #444;">
             <span id="pin-judge-label" style="display:none; margin-right: 10px;">JUDGE PIN: <strong id="txt-pin-judge" style="color:var(--judge)">-</strong></span>
             <span id="pin-player-label" style="display:none;">PLAYER PIN: <strong id="txt-pin-player" style="color:var(--success)">-</strong></span>
@@ -232,7 +248,6 @@
     let miRol = sessionStorage.getItem('ygo_rol') || "INVITADO";
     let pressTimer;
 
-    // --- LÓGICA DE ACCESO Y PIN ---
     window.cambiarRol = function(val) {
         const resetRol = () => {
             miRol = "INVITADO";
@@ -338,7 +353,6 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
-        // --- MANEJO DE ROLES DINÁMICOS ---
         const selectRol = document.getElementById('select-rol');
         let optionsHTML = `<option value="INVITADO" ${miRol === 'INVITADO' ? 'selected' : ''}>INVITADO</option>`;
         
@@ -353,7 +367,36 @@
         badge.innerText = miRol;
         badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : miRol === 'PLAYER' ? 'role-player' : 'role-guest');
 
-        // --- VISIBILIDAD DE PINS ---
+        // --- LÓGICA DE ESTADOS Y CLASES VISUALES (MODIFICADA) ---
+        const estadoInvitadoCont = document.getElementById('estado-torneo-invitado');
+        const txtEstadoInvitado = document.getElementById('txt-estado-invitado');
+        
+        // Resetear clases y estilos previos
+        estadoInvitadoCont.classList.remove('texto-palpitante');
+        estadoInvitadoCont.style.color = "";
+        estadoInvitadoCont.style.borderColor = "";
+
+        if (miRol === "INVITADO") {
+            if (!torneo.activa && !torneo.finalizado) {
+                estadoInvitadoCont.style.display = "block";
+                txtEstadoInvitado.innerText = "ESTADO: TORNEO EN ETAPA DE REGISTRO";
+                estadoInvitadoCont.classList.add('texto-palpitante');
+                estadoInvitadoCont.style.color = "var(--warning)";
+                estadoInvitadoCont.style.borderColor = "var(--warning)";
+            } else if (torneo.activa) {
+                estadoInvitadoCont.style.display = "block";
+                txtEstadoInvitado.innerText = "ESTADO: TORNEO EN CURSO";
+                estadoInvitadoCont.classList.add('texto-palpitante');
+                estadoInvitadoCont.style.color = "#2ecc71"; // Verde fuerte solicitado
+                estadoInvitadoCont.style.borderColor = "#2ecc71";
+            } else {
+                estadoInvitadoCont.style.display = "none";
+            }
+        } else {
+            estadoInvitadoCont.style.display = "none";
+        }
+        // -------------------------------------------------------
+
         const pinCont = document.getElementById('pins-display');
         const pinJ = document.getElementById('pin-judge-label');
         const pinP = document.getElementById('pin-player-label');
@@ -376,13 +419,7 @@
 
         const mainWrapper = document.getElementById('main-content-wrapper');
         const esOrg = miRol === "ORGANIZADOR" && sessionStorage.getItem('ygo_auth') === 'true';
-        
-        if (miRol === "INVITADO") {
-            mainWrapper.style.display = 'none';
-        } else {
-            mainWrapper.style.display = 'block';
-        }
-
+        mainWrapper.style.display = 'block';
         document.getElementById('historial-container').style.display = esOrg ? "block" : "none";
 
         const entryContainer = document.getElementById('entry-container');
@@ -417,7 +454,7 @@
             `).join('');
         } else {
             entryContainer.style.display = (torneo.faseTop || !esOrg) ? 'none' : 'block';
-            buscadorMesa.style.display = 'block';
+            buscadorMesa.style.display = (miRol === "INVITADO") ? 'none' : 'block';
             
             const selectMiNombre = document.getElementById('select-mi-nombre');
             const miIdGuardado = localStorage.getItem('ygo_mi_nombre_id') || "";
