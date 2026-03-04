@@ -27,6 +27,7 @@
         .role-org { background: var(--danger); color: white; }
         .role-judge { background: var(--judge); color: white; }
         .role-player { background: #555; color: white; }
+        .role-guest { background: #333; color: #aaa; }
 
         .section-label { font-size: 0.75em; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; display: block; }
 
@@ -133,11 +134,8 @@
     <span class="section-label">Acceso de Usuario:</span>
     <div class="access-panel">
         <select id="select-rol" onchange="cambiarRol(this.value)">
-            <option value="PLAYER">DUELISTA</option>
-            <option value="JUDGE">JUDGE</option>
-            <option value="ORGANIZADOR">ORGANIZADOR</option>
-        </select>
-        <div id="badge-rol" class="role-badge role-player">DUELISTA</div>
+            </select>
+        <div id="badge-rol" class="role-badge role-guest">INVITADO</div>
     </div>
 
     <span class="section-label">Detalles del Torneo:</span>
@@ -152,57 +150,63 @@
                 <option value="TOP 8">TOP CUT 8</option>
             </select>
         </div>
-    </div>
-
-    <div id="view-buscador-mesa" class="search-box" style="display:none;">
-        <label>¿DÓNDE ESTOY JUGANDO?</label>
-        <select id="select-mi-nombre" onchange="guardarMiNombre(this.value)">
-            <option value="">-- SELECCIONA TU NOMBRE --</option>
-        </select>
-    </div>
-
-    <div id="entry-container" style="display:none;">
-        <span id="label-ingreso" class="section-label">REGISTRAR DUELISTA:</span>
-        <div id="entry-section" class="input-box">
-            <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
-            <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
+        <div id="pins-display" style="display:none; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; border: 1px solid #444;">
+            <span id="pin-judge-label" style="display:none; margin-right: 10px;">JUDGE PIN: <strong id="txt-pin-judge" style="color:var(--judge)">-</strong></span>
+            <span id="pin-player-label" style="display:none;">PLAYER PIN: <strong id="txt-pin-player" style="color:var(--success)">-</strong></span>
         </div>
     </div>
 
-    <div id="view-registro">
-        <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'Iniciar Ronda 1', iniciarTorneo)">INICIAR TORNEO</button>
-        
-        <span class="section-label">Duelistas Registrados:</span>
-        <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
-        
-        <div id="historial-container" class="historial-box" style="display:none;">
-            <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">DUELISTAS PRE-REGISTRADOS</h3>
-            <div id="lista-historial-global"></div>
+    <div id="main-content-wrapper" style="display:none;">
+        <div id="view-buscador-mesa" class="search-box" style="display:none;">
+            <label>¿DÓNDE ESTOY JUGANDO?</label>
+            <select id="select-mi-nombre" onchange="guardarMiNombre(this.value)">
+                <option value="">-- SELECCIONA TU NOMBRE --</option>
+            </select>
         </div>
-    </div>
 
-    <div id="view-torneo" style="display:none;">
-        <h2 id="txt-ronda-actual" style="color:var(--warning); text-align: center; text-transform: uppercase;">Ronda 1 / ?</h2>
-        <div id="pairings-list" class="pairings-grid"></div>
-        
-        <div id="torneo-controls" style="display:none; flex-direction: column; gap:15px; margin-top:30px;">
-            <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'TERMINAR RONDA', terminarRonda)">TERMINAR RONDA</button>
-            <button id="btn-retroceder" style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
+        <div id="entry-container" style="display:none;">
+            <span id="label-ingreso" class="section-label">REGISTRAR DUELISTA:</span>
+            <div id="entry-section" class="input-box">
+                <input type="text" id="nombreCompleto" placeholder="NOMBRES Y APELLIDOS" oninput="validarBotonInscripcion()">
+                <button id="btn-registrar" class="btn-add" onclick="registrarDuelista()">Inscribir / Late Joiner</button>
+            </div>
         </div>
-    </div>
 
-    <div id="standings-view" style="display:none;">
-        <h2 style="margin-top:40px; border-left: 4px solid var(--success); padding-left:10px; text-transform: uppercase;">Standings Oficiales</h2>
-        <div class="table-wrapper">
-            <table id="main-table">
-                <thead>
-                    <tr><th>Pos</th><th style="text-align:left;">Duelista</th><th>PUNTOS</th><th>OMW%</th><th>OOW%</th><th>LRS</th><th>TIE BREAK</th></tr>
-                </thead>
-                <tbody id="tabla-body"></tbody>
-            </table>
+        <div id="view-registro">
+            <button id="btn-iniciar-master" class="btn-start" style="display:none;" onclick="handleDoubleConfirm(this, 'INICIAR TORNEO', iniciarTorneo)">INICIAR TORNEO</button>
+            
+            <span class="section-label">Duelistas Registrados:</span>
+            <div id="lista-jugadores" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px; max-height: 280px; overflow-y: auto; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #222; margin-bottom: 20px;"></div>
+            
+            <div id="historial-container" class="historial-box" style="display:none;">
+                <h3 style="margin-top:0; color:var(--primary); text-transform: uppercase; text-align: center;">DUELISTAS PRE-REGISTRADOS</h3>
+                <div id="lista-historial-global"></div>
+            </div>
         </div>
-        
-        <button id="btn-finalizar-evento" style="display:none; background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'FINALIZAR EVENTO', reiniciarTorneo)">Finalizar Evento</button>
+
+        <div id="view-torneo" style="display:none;">
+            <h2 id="txt-ronda-actual" style="color:var(--warning); text-align: center; text-transform: uppercase;">Ronda 1 / ?</h2>
+            <div id="pairings-list" class="pairings-grid"></div>
+            
+            <div id="torneo-controls" style="display:none; flex-direction: column; gap:15px; margin-top:30px;">
+                <button id="btn-siguiente" style="background:var(--warning); color:black; font-size:1.3em;" onclick="handleDoubleConfirm(this, 'TERMINAR RONDA', terminarRonda)">TERMINAR RONDA</button>
+                <button id="btn-retroceder" style="background:#444; color:white;" onclick="handleDoubleConfirm(this, 'Retroceder Ronda', retrocederRonda)">Retroceder Ronda</button>
+            </div>
+        </div>
+
+        <div id="standings-view" style="display:none;">
+            <h2 style="margin-top:40px; border-left: 4px solid var(--success); padding-left:10px; text-transform: uppercase;">Standings Oficiales</h2>
+            <div class="table-wrapper">
+                <table id="main-table">
+                    <thead>
+                        <tr><th>Pos</th><th style="text-align:left;">Duelista</th><th>PUNTOS</th><th>OMW%</th><th>OOW%</th><th>LRS</th><th>TIE BREAK</th></tr>
+                    </thead>
+                    <tbody id="tabla-body"></tbody>
+                </table>
+            </div>
+            
+            <button id="btn-finalizar-evento" style="display:none; background:var(--danger); color:white; width:100%; margin-top:50px; padding:20px; font-size: 1.2em;" onclick="handleDoubleConfirm(this, 'FINALIZAR EVENTO', reiniciarTorneo)">Finalizar Evento</button>
+        </div>
     </div>
 </div>
 
@@ -224,13 +228,51 @@
 
     let jugadores = [];
     let historial = [];
-    let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" };
-    let miRol = localStorage.getItem('ygo_rol') || "PLAYER";
+    let torneo = { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS", pinJudge: "", pinPlayer: "" };
+    let miRol = sessionStorage.getItem('ygo_rol') || "INVITADO";
     let pressTimer;
 
+    // --- LÓGICA DE ACCESO Y PIN ---
     window.cambiarRol = function(val) {
-        miRol = val;
-        localStorage.setItem('ygo_rol', val);
+        const resetRol = () => {
+            miRol = "INVITADO";
+            document.getElementById('select-rol').value = "INVITADO";
+        };
+
+        if (val === "ORGANIZADOR") {
+            const pin = prompt("INGRESE PIN DE ACCESO ORGANIZADOR:");
+            if (pin === "19291967") {
+                sessionStorage.setItem('ygo_auth', 'true');
+                miRol = "ORGANIZADOR";
+            } else {
+                alert("PIN INCORRECTO - ACCESO DENEGADO");
+                resetRol();
+            }
+        } else if (val === "JUDGE") {
+            const pin = prompt("INGRESE PIN DE ACCESO JUDGE (6 DÍGITOS):");
+            if (pin && pin === torneo.pinJudge) {
+                sessionStorage.setItem('ygo_auth_judge', 'true');
+                miRol = "JUDGE";
+            } else {
+                alert("PIN INCORRECTO");
+                resetRol();
+            }
+        } else if (val === "PLAYER") {
+            const pin = prompt("INGRESE PIN DE ACCESO DUELISTA (4 DÍGITOS):");
+            if (pin && pin === torneo.pinPlayer) {
+                sessionStorage.setItem('ygo_auth_player', 'true');
+                miRol = "PLAYER";
+            } else {
+                alert("PIN INCORRECTO");
+                resetRol();
+            }
+        } else {
+            miRol = val;
+            sessionStorage.removeItem('ygo_auth');
+            sessionStorage.removeItem('ygo_auth_judge');
+            sessionStorage.removeItem('ygo_auth_player');
+        }
+        sessionStorage.setItem('ygo_rol', miRol);
         actualizarUI();
     };
 
@@ -296,21 +338,61 @@
         document.getElementById('stat-count').innerText = n;
         document.getElementById('stat-rondas').innerText = r;
 
-        const badge = document.getElementById('badge-rol');
-        document.getElementById('select-rol').value = miRol;
-        badge.innerText = miRol;
-        badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : 'role-player');
+        // --- MANEJO DE ROLES DINÁMICOS ---
+        const selectRol = document.getElementById('select-rol');
+        let optionsHTML = `<option value="INVITADO" ${miRol === 'INVITADO' ? 'selected' : ''}>INVITADO</option>`;
+        
+        if (torneo.activa) {
+            optionsHTML += `<option value="PLAYER" ${miRol === 'PLAYER' ? 'selected' : ''}>DUELISTA</option>`;
+            optionsHTML += `<option value="JUDGE" ${miRol === 'JUDGE' ? 'selected' : ''}>JUDGE</option>`;
+        }
+        optionsHTML += `<option value="ORGANIZADOR" ${miRol === 'ORGANIZADOR' ? 'selected' : ''}>ORGANIZADOR</option>`;
+        selectRol.innerHTML = optionsHTML;
 
-        document.getElementById('historial-container').style.display = (miRol === "ORGANIZADOR") ? "block" : "none";
+        const badge = document.getElementById('badge-rol');
+        badge.innerText = miRol;
+        badge.className = "role-badge " + (miRol === 'ORGANIZADOR' ? 'role-org' : miRol === 'JUDGE' ? 'role-judge' : miRol === 'PLAYER' ? 'role-player' : 'role-guest');
+
+        // --- VISIBILIDAD DE PINS ---
+        const pinCont = document.getElementById('pins-display');
+        const pinJ = document.getElementById('pin-judge-label');
+        const pinP = document.getElementById('pin-player-label');
+        
+        if (torneo.activa && (miRol === "ORGANIZADOR" || miRol === "JUDGE")) {
+            pinCont.style.display = "flex";
+            if (miRol === "ORGANIZADOR") {
+                pinJ.style.display = "inline";
+                document.getElementById('txt-pin-judge').innerText = torneo.pinJudge || "-";
+                pinP.style.display = "inline";
+                document.getElementById('txt-pin-player').innerText = torneo.pinPlayer || "-";
+            } else if (miRol === "JUDGE") {
+                pinJ.style.display = "none";
+                pinP.style.display = "inline";
+                document.getElementById('txt-pin-player').innerText = torneo.pinPlayer || "-";
+            }
+        } else {
+            pinCont.style.display = "none";
+        }
+
+        const mainWrapper = document.getElementById('main-content-wrapper');
+        const esOrg = miRol === "ORGANIZADOR" && sessionStorage.getItem('ygo_auth') === 'true';
+        
+        if (miRol === "INVITADO") {
+            mainWrapper.style.display = 'none';
+        } else {
+            mainWrapper.style.display = 'block';
+        }
+
+        document.getElementById('historial-container').style.display = esOrg ? "block" : "none";
 
         const entryContainer = document.getElementById('entry-container');
         const buscadorMesa = document.getElementById('view-buscador-mesa');
         const selectTop = document.getElementById('select-top-final');
 
-        selectTop.disabled = (miRol !== "ORGANIZADOR");
+        selectTop.disabled = !esOrg;
 
         if (!torneo.activa && !torneo.finalizado) {
-            entryContainer.style.display = (miRol === "ORGANIZADOR") ? 'block' : 'none';
+            entryContainer.style.display = esOrg ? 'block' : 'none';
             buscadorMesa.style.display = 'none';
             document.getElementById('view-registro').style.display = 'block';
             document.getElementById('view-torneo').style.display = 'none';
@@ -322,7 +404,7 @@
             else if (n < 17) { optTop4.disabled = false; optTop8.disabled = true; if (selectTop.value === "TOP 8") selectTop.value = "TOP 4"; }
             else { optTop4.disabled = false; optTop8.disabled = false; }
 
-            document.getElementById('btn-iniciar-master').style.display = (n >= 4 && miRol === "ORGANIZADOR") ? 'block' : 'none';
+            document.getElementById('btn-iniciar-master').style.display = (n >= 4 && esOrg) ? 'block' : 'none';
             
             document.getElementById('lista-jugadores').innerHTML = jugadores.map((j, index) => `
                 <div style="background:#222; padding:15px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid #333; align-items:center;">
@@ -330,11 +412,11 @@
                         <span style="color:var(--primary); font-weight:bold; font-family:monospace; font-size:1.1em;">${(index + 1).toString().padStart(2, '0')}.</span>
                         <span style="font-size:1.1em; text-transform:uppercase;">${j.nombre}</span>
                     </div>
-                    ${miRol === "ORGANIZADOR" ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>` : ''}
+                    ${esOrg ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarJugador('${j.id}'))">X</button>` : ''}
                 </div>
             `).join('');
         } else {
-            entryContainer.style.display = (torneo.faseTop || miRol !== "ORGANIZADOR") ? 'none' : 'block';
+            entryContainer.style.display = (torneo.faseTop || !esOrg) ? 'none' : 'block';
             buscadorMesa.style.display = 'block';
             
             const selectMiNombre = document.getElementById('select-mi-nombre');
@@ -350,9 +432,9 @@
             document.getElementById('view-torneo').style.display = 'block';
             document.getElementById('standings-view').style.display = 'block';
             
-            document.getElementById('torneo-controls').style.display = (miRol === "ORGANIZADOR") ? 'flex' : 'none';
+            document.getElementById('torneo-controls').style.display = esOrg ? 'flex' : 'none';
             document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
-            document.getElementById('btn-finalizar-evento').style.display = (miRol === "ORGANIZADOR") ? 'block' : 'none';
+            document.getElementById('btn-finalizar-evento').style.display = esOrg ? 'block' : 'none';
             
             renderPareos();
             renderStandings();
@@ -363,6 +445,7 @@
 
     function renderHistorial() {
         const div = document.getElementById('lista-historial-global');
+        const esOrg = miRol === "ORGANIZADOR" && sessionStorage.getItem('ygo_auth') === 'true';
         const historialOrdenado = [...historial].sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         div.innerHTML = historialOrdenado.map(h => {
@@ -370,52 +453,28 @@
             return `<div class="historial-item">
                 <span class="nombre-historial ${yaInscrito ? 'nombre-inscrito' : ''}">${h.nombre}</span>
                 <div style="display:flex; gap:8px;">
-                    ${(!yaInscrito && !torneo.faseTop && miRol === "ORGANIZADOR") ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
-                    ${miRol === "ORGANIZADOR" ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>` : ''}
+                    ${(!yaInscrito && !torneo.faseTop && esOrg) ? `<button class="btn-plus" onclick="reInscribir('${h.nombre}')">+</button>` : ''}
+                    ${esOrg ? `<button class="btn-delete-node" data-confirmed="false" onclick="confirmAction(this, () => borrarDelHistorial('${h.id}'))">X</button>` : ''}
                 </div>
             </div>`;
         }).join('');
     }
 
     window.reInscribir = function(nombre) { if(torneo.faseTop || miRol !== "ORGANIZADOR") return; document.getElementById('nombreCompleto').value = nombre.toUpperCase(); registrarDuelista(); };
-   window.registrarDuelista = async function() {
+    window.registrarDuelista = async function() {
         if(torneo.faseTop || miRol !== "ORGANIZADOR") return;
         const full = document.getElementById('nombreCompleto').value.trim().toUpperCase();
         if(!full) return;
-
         const id = Date.now().toString();
-        const nuevoJugador = { 
-            id: id,
-            nombre: full, 
-            puntos: 0, 
-            oponentes: [], 
-            resultados: [], 
-            rondasPerdidas: [], 
-            tieBreaker: "00000000000000",
-            retirado: false
-        };
-
-        if (!historial.find(h => h.nombre.toUpperCase() === full)) {
-            await setDoc(doc(db, "historial_global", id), { nombre: full });
-        }
-
+        const nuevoJugador = { id, nombre: full, puntos: 0, oponentes: [], resultados: [], rondasPerdidas: [], tieBreaker: "00000000000000", retirado: false };
+        if (!historial.find(h => h.nombre.toUpperCase() === full)) await setDoc(doc(db, "historial_global", id), { nombre: full });
         if (torneo.activa && !torneo.finalizado) {
             let nuevosPareos = [...torneo.pareos];
             let byeEncontrado = nuevosPareos.find(p => p.j2Id === "BYE");
-
-            if (byeEncontrado) {
-                byeEncontrado.j2Id = id;
-                byeEncontrado.ganador = null;
-            } else {
-                nuevosPareos.push({ j1Id: id, j2Id: "BYE", ganador: id });
-            }
-            
-            await updateDoc(doc(db, "torneo", "estado"), { 
-                pareos: nuevosPareos,
-                [`historicoPareos.${torneo.ronda}`]: nuevosPareos 
-            });
+            if (byeEncontrado) { byeEncontrado.j2Id = id; byeEncontrado.ganador = null; } 
+            else { nuevosPareos.push({ j1Id: id, j2Id: "BYE", ganador: id }); }
+            await updateDoc(doc(db, "torneo", "estado"), { pareos: nuevosPareos, [`historicoPareos.${torneo.ronda}`]: nuevosPareos });
         }
-
         await setDoc(doc(db, "jugadores", id), nuevoJugador);
         document.getElementById('nombreCompleto').value = "";
     };
@@ -425,19 +484,36 @@
 
     window.iniciarTorneo = async function() {
         if(miRol !== "ORGANIZADOR") return;
+        
+        const pJudge = prompt("DEFINA PIN PARA JUDGE (6 DÍGITOS):");
+        if(!pJudge || pJudge.length !== 6) { alert("PIN DE JUDGE INVÁLIDO"); return; }
+        
+        const pPlayer = prompt("DEFINA PIN PARA DUELISTA (4 DÍGITOS):");
+        if(!pPlayer || pPlayer.length !== 4) { alert("PIN DE DUELISTA INVÁLIDO"); return; }
+
         const r = parseInt(document.getElementById('stat-rondas').innerText);
         const p1 = generarKTS();
         const mod = document.getElementById('select-top-final').value;
-        torneo = { activa: true, ronda: 1, totalRondas: r, usaTop: mod, pareos: p1, historicoPareos: { 1: p1 }, finalizado: false, faseTop: false, rondaTopActual: 0 };
+        
+        torneo = { 
+            activa: true, 
+            ronda: 1, 
+            totalRondas: r, 
+            usaTop: mod, 
+            pareos: p1, 
+            historicoPareos: { 1: p1 }, 
+            finalizado: false, 
+            faseTop: false, 
+            rondaTopActual: 0,
+            pinJudge: pJudge,
+            pinPlayer: pPlayer
+        };
         await setDoc(doc(db, "torneo", "estado"), torneo);
     };
 
-    // --- LÓGICA DE DROP TOGGLE (PULSACIÓN LARGA SIN ALERT) ---
     window.startPress = (idx, id) => {
         if((miRol !== "ORGANIZADOR" && miRol !== "JUDGE") || torneo.finalizado) return;
-        pressTimer = setTimeout(() => {
-            ejecutarToggleDrop(idx, id);
-        }, 3000); 
+        pressTimer = setTimeout(() => { ejecutarToggleDrop(idx, id); }, 3000); 
     };
     window.cancelPress = () => clearTimeout(pressTimer);
 
@@ -445,59 +521,47 @@
         const jug = jugadores.find(j => j.id === id);
         const m = torneo.pareos[idx];
         const nuevoEstado = !jug.retirado;
-        
         if (nuevoEstado) {
-            // ACTIVAR DROP: Oponente gana
             const opId = (m.j1Id === id) ? m.j2Id : m.j1Id;
             if(opId && opId !== "BYE") m.ganador = opId;
-        } else {
-            // QUITAR DROP: Mesa vuelve a cero
-            m.ganador = null;
-        }
-        
+        } else { m.ganador = null; }
         await updateDoc(doc(db, "jugadores", id), { retirado: nuevoEstado });
         await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
     };
 
-function generarKTS() {
+    function generarKTS() {
         calcularTieBreakersLocales();
         let pool = jugadores.filter(j => !j.retirado);
         let pairs = [];
         let byeMatch = null;
-
         if (pool.length % 2 !== 0) {
             let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
-            if (candidatosParaBye.length > 0) {
-                let elegidoParaBye = null;
-                if (torneo.ronda === 1) {
-                    elegidoParaBye = candidatosParaBye[Math.floor(Math.random() * candidatosParaBye.length)];
-                } else {
-                    candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
-                    const menorTieBreak = candidatosParaBye[0].tieBreaker;
-                    let empatadosEnElFondo = candidatosParaBye.filter(j => j.tieBreaker === menorTieBreak);
-                    elegidoParaBye = empatadosEnElFondo[Math.floor(Math.random() * empatadosEnElFondo.length)];
-                }
-                if (elegidoParaBye) {
-                    byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
-                    pool = pool.filter(j => j.id !== elegidoParaBye.id);
-                }
-            }
+            if (candidatosParaBye.length === 0) candidatosParaBye = [...pool];
+            candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
+            let elegidoParaBye = candidatosParaBye[0];
+            byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
+            pool = pool.filter(j => j.id !== elegidoParaBye.id);
         }
-
         pool.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
         while (pool.length > 0) {
             let j1 = pool.shift();
-            let idx = pool.findIndex(o => !j1.oponentes.includes(o.id));
-            if (idx === -1) idx = 0;
-            pairs.push({ j1Id: j1.id, j2Id: pool[idx].id, ganador: null });
-            pool.splice(idx, 1);
+            let encontrado = false;
+            for (let i = 0; i < pool.length; i++) {
+                if (!j1.oponentes.includes(pool[i].id)) {
+                    pairs.push({ j1Id: j1.id, j2Id: pool[i].id, ganador: null });
+                    pool.splice(i, 1);
+                    encontrado = true;
+                    break;
+                }
+            }
+            if (!encontrado && pool.length > 0) { pairs.push({ j1Id: j1.id, j2Id: pool[0].id, ganador: null }); pool.shift(); }
         }
         if (byeMatch) pairs.push(byeMatch);
         return pairs;
     }
 
     window.marcarGanador = async function(idx, idWin) {
-        if(torneo.finalizado || miRol === "PLAYER") return; 
+        if(torneo.finalizado || miRol === "PLAYER" || miRol === "INVITADO") return; 
         torneo.pareos[idx].ganador = (torneo.pareos[idx].ganador === idWin) ? null : idWin;
         await updateDoc(doc(db, "torneo", "estado"), { pareos: torneo.pareos });
     }
@@ -524,12 +588,8 @@ function generarKTS() {
             if (torneo.pareos.length === 1 && ganadores.length === 1) torneo.finalizado = true;
             else if (ganadores.length === torneo.pareos.length) {
                 const nuevosPareos = [];
-                if (ganadores.length === 4) {
-                    nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[3], ganador: null }); 
-                    nuevosPareos.push({ j1Id: ganadores[1], j2Id: ganadores[2], ganador: null }); 
-                } else if (ganadores.length === 2) {
-                    nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[1], ganador: null });
-                }
+                if (ganadores.length === 4) { nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[3], ganador: null }); nuevosPareos.push({ j1Id: ganadores[1], j2Id: ganadores[2], ganador: null }); } 
+                else if (ganadores.length === 2) { nuevosPareos.push({ j1Id: ganadores[0], j2Id: ganadores[1], ganador: null }); }
                 torneo.ronda++; torneo.rondaTopActual++; torneo.pareos = nuevosPareos; torneo.historicoPareos[torneo.ronda] = nuevosPareos;
             }
         }
@@ -597,30 +657,23 @@ function generarKTS() {
         const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
         const miId = localStorage.getItem('ygo_mi_nombre_id');
         let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
-        
         document.getElementById('txt-ronda-actual').innerText = labelRonda;
         document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
             const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
             const p2 = p.j2Id === "BYE" ? { nombre: "BYE" } : (jugadores.find(j => j.id === p.j2Id) || {nombre: '...'});
             const mesaClase = esMesaFinal ? 'match-card is-final' : 'match-card';
             const extraClase = (p.j1Id === miId || p.j2Id === miId) ? 'pulse-find' : '';
-
             const btnPlayer = (jug, id, opId) => {
                 const win = p.ganador === id;
                 const isDropped = jug.retirado;
-                // Permitir marcar ganador solo si no hay drop en la mesa
                 const op = jugadores.find(j => j.id === opId);
                 const mesaConDrop = isDropped || (op && op.retirado);
-                const clickAction = !mesaConDrop && p.j2Id !== 'BYE' && miRol !== 'PLAYER' ? `marcarGanador(${i},'${id}')` : '';
-                
+                const clickAction = !mesaConDrop && p.j2Id !== 'BYE' && (miRol === 'ORGANIZADOR' || miRol === 'JUDGE') ? `marcarGanador(${i},'${id}')` : '';
                 return `<div class="player-btn ${win ? 'winner' : ''} ${isDropped ? 'dropped' : ''}" 
                     onmousedown="startPress(${i},'${id}')" onmouseup="cancelPress()" onmouseleave="cancelPress()"
                     ontouchstart="startPress(${i},'${id}')" ontouchend="cancelPress()"
-                    onclick="${clickAction}">
-                    ${jug.nombre} ${isDropped ? '(DROP)' : ''}
-                </div>`;
+                    onclick="${clickAction}">${jug.nombre} ${isDropped ? '(DROP)' : ''}</div>`;
             };
-
             return `<div class="${mesaClase} ${extraClase}">
                 <div class="match-info">${esMesaFinal ? 'MESA FINAL' : 'MESA ' + (i+1)}</div>
                 <div class="match-players">
@@ -634,10 +687,7 @@ function generarKTS() {
 
     function renderStandings() {
         let fW = null, fL = null;
-        if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) {
-            fW = torneo.pareos[0].ganador;
-            fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id;
-        }
+        if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) { fW = torneo.pareos[0].ganador; fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id; }
         calcularTieBreakersLocales(fW, fL);
         jugadores.sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
         document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
@@ -645,9 +695,7 @@ function generarKTS() {
             const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
             return `<tr style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
                 <td>${isChamp ? '🏆' : i+1}</td>
-                <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">
-                    ${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}
-                </td>
+                <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}</td>
                 <td class="col-pts">${j.puntos}</td>
                 <td>${(parseInt(j.tieBreaker.substring(3,7))/10).toFixed(1)}%</td>
                 <td>${(parseInt(j.tieBreaker.substring(7,11))/10).toFixed(1)}%</td>
@@ -662,11 +710,14 @@ function generarKTS() {
         const batch = writeBatch(db);
         const snaps = await getDocs(collection(db, "jugadores"));
         snaps.forEach(d => batch.delete(d.ref));
-        batch.set(doc(db, "torneo", "estado"), { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS" });
+        batch.set(doc(db, "torneo", "estado"), { activa: false, ronda: 0, totalRondas: 0, pareos: [], historicoPareos: {}, finalizado: false, faseTop: false, rondaTopActual: 0, usaTop: "SUIZAS", pinJudge: "", pinPlayer: "" });
         localStorage.removeItem('ygo_mi_nombre_id');
         await batch.commit();
     };
+
+    actualizarUI();
 </script>
 </body>
 </html>
+
 
