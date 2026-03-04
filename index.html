@@ -381,13 +381,13 @@
         if (miRol === "INVITADO") {
             if (!torneo.activa && !torneo.finalizado) {
                 estadoInvitadoCont.style.display = "block";
-                txtEstadoInvitado.innerText = "ESTADO: TORNEO EN ETAPA DE REGISTRO";
+                txtEstadoInvitado.innerText = "TORNEO EN ETAPA DE REGISTRO";
                 estadoInvitadoCont.classList.add('texto-palpitante');
                 estadoInvitadoCont.style.color = "var(--warning)";
                 estadoInvitadoCont.style.borderColor = "var(--warning)";
             } else if (torneo.activa) {
                 estadoInvitadoCont.style.display = "block";
-                txtEstadoInvitado.innerText = "ESTADO: TORNEO EN CURSO";
+                txtEstadoInvitado.innerText = "TORNEO EN CURSO";
                 estadoInvitadoCont.classList.add('texto-palpitante');
                 estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
@@ -764,6 +764,7 @@
 </script>
 </body>
 </html>
+
 
 
 
