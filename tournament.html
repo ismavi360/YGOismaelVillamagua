@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" href="iconTournament.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>YGO OFFICIAL TOURNAMENT</title>
+    <title>YGO AI-Duelist</title>
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --bg: #0f0f0f; --card: #1a1a1a; --gold: #ffd700; --judge: #9b59b6; }
         
@@ -19,40 +19,57 @@
             overscroll-behavior: contain;
         }
         
-/* Título Estilo YGO AI-Duelist - Elegante y Moderno */
-.main-title { 
-    text-align: center; 
-    color: #f0f0f0; 
-    text-transform: uppercase; 
-    letter-spacing: 8px; 
-    margin: 30px 0; 
-    padding-bottom: 20px; 
-    font-size: 2.2em; 
-    font-weight: 200; /* Letra muy fina para YGO */
-    border-bottom: 1px solid #333;
-}
+        /* Título Estilo YGO AI-Duelist - Elegante y Moderno */
+        .main-title { 
+            text-align: center; 
+            color: #f0f0f0; 
+            text-transform: uppercase; 
+            letter-spacing: 8px; 
+            margin: 30px 0; 
+            padding-bottom: 20px; 
+            font-size: 2.2em; 
+            font-weight: 200; 
+            border-bottom: 1px solid #333;
+        }
 
-.main-title b { 
-    font-weight: 900; /* Letra muy gruesa para AI-Duelist */
-    color: var(--primary); 
-    text-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
-    letter-spacing: 2px;
-}
+        .main-title b { 
+            font-weight: 900; 
+            color: var(--primary); 
+            text-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
+            letter-spacing: 2px;
+        }
 
-/* Subtítulo sutil opcional */
-.main-subtitle {
-    display: block;
-    font-size: 0.35em;
-    color: #666;
-    letter-spacing: 5px;
-    margin-top: 10px;
-    font-weight: 400;
-}
+        .main-subtitle {
+            display: block;
+            font-size: 0.35em;
+            color: #666;
+            letter-spacing: 5px;
+            margin-top: 10px;
+            font-weight: 400;
+        }
         
         @keyframes palpitar {
             0% { opacity: 1; }
             50% { opacity: 0.4; }
             100% { opacity: 1; }
+        }
+
+        /* Efecto Dorado Palpitante para el Campeón */
+        .campeon-gold {
+            animation: palpitar-gold 2s infinite ease-in-out;
+            color: var(--gold) !important;
+            border: 2px solid var(--gold) !important;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            text-align: center;
+        }
+
+        @keyframes palpitar-gold {
+            0% { transform: scale(1); opacity: 1; text-shadow: 0 0 5px var(--gold); }
+            50% { transform: scale(1.05); opacity: 0.8; text-shadow: 0 0 20px var(--gold); }
+            100% { transform: scale(1); opacity: 1; text-shadow: 0 0 5px var(--gold); }
         }
 
         .texto-palpitante {
@@ -90,8 +107,6 @@
             color: white; outline: none; font-size: 16px; text-transform: uppercase; 
         }
         
-        #select-top-final { padding: 5px 10px; height: 35px; margin: 0; vertical-align: middle; }
-
         .search-box { background: #111; padding: 15px; border-radius: 10px; border: 2px solid var(--primary); margin-bottom: 20px; text-align: center; }
         .search-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); font-size: 0.9em; }
         .search-box select { width: 100%; max-width: 400px; border-color: var(--primary); }
@@ -104,7 +119,6 @@
         
         .btn-add { background: var(--primary); color: white; width: 100%; }
         .btn-start { background: var(--success); color: white; width: 100%; font-size: 1.3em; margin-bottom: 20px; }
-        
         .btn-delete-node { background: var(--danger); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1em; }
         .btn-plus { background: var(--success); color: white; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 1.1em; }
         .btn-confirm-green { background: var(--success) !important; }
@@ -174,14 +188,13 @@
 
 <div class="container">
     <h1 class="main-title">
-    YGO <b>KTS-TOURNAMENT</b>
-    <span class="main-subtitle">Advanced Tournament Engine</span>
-</h1>
+        YGO <b>AI-Duelist</b>
+        <span class="main-subtitle">Advanced Tournament Engine</span>
+    </h1>
 
     <span class="section-label">Acceso de Usuario:</span>
     <div class="access-panel">
-        <select id="select-rol" onchange="cambiarRol(this.value)">
-            </select>
+        <select id="select-rol" onchange="cambiarRol(this.value)"></select>
         <div id="badge-rol" class="role-badge role-guest">INVITADO</div>
     </div>
 
@@ -346,14 +359,6 @@
         btn.style.display = (miRol === "ORGANIZADOR" && !yaExiste && valor !== "") ? 'block' : 'none';
     };
 
-    window.confirmAction = function(btn, callback) {
-        if (btn.dataset.confirmed === "true") { callback(); } 
-        else {
-            btn.classList.add("btn-confirm-green"); btn.innerText = "OK"; btn.dataset.confirmed = "true";
-            setTimeout(() => { btn.classList.remove("btn-confirm-green"); btn.innerText = "X"; btn.dataset.confirmed = "false"; }, 3000);
-        }
-    };
-
     window.handleDoubleConfirm = function(btn, originalText, callback) {
         if (btn.dataset.status === "confirming") {
             callback(); btn.dataset.status = "idle"; btn.innerText = originalText; btn.classList.remove("confirming");
@@ -405,7 +410,7 @@
         const estadoInvitadoCont = document.getElementById('estado-torneo-invitado');
         const txtEstadoInvitado = document.getElementById('txt-estado-invitado');
         
-        estadoInvitadoCont.classList.remove('texto-palpitante');
+        estadoInvitadoCont.className = ""; 
         estadoInvitadoCont.style.color = "";
         estadoInvitadoCont.style.borderColor = "";
 
@@ -416,12 +421,17 @@
                 estadoInvitadoCont.classList.add('texto-palpitante');
                 estadoInvitadoCont.style.color = "var(--warning)";
                 estadoInvitadoCont.style.borderColor = "var(--warning)";
-            } else if (torneo.activa) {
+            } else if (torneo.activa && !torneo.finalizado) {
                 estadoInvitadoCont.style.display = "block";
                 txtEstadoInvitado.innerText = "TORNEO EN CURSO";
                 estadoInvitadoCont.classList.add('texto-palpitante');
                 estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
+            } else if (torneo.finalizado) {
+                const ganador = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker))[0];
+                estadoInvitadoCont.style.display = "block";
+                txtEstadoInvitado.innerText = `🏆 CAMPEÓN: ${ganador ? ganador.nombre : "---"} 🏆`;
+                estadoInvitadoCont.className = "campeon-gold"; 
             } else {
                 estadoInvitadoCont.style.display = "none";
             }
@@ -498,11 +508,7 @@
             ).join('');
 
             document.getElementById('view-registro').style.display = 'none';
-            
-            /* MODIFICACIÓN SOLICITADA: Restringir visibilidad de mesas si es INVITADO */
             document.getElementById('view-torneo').style.display = (miRol === "INVITADO") ? 'none' : 'block';
-            
-            /* Los standings siempre son visibles para todos */
             document.getElementById('standings-view').style.display = 'block';
             
             document.getElementById('torneo-controls').style.display = esOrg ? 'flex' : 'none';
@@ -552,35 +558,27 @@
         document.getElementById('nombreCompleto').value = "";
     };
 
+    window.confirmAction = function(btn, callback) {
+        if (btn.dataset.confirmed === "true") { callback(); } 
+        else {
+            btn.classList.add("btn-confirm-green"); btn.innerText = "OK"; btn.dataset.confirmed = "true";
+            setTimeout(() => { btn.classList.remove("btn-confirm-green"); btn.innerText = "X"; btn.dataset.confirmed = "false"; }, 3000);
+        }
+    };
+
     window.borrarJugador = async function(id) { if(miRol === "ORGANIZADOR") await deleteDoc(doc(db, "jugadores", id)); };
     window.borrarDelHistorial = async function(id) { if(miRol === "ORGANIZADOR") await deleteDoc(doc(db, "historial_global", id)); };
 
     window.iniciarTorneo = async function() {
         if(miRol !== "ORGANIZADOR") return;
-        
         const pJudge = prompt("DEFINA PIN PARA JUDGE (6 DÍGITOS):");
         if(!pJudge || pJudge.length !== 6) { alert("PIN DE JUDGE INVÁLIDO"); return; }
-        
         const pPlayer = prompt("DEFINA PIN PARA DUELISTA (4 DÍGITOS):");
         if(!pPlayer || pPlayer.length !== 4) { alert("PIN DE DUELISTA INVÁLIDO"); return; }
-
         const r = parseInt(document.getElementById('stat-rondas').innerText);
         const p1 = generarKTS();
         const mod = document.getElementById('select-top-final').value;
-        
-        torneo = { 
-            activa: true, 
-            ronda: 1, 
-            totalRondas: r, 
-            usaTop: mod, 
-            pareos: p1, 
-            historicoPareos: { 1: p1 }, 
-            finalizado: false, 
-            faseTop: false, 
-            rondaTopActual: 0,
-            pinJudge: pJudge,
-            pinPlayer: pPlayer
-        };
+        torneo = { activa: true, ronda: 1, totalRondas: r, usaTop: mod, pareos: p1, historicoPareos: { 1: p1 }, finalizado: false, faseTop: false, rondaTopActual: 0, pinJudge: pJudge, pinPlayer: pPlayer };
         await setDoc(doc(db, "torneo", "estado"), torneo);
     };
 
@@ -768,7 +766,6 @@
             const isChamp = torneo.finalizado && ((fW && j.id === fW) || (!torneo.faseTop && i === 0 && j.puntos > 0));
             const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
             const esUsuarioActivo = (j.id === miId);
-
             return `<tr class="${esUsuarioActivo ? 'fila-activa' : ''}" style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
                 <td>${isChamp ? '🏆' : i+1}</td>
                 <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}</td>
@@ -795,4 +792,3 @@
 </script>
 </body>
 </html>
-
