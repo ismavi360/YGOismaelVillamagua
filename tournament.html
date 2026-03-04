@@ -430,7 +430,7 @@
             } else if (torneo.finalizado) {
                 const ganador = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker))[0];
                 estadoInvitadoCont.style.display = "block";
-                txtEstadoInvitado.innerText = `🏆 CAMPEÓN: ${ganador ? ganador.nombre : "---"} 🏆`;
+                txtEstadoInvitado.innerText = `🏆 CAMPEÓN: ${ganador ? ganador.nombre : "---"}`;
                 estadoInvitadoCont.className = "campeon-gold"; 
             } else {
                 estadoInvitadoCont.style.display = "none";
