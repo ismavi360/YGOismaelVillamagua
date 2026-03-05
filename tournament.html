@@ -423,7 +423,17 @@
                 estadoInvitadoCont.style.borderColor = "var(--warning)";
             } else if (torneo.activa && !torneo.finalizado) {
                 estadoInvitadoCont.style.display = "block";
-                txtEstadoInvitado.innerText = "TORNEO EN CURSO";
+                // --- Lógica de texto dinámica solicitada ---
+                if (!torneo.faseTop) {
+                    txtEstadoInvitado.innerText = `TORNEO EN CURSO - RONDA ${torneo.ronda}`;
+                } else {
+                    const numMesas = torneo.pareos.length;
+                    if (numMesas === 4) txtEstadoInvitado.innerText = "PLAYOFFS - CUARTOS DE FINAL";
+                    else if (numMesas === 2) txtEstadoInvitado.innerText = "PLAYOFFS - SEMIFINAL";
+                    else if (numMesas === 1) txtEstadoInvitado.innerText = "PLAYOFFS - GRAN FINAL";
+                    else txtEstadoInvitado.innerText = "PLAYOFFS EN CURSO";
+                }
+                // --------------------------------------------
                 estadoInvitadoCont.classList.add('texto-palpitante');
                 estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
@@ -771,7 +781,7 @@
         const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
         const miId = localStorage.getItem('ygo_mi_nombre_id');
         
-        // --- Lógica Modificada de labelRonda ---
+        // --- Lógica de labelRonda ---
         let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : "";
         if (torneo.faseTop) {
             const numMesas = torneo.pareos.length;
