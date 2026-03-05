@@ -770,7 +770,18 @@
     function renderPareos() {
         const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
         const miId = localStorage.getItem('ygo_mi_nombre_id');
-        let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : (esMesaFinal ? `🏆 PLAYOFFS - GRAN FINAL 🏆` : `PLAYOFFS - ${torneo.rondaTopActual}`);
+        
+        // --- Lógica Modificada de labelRonda ---
+        let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : "";
+        if (torneo.faseTop) {
+            const numMesas = torneo.pareos.length;
+            if (numMesas === 4) labelRonda = "🏆 PLAYOFFS - CUARTOS DE FINAL 🏆";
+            else if (numMesas === 2) labelRonda = "🏆 PLAYOFFS - SEMIFINAL 🏆";
+            else if (numMesas === 1) labelRonda = "🏆 PLAYOFFS - GRAN FINAL 🏆";
+            else labelRonda = `PLAYOFFS - ${torneo.rondaTopActual}`;
+        }
+        // ---------------------------------------
+
         document.getElementById('txt-ronda-actual').innerText = labelRonda;
         document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
             const p1 = jugadores.find(j => j.id === p.j1Id) || {nombre: '...'};
@@ -832,9 +843,6 @@
     };
 
     actualizarUI();
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
