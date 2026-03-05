@@ -109,7 +109,22 @@
         
         .search-box { background: #111; padding: 15px; border-radius: 10px; border: 2px solid var(--primary); margin-bottom: 20px; text-align: center; }
         .search-box label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); font-size: 0.9em; }
-        .search-box select { width: 100%; max-width: 400px; border-color: var(--primary); }
+        .search-box select { width: 100%; max-width: 400px; border-color: var(--primary); margin-bottom: 15px; }
+
+        /* Estilo Tableta de Información Personalizada */
+        .info-tablet {
+            background: #1a1a1a;
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none; /* Se activa por JS */
+            text-align: left;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .info-tablet h4 { margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 0.9em; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 1.1em; }
+        .info-val { font-weight: bold; color: var(--warning); }
 
         button { 
             padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; 
@@ -225,6 +240,14 @@
             <select id="select-mi-nombre" onchange="guardarMiNombre(this.value)">
                 <option value="">-- SELECCIONA TU NOMBRE --</option>
             </select>
+            
+            <div id="tablet-info-duelista" class="info-tablet">
+                <h4>ESTADO ACTUAL DEL DUELISTA</h4>
+                <div class="info-row"><span>DUELISTA:</span> <span id="tablet-nombre" class="info-val">-</span></div>
+                <div class="info-row"><span>MESA ACTUAL:</span> <span id="tablet-mesa" class="info-val">-</span></div>
+                <div class="info-row"><span>POSICIÓN STANDING:</span> <span id="tablet-rank" class="info-val">-</span></div>
+                <button id="btn-cerrar-tablet" style="width:100%; margin-top:10px; padding:8px; font-size:0.8em; background:#333; color:white;" onclick="cerrarTabletaConConfirmacion()">CERRAR CONSULTA</button>
+            </div>
         </div>
 
         <div id="entry-container" style="display:none;">
@@ -340,8 +363,59 @@
 
     window.guardarMiNombre = function(val) {
         localStorage.setItem('ygo_mi_nombre_id', val);
+        actualizarTableta(val); // Lógica de la tableta integrada
         renderPareos();
         renderStandings();
+    };
+
+    // FUNCIÓN PARA ACTUALIZAR LA TABLETA DE INFORMACIÓN
+    function actualizarTableta(idDuelista) {
+        const tablet = document.getElementById('tablet-info-duelista');
+        if(!idDuelista) {
+            tablet.style.display = 'none';
+            return;
+        }
+
+        const duelista = jugadores.find(j => j.id === idDuelista);
+        if(!duelista) return;
+
+        // Buscar Mesa
+        let mesaEncontrada = "NO ASIGNADA";
+        if (torneo.pareos) {
+            const indexMesa = torneo.pareos.findIndex(p => p.j1Id === idDuelista || p.j2Id === idDuelista);
+            if(indexMesa !== -1) {
+                mesaEncontrada = (torneo.faseTop && torneo.pareos.length === 1) ? "MESA FINAL" : (indexMesa + 1);
+            }
+        }
+
+        // Buscar Rank (según el standing oficial ya ordenado)
+        // Re-calculamos standings para tener el rank exacto
+        let fW = null, fL = null;
+        if (torneo.finalizado && torneo.faseTop && torneo.pareos.length === 1) { 
+            fW = torneo.pareos[0].ganador; 
+            fL = (fW === torneo.pareos[0].j1Id) ? torneo.pareos[0].j2Id : torneo.pareos[0].j1Id; 
+        }
+        calcularTieBreakersLocales(fW, fL);
+        const standingsOrdenados = [...jugadores].sort((a, b) => b.tieBreaker.localeCompare(a.tieBreaker));
+        const rank = standingsOrdenados.findIndex(j => j.id === idDuelista) + 1;
+
+        // Llenar Tableta
+        document.getElementById('tablet-nombre').innerText = duelista.nombre;
+        document.getElementById('tablet-mesa').innerText = mesaEncontrada;
+        document.getElementById('tablet-rank').innerText = rank + "° LUGAR";
+        
+        tablet.style.display = 'block';
+    }
+
+    // FUNCIÓN PARA CERRAR TABLETA CON CONFIRMACIÓN
+    window.cerrarTabletaConConfirmacion = function() {
+        if(confirm("¿DESEAS CERRAR TU CONSULTA DE MESA?")) {
+            document.getElementById('tablet-info-duelista').style.display = 'none';
+            document.getElementById('select-mi-nombre').value = "";
+            localStorage.removeItem('ygo_mi_nombre_id');
+            renderPareos();
+            renderStandings();
+        }
     };
 
     window.actualizarModalidadLocal = async function() {
@@ -522,13 +596,15 @@
                 `<option value="${j.id}" ${j.id === miIdGuardado ? 'selected' : ''}>${j.nombre}</option>`
             ).join('');
 
+            // Asegurar que si hay un ID guardado, la tableta se refresque al actualizarUI
+            if(miIdGuardado) actualizarTableta(miIdGuardado);
+
             document.getElementById('view-registro').style.display = 'none';
             document.getElementById('view-torneo').style.display = (miRol === "INVITADO") ? 'none' : 'block';
             document.getElementById('standings-view').style.display = 'block';
             
             document.getElementById('torneo-controls').style.display = esOrg ? 'flex' : 'none';
             
-            // --- MODIFICACIÓN DE VISIBILIDAD DE BOTÓN SIGUIENTE ---
             const btnSiguiente = document.getElementById('btn-siguiente');
             if (torneo.finalizado) {
                 btnSiguiente.style.display = 'none';
@@ -540,7 +616,6 @@
                     btnSiguiente.style.display = 'block';
                 }
             }
-            // ------------------------------------------------------
 
             document.getElementById('btn-finalizar-evento').style.display = esOrg ? 'block' : 'none';
             
