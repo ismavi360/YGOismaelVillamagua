@@ -236,7 +236,7 @@
 
     <div id="main-content-wrapper" style="display:none;">
         <div id="view-buscador-mesa" class="search-box" style="display:none;">
-            <label>¿DÓNDE ESTOY JUGANDO?</label>
+            <label>BUSCADOR DE DUELISTA</label>
             <select id="select-mi-nombre" onchange="guardarMiNombre(this.value)">
                 <option value="">-- SELECCIONA TU NOMBRE --</option>
             </select>
@@ -490,7 +490,7 @@
             if (!torneo.activa && !torneo.finalizado) {
                 estadoInvitadoCont.style.display = "block";
                 txtEstadoInvitado.innerText = "TORNEO EN ETAPA DE REGISTRO";
-                estadoInvitadoCont.classList.add('texto-palpitante');
+                // SIN PALPITAR PARA INVITADOS
                 estadoInvitadoCont.style.color = "var(--warning)";
                 estadoInvitadoCont.style.borderColor = "var(--warning)";
             } else if (torneo.activa && !torneo.finalizado) {
@@ -504,7 +504,7 @@
                     else if (numMesas === 1) txtEstadoInvitado.innerText = "PLAYOFFS - GRAN FINAL";
                     else txtEstadoInvitado.innerText = "PLAYOFFS EN CURSO";
                 }
-                estadoInvitadoCont.classList.add('texto-palpitante');
+                // SIN PALPITAR PARA INVITADOS
                 estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
             } else if (torneo.finalizado) {
@@ -518,11 +518,15 @@
                 
                 estadoInvitadoCont.style.display = "block";
                 txtEstadoInvitado.innerText = `🏆 CAMPEÓN: ${ganador ? ganador.nombre : "---"}`;
-                estadoInvitadoCont.className = "campeon-gold"; 
+                estadoInvitadoCont.className = "campeon-gold"; // MANTIENE CAMPEÓN GOLD SEGÚN SOLICITUD
             } else {
                 estadoInvitadoCont.style.display = "none";
             }
         } else {
+            // Lógica para roles que SI ven los textos palpitantes en la barra superior
+            if (!torneo.activa && !torneo.finalizado) {
+                // (Opcional: Si quieres que otros roles SI vean palpitante, añade las clases aquí)
+            }
             estadoInvitadoCont.style.display = "none";
         }
 
@@ -709,10 +713,22 @@
         let byeMatch = null;
 
         if (pool.length % 2 !== 0) {
+            // 1. Filtrar candidatos que NUNCA han recibido un BYE
             let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
+            
+            // Si todos ya tuvieron BYE (extremadamente raro), se reinicia el pool
             if (candidatosParaBye.length === 0) candidatosParaBye = [...pool];
+
+            // 2. Ordenar por Tie Break (Menor a Mayor)
             candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
-            let elegidoParaBye = candidatosParaBye[0];
+
+            // 3. Obtener a TODOS los jugadores que comparten el puntaje de Tie Break más bajo
+            const minTB = candidatosParaBye[0].tieBreaker;
+            const posiblesElegidos = candidatosParaBye.filter(j => j.tieBreaker === minTB);
+            
+            // 4. Elegir uno de forma ALEATORIA entre los que tengan el menor Tie Break
+            let elegidoParaBye = posiblesElegidos[Math.floor(Math.random() * posiblesElegidos.length)];
+
             byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
             pool = pool.filter(j => j.id !== elegidoParaBye.id);
         }
@@ -902,8 +918,11 @@
         document.getElementById('tabla-body').innerHTML = jugadores.map((j, i) => {
             const isChamp = torneo.finalizado && ((fW && j.id === fW) || (!torneo.faseTop && i === 0 && j.puntos > 0));
             const isSecond = torneo.finalizado && ((fL && j.id === fL) || (!torneo.faseTop && i === 1 && j.puntos > 0));
-            const esUsuarioActivo = (j.id === miId);
-            return `<tr class="${esUsuarioActivo ? 'fila-activa' : ''}" style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
+            
+            // MODIFICACIÓN: No aplicar 'fila-activa' (que tiene animación) si es Invitado
+            const esUsuarioActivoYNoInvitado = (j.id === miId && miRol !== "INVITADO");
+            
+            return `<tr class="${esUsuarioActivoYNoInvitado ? 'fila-activa' : ''}" style="${isChamp ? 'background: rgba(40, 167, 69, 0.25);' : isSecond ? 'background: rgba(255, 193, 7, 0.15);' : ''}">
                 <td>${isChamp ? '🏆' : i+1}</td>
                 <td style="text-align:left; font-weight:bold; ${isChamp ? 'color: var(--success);' : isSecond ? 'color: var(--warning);' : ''}">${j.nombre} ${j.retirado ? '<span style="color:var(--danger); font-size:0.8em;">(DROP)</span>' : ''}</td>
                 <td class="col-pts">${j.puntos}</td>
