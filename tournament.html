@@ -407,15 +407,13 @@
         tablet.style.display = 'block';
     }
 
-    // FUNCIÓN PARA CERRAR TABLETA CON CONFIRMACIÓN
+    // FUNCIÓN PARA CERRAR TABLETA SIN CONFIRMACIÓN (CAMBIO SOLICITADO)
     window.cerrarTabletaConConfirmacion = function() {
-        if(confirm("¿DESEAS CERRAR TU CONSULTA DE MESA?")) {
-            document.getElementById('tablet-info-duelista').style.display = 'none';
-            document.getElementById('select-mi-nombre').value = "";
-            localStorage.removeItem('ygo_mi_nombre_id');
-            renderPareos();
-            renderStandings();
-        }
+        document.getElementById('tablet-info-duelista').style.display = 'none';
+        document.getElementById('select-mi-nombre').value = "";
+        localStorage.removeItem('ygo_mi_nombre_id');
+        renderPareos();
+        renderStandings();
     };
 
     window.actualizarModalidadLocal = async function() {
