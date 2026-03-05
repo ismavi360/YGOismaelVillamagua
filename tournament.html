@@ -423,7 +423,6 @@
                 estadoInvitadoCont.style.borderColor = "var(--warning)";
             } else if (torneo.activa && !torneo.finalizado) {
                 estadoInvitadoCont.style.display = "block";
-                // --- Lógica de texto dinámica solicitada ---
                 if (!torneo.faseTop) {
                     txtEstadoInvitado.innerText = `TORNEO EN CURSO - RONDA ${torneo.ronda}`;
                 } else {
@@ -433,12 +432,10 @@
                     else if (numMesas === 1) txtEstadoInvitado.innerText = "PLAYOFFS - GRAN FINAL";
                     else txtEstadoInvitado.innerText = "PLAYOFFS EN CURSO";
                 }
-                // --------------------------------------------
                 estadoInvitadoCont.classList.add('texto-palpitante');
                 estadoInvitadoCont.style.color = "#2ecc71"; 
                 estadoInvitadoCont.style.borderColor = "#2ecc71";
             } else if (torneo.finalizado) {
-                // Cálculo del Campeón basado en los Standings actuales
                 let fW = null, fL = null;
                 if (torneo.faseTop && torneo.pareos.length === 1) { 
                     fW = torneo.pareos[0].ganador; 
@@ -530,7 +527,21 @@
             document.getElementById('standings-view').style.display = 'block';
             
             document.getElementById('torneo-controls').style.display = esOrg ? 'flex' : 'none';
-            document.getElementById('btn-siguiente').style.display = torneo.finalizado ? 'none' : 'block';
+            
+            // --- MODIFICACIÓN DE VISIBILIDAD DE BOTÓN SIGUIENTE ---
+            const btnSiguiente = document.getElementById('btn-siguiente');
+            if (torneo.finalizado) {
+                btnSiguiente.style.display = 'none';
+            } else {
+                if (torneo.faseTop) {
+                    const todosTienenGanador = torneo.pareos.every(p => p.ganador !== null);
+                    btnSiguiente.style.display = todosTienenGanador ? 'block' : 'none';
+                } else {
+                    btnSiguiente.style.display = 'block';
+                }
+            }
+            // ------------------------------------------------------
+
             document.getElementById('btn-finalizar-evento').style.display = esOrg ? 'block' : 'none';
             
             renderPareos();
@@ -624,32 +635,26 @@
         let pairs = [];
         let byeMatch = null;
 
-        // --- Lógica del BYE (Preservada) ---
         if (pool.length % 2 !== 0) {
             let candidatosParaBye = pool.filter(j => !j.oponentes.includes("BYE"));
             if (candidatosParaBye.length === 0) candidatosParaBye = [...pool];
-            // Aquí se usa tieBreaker para seleccionar el peor (o mejor según el sort)
             candidatosParaBye.sort((a, b) => a.tieBreaker.localeCompare(b.tieBreaker));
             let elegidoParaBye = candidatosParaBye[0];
             byeMatch = { j1Id: elegidoParaBye.id, j2Id: "BYE", ganador: elegidoParaBye.id };
             pool = pool.filter(j => j.id !== elegidoParaBye.id);
         }
 
-        // --- Aleatoriedad por Nivel (Shuffle Fisher-Yates) ---
-        // Agrupamos jugadores por su tieBreaker para mezclar grupos con el mismo puntaje
         let grupos = {};
         pool.forEach(j => {
             if (!grupos[j.tieBreaker]) grupos[j.tieBreaker] = [];
             grupos[j.tieBreaker].push(j);
         });
 
-        // Aplicamos Fisher-Yates a cada subgrupo y reconstruimos el pool ordenado
         let sortedKeys = Object.keys(grupos).sort((a, b) => b.localeCompare(a));
         let poolAleatorio = [];
         
         sortedKeys.forEach(key => {
             let subGrupo = grupos[key];
-            // Fisher-Yates Shuffle
             for (let i = subGrupo.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [subGrupo[i], subGrupo[j]] = [subGrupo[j], subGrupo[i]];
@@ -657,14 +662,12 @@
             poolAleatorio = poolAleatorio.concat(subGrupo);
         });
 
-        // --- Validación de Oponentes Únicos (Backtracking / Greedy con Historial) ---
         while (poolAleatorio.length > 0) {
             let j1 = poolAleatorio.shift();
             let encontrado = false;
 
             for (let i = 0; i < poolAleatorio.length; i++) {
                 let j2Candidate = poolAleatorio[i];
-                // Verificamos si ya se han enfrentado
                 if (!j1.oponentes.includes(j2Candidate.id)) {
                     pairs.push({ j1Id: j1.id, j2Id: j2Candidate.id, ganador: null });
                     poolAleatorio.splice(i, 1);
@@ -673,7 +676,6 @@
                 }
             }
 
-            // Si no se encuentra un oponente nuevo (caso extremo de pocas opciones), emparejamos con el siguiente disponible
             if (!encontrado && poolAleatorio.length > 0) {
                 let j2Fallback = poolAleatorio.shift();
                 pairs.push({ j1Id: j1.id, j2Id: j2Fallback.id, ganador: null });
@@ -781,7 +783,6 @@
         const esMesaFinal = torneo.faseTop && torneo.pareos.length === 1;
         const miId = localStorage.getItem('ygo_mi_nombre_id');
         
-        // --- Lógica de labelRonda ---
         let labelRonda = !torneo.faseTop ? `RONDA SUIZA: ${torneo.ronda} DE ${torneo.totalRondas}` : "";
         if (torneo.faseTop) {
             const numMesas = torneo.pareos.length;
@@ -790,7 +791,6 @@
             else if (numMesas === 1) labelRonda = "🏆 PLAYOFFS - GRAN FINAL 🏆";
             else labelRonda = `PLAYOFFS - ${torneo.rondaTopActual}`;
         }
-        // ---------------------------------------
 
         document.getElementById('txt-ronda-actual').innerText = labelRonda;
         document.getElementById('pairings-list').innerHTML = torneo.pareos.map((p, i) => {
