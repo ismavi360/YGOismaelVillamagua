@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duel Timer</title>
+<link rel="icon" type="image/png" href="iconTempo.png">
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    position: relative;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  body.claro { background: #fff; color: #000; }
+  body.oscuro { background: #111; color: #fff; }
+
+  #header {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+  }
+  #header h1 { margin: 0; font-size: 3.5rem; }
+  #header h2 { margin: 0; font-size: 2.5rem; font-weight: normal; }
+
+  #timer { font-size: 30vw; font-weight: bold; margin-bottom: 20px; }
+
+  body.claro button {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
+  }
+  body.oscuro button {
+    background-color: #111;
+    color: #fff;
+    border: 2px solid #fff;
+  }
+
+  button {
+    font-size: 2rem;
+    padding: 0 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #startPauseBtn, #resetBtn { text-transform: uppercase; }
+  #fullscreenBtn { font-size: 1.5rem; padding: 0; width:50px; height:50px; }
+
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .bottom-buttons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .bottom-buttons button {
+    height: 50px;
+    min-width: 120px;
+    font-size: 1.5rem;
+    border-radius: 5px;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+    color: #fff;
+    text-align: center;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-row label { flex: 1; text-align: left; font-size: 1.2rem; }
+
+  .modal-row input,
+  .modal-row select {
+    flex: 1;
+    font-size: 1.5rem;
+    text-align: center;
+    border-radius: 5px;
+    border: none;
+    height: 40px;
+    max-width: 120px;
+  }
+
+  .modal-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>DUELIST KINGDOM EC</h1>
+  <h2>Yu-Gi-Oh! Duel Timer</h2>
+</div>
+
+<div id="timer">50:00</div>
+
+<div class="bottom-buttons">
+  <button id="startPauseBtn">START</button>
+  <button id="resetBtn">RESET</button>
+  <button id="configBtn">CONFIGURACIÓN</button>
+  <button id="fullscreenBtn" title="Pantalla completa">⛶</button>
+</div>
+
+<audio id="alarmSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg">
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.mp3">
+</audio>
+
+<!-- Modal Configuración -->
+<div id="configModal" class="modal">
+  <div class="modal-content">
+    <h3>Configurar Temporizador</h3>
+    <div class="modal-row">
+      <label>Minutos:</label>
+      <input type="number" id="modalMinutes" min="0" max="999" value="50">
+    </div>
+    <div class="modal-row">
+      <label>Segundos:</label>
+      <input type="number" id="modalSeconds" min="0" max="59" value="0">
+    </div>
+    <div class="modal-row">
+      <label>Tema:</label>
+      <select id="themeSelect">
+        <option value="oscuro">Oscuro</option>
+        <option value="claro">Claro</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <label>Volumen Alarma (0-10):</label>
+      <input type="number" id="alarmVolume" min="0" max="10" value="10">
+    </div>
+    <div class="modal-row">
+      <label>Habilitar voz:</label>
+      <input type="checkbox" id="voiceEnabled">
+    </div>
+    <div class="modal-row">
+      <label>Mensaje de voz:</label>
+      <input type="text" id="voiceMessage" placeholder="Ej: Duelistas, tiempo finalizado" style="max-width:300px;">
+    </div>
+    <div class="modal-buttons">
+      <button id="saveConfigBtn">Guardar</button>
+      <button id="cancelConfigBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reset -->
+<div id="resetModal" class="modal">
+  <div class="modal-content">
+    <h3>¿Estás seguro de resetear el temporizador?</h3>
+    <div class="modal-buttons">
+      <button id="confirmResetBtn">Sí</button>
+      <button id="cancelResetBtn">No</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let tiempo, interval=null, running=false, alarmPlayed=false;
+
+// Recuperar localStorage
+let savedMins = localStorage.getItem('savedMinutes')!==null ? parseInt(localStorage.getItem('savedMinutes')) : 50;
+let savedSecs = localStorage.getItem('savedSeconds')!==null ? parseInt(localStorage.getItem('savedSeconds')) : 0;
+let alarmVolume = localStorage.getItem('alarmVolume')!==null ? parseInt(localStorage.getItem('alarmVolume')) : 10;
+let voiceEnabled = localStorage.getItem('voiceEnabled')==='true';
+let voiceMessage = localStorage.getItem('voiceMessage') || "Duelistas, el tiempo de ronda a finalizado";
+
+const timerDiv = document.getElementById('timer');
+const startPauseBtn = document.getElementById('startPauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const configBtn = document.getElementById('configBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+const configModal = document.getElementById('configModal');
+const modalMinutes = document.getElementById('modalMinutes');
+const modalSeconds = document.getElementById('modalSeconds');
+const themeSelect = document.getElementById('themeSelect');
+const alarmVolumeInput = document.getElementById('alarmVolume');
+const voiceEnabledInput = document.getElementById('voiceEnabled');
+const voiceMessageInput = document.getElementById('voiceMessage');
+const saveConfigBtn = document.getElementById('saveConfigBtn');
+const cancelConfigBtn = document.getElementById('cancelConfigBtn');
+
+const resetModal = document.getElementById('resetModal');
+const confirmResetBtn = document.getElementById('confirmResetBtn');
+const cancelResetBtn = document.getElementById('cancelResetBtn');
+
+const alarmSound = document.getElementById('alarmSound');
+alarmSound.volume = alarmVolume/10;
+
+// Aplicar tema guardado
+const savedTheme = localStorage.getItem('tema') || 'claro';
+document.body.classList.add(savedTheme);
+themeSelect.value = savedTheme;
+
+tiempo = savedMins*60 + savedSecs;
+
+function actualizar() {
+  let mins = Math.floor(Math.abs(tiempo)/60);
+  let secs = Math.abs(tiempo)%60;
+  mins = mins<10?'0'+mins:mins;
+  secs = secs<10?'0'+secs:secs;
+  timerDiv.textContent = (tiempo<0?'-':'') + mins + ':' + secs;
+
+  if(tiempo <=10 || tiempo<0) timerDiv.style.color = '#ff4d4d';
+  else timerDiv.style.color = document.body.classList.contains('claro') ? '#000' : '#fff';
+
+  if(tiempo===0 && !alarmPlayed){
+    alarmSound.currentTime = 0;
+    alarmSound.play();
+    alarmPlayed=true;
+    setTimeout(()=>{
+      alarmSound.pause();
+      alarmSound.currentTime=0;
+      speakFinalMessage();
+    },4500); // alarma 4s
+  }
+
+  if(!running){ 
+    alarmSound.pause(); 
+    alarmSound.currentTime=0; 
+  }
+
+  if(running) tiempo--;
+}
+
+function startPauseTimer(){
+  if(!running){
+    if(!interval) interval=setInterval(actualizar,1000);
+    running=true;
+    startPauseBtn.textContent='PAUSE';
+    configBtn.disabled=true;
+  } else {
+    running=false;
+    startPauseBtn.textContent='START';
+    configBtn.disabled=false;
+    alarmSound.pause();
+    alarmSound.currentTime=0;
+  }
+}
+
+function openConfigModal(){
+  modalMinutes.value = savedMins;
+  modalSeconds.value = savedSecs;
+  alarmVolumeInput.value = alarmVolume;
+  voiceEnabledInput.checked = voiceEnabled;
+  voiceMessageInput.value = voiceMessage;
+  configModal.style.display='flex';
+}
+
+function closeConfigModal(){ configModal.style.display='none'; }
+
+function saveConfig(){
+  // Tema
+  const selectedTheme = themeSelect.value;
+  document.body.classList.remove('oscuro','claro');
+  document.body.classList.add(selectedTheme);
+  localStorage.setItem('tema', selectedTheme);
+
+  // Guardar tiempo solo si es diferente
+  let newMins = parseInt(modalMinutes.value);
+  let newSecs = parseInt(modalSeconds.value);
+  if(isNaN(newMins) || newMins<0) newMins=0;
+  if(newMins>999) newMins=999;
+  if(isNaN(newSecs) || newSecs<0) newSecs=0;
+  if(newSecs>59) newSecs=59;
+
+  if(newMins !== savedMins || newSecs !== savedSecs){
+    savedMins=newMins;
+    savedSecs=newSecs;
+    tiempo = savedMins*60 + savedSecs;
+    alarmPlayed=false;
+    localStorage.setItem('savedMinutes', savedMins);
+    localStorage.setItem('savedSeconds', savedSecs);
+  }
+
+  // Volumen
+  alarmVolume = parseInt(alarmVolumeInput.value);
+  if(alarmVolume<0) alarmVolume=0;
+  if(alarmVolume>10) alarmVolume=10;
+  alarmSound.volume = alarmVolume/10;
+  localStorage.setItem('alarmVolume', alarmVolume);
+
+  // Voz
+  voiceEnabled = voiceEnabledInput.checked;
+  voiceMessage = voiceMessageInput.value || "Duelistas, el tiempo de ronda a finalizado";
+  localStorage.setItem('voiceEnabled', voiceEnabled);
+  localStorage.setItem('voiceMessage', voiceMessage);
+
+  actualizar();
+  closeConfigModal();
+}
+
+function openResetModal(){ resetModal.style.display='flex'; }
+function closeResetModal(){ resetModal.style.display='none'; }
+
+function confirmReset(){
+  running=false;
+  startPauseBtn.textContent='START';
+  configBtn.disabled=false;
+  tiempo=savedMins*60+savedSecs;
+  alarmPlayed=false;
+  alarmSound.pause();
+  alarmSound.currentTime=0;
+  actualizar();
+  closeResetModal();
+}
+
+function speakFinalMessage() {
+  if(!voiceEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  const msg = new SpeechSynthesisUtterance(voiceMessage);
+  msg.lang = 'es-MX';
+  msg.volume = alarmSound.volume;
+  msg.rate = 0.7;
+  msg.pitch = 0.0;
+  window.speechSynthesis.speak(msg);
+}
+
+fullscreenBtn.addEventListener('click',()=>{
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+});
+
+startPauseBtn.addEventListener('click',startPauseTimer);
+configBtn.addEventListener('click',openConfigModal);
+saveConfigBtn.addEventListener('click',saveConfig);
+cancelConfigBtn.addEventListener('click',closeConfigModal);
+resetBtn.addEventListener('click',openResetModal);
+confirmResetBtn.addEventListener('click',confirmReset);
+cancelResetBtn.addEventListener('click',closeResetModal);
+
+window.addEventListener('click',(e)=>{
+  if(e.target===configModal) closeConfigModal();
+  if(e.target===resetModal) closeResetModal();
+});
+
+actualizar();
+</script>
+</body>
+</html>
