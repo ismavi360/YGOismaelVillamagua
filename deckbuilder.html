@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="icon" href="iconTournament.ico" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YGO DECK BUILDER V1.0</title>
+    <title>YGO AI DECK BUILDER</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -22,6 +22,20 @@
             --shadow: 0 4px 16px rgba(0,0,0,0.06);
             --aqua-strong: #00CED1; 
             --purple-strong: #9370DB; 
+        }
+
+        /* ANIMACIÓN DE PULSACIÓN PARA EL NOMBRE DEL DECK */
+        .cloud-item-name {
+            cursor: pointer;
+            flex-grow: 1;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.1s ease-in-out, opacity 0.2s;
+            display: inline-block;
+        }
+        .cloud-item-name:active {
+            transform: scale(0.95);
+            opacity: 0.7;
         }
 
         html, body { overflow-x: hidden; touch-action: pan-y; -webkit-text-size-adjust: none; }
@@ -231,7 +245,7 @@
 
 <div class="container">
     <header>
-        <h1>YGO DECK BUILDER V1.0</h1>
+        <h1>YGO AI DECK BUILDER</h1>
         <p>Designed by Ismael Villamagua</p>
     </header>
 
@@ -344,7 +358,8 @@
                 const name = docSnap.id;
                 const row = document.createElement('div');
                 row.className = 'cloud-item';
-                row.innerHTML = `<span onclick="loadFromCloud('${name}')" style="cursor:pointer; flex-grow:1; font-weight:600; font-size:14px;">${name}</span><button class="btn-delete-cloud" id="del-${name}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:8px 12px; font-size:11px; font-weight:bold;" onclick="handleCloudDelete('${name}')">BORRAR</button>`;
+                // AQUI SE APLICA LA CLASE .cloud-item-name PARA LA ANIMACIÓN
+                row.innerHTML = `<span class="cloud-item-name" onclick="loadFromCloud('${name}')">${name}</span><button class="btn-delete-cloud" id="del-${name}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:8px 12px; font-size:11px; font-weight:bold;" onclick="handleCloudDelete('${name}')">BORRAR</button>`;
                 list.appendChild(row);
             });
         } catch (e) { alert("Error al acceder a la nube."); }
@@ -681,18 +696,17 @@
         }
         const modaResult = {};
         categories.forEach(cat => {
-        const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
-        let maxF = 0, mV = 0;
-        for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
+            const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
+            let maxF = 0, mV = 0;
+            for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
     
-        // Nueva lógica diferenciada UMBRALES (BRICKS):(STARTERS;EXTENDERS etc)
-        const umbral = (cat === "Bricks") ? 0.4 : 0.6;
+            const umbral = (cat === "Bricks") ? 0.45 : 0.6;
     
-        if (mV === 0 && (successCount[cat] / iterations) >= umbral) {
-        mV = 1;
-        }
+            if (mV === 0 && (successCount[cat] / iterations) >= umbral) {
+                mV = 1;
+            }
     
-        modaResult[cat] = mV;
+            modaResult[cat] = mV;
         });
         const bar = document.getElementById(barId); bar.innerHTML = '';
         let currentTotal = 0;
