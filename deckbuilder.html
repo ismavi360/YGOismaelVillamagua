@@ -686,7 +686,7 @@
         for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
     
         // Nueva lógica diferenciada UMBRALES (BRICKS):(STARTERS;EXTENDERS etc)
-        const umbral = (cat === "Bricks") ? 0.4 : 0.5;
+        const umbral = (cat === "Bricks") ? 0.4 : 0.6;
     
         if (mV === 0 && (successCount[cat] / iterations) >= umbral) {
         mV = 1;
