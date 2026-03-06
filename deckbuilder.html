@@ -243,7 +243,10 @@
 
     <div id="tier-config-panel">
         <div id="rules-container"></div>
-        <button class="btn-ios btn-blue" onclick="addTierDefinition()" style="font-size:13px; padding:10px; background:var(--ios-gray); color:var(--ios-text)">+ AÑADIR NUEVO TIER</button>
+        <div style="display:flex; gap: 10px;">
+            <button class="btn-ios btn-blue" onclick="addTierDefinition()" style="flex:1; font-size:13px; padding:10px; background:var(--ios-gray); color:var(--ios-text)">+ TIER</button>
+            <button id="defaultBtn" class="btn-ios btn-green" onclick="handleDefaultClick()" style="flex:1; font-size:13px; padding:10px; background:var(--ios-green); color:white">TIER DEFAULT</button>
+        </div>
     </div>
 
     <div id="categories-main"></div>
@@ -376,6 +379,7 @@
     let pdfConfirm = { active: false, timeout: null };
     let configConfirm = { active: false, timeout: null };
     let delTierConfirm = { idx: null, timeout: null };
+    let defaultConfirm = { active: false, timeout: null };
     
     let customTierRules = [];
 
@@ -406,6 +410,37 @@
         saveAll();
         updateTotal();
     };
+
+    function handleDefaultClick() {
+        const btn = document.getElementById('defaultBtn');
+        if (!defaultConfirm.active) {
+            defaultConfirm.active = true;
+            btn.innerText = "CONFIRMAR DEFAULT";
+            btn.style.background = "var(--ios-blue)";
+            defaultConfirm.timeout = setTimeout(() => {
+                defaultConfirm.active = false;
+                btn.innerText = "TIER DEFAULT";
+                btn.style.background = "var(--ios-green)";
+            }, 2500);
+        } else {
+            clearTimeout(defaultConfirm.timeout);
+            setDefaults();
+            defaultConfirm.active = false;
+            btn.innerText = "TIER DEFAULT";
+            btn.style.background = "var(--ios-green)";
+        }
+    }
+
+    function setDefaults() {
+        customTierRules = [
+            { name: "S", rules: { "Starters": [1, "<=", "<=", 6], "Starters + Extenders": [2, "<=", "<=", 6], "Hand Traps + Board Breakers": [2, "<=", "<=", 6], "Bricks": [0, "==", "==", 0] } },
+            { name: "A", rules: { "Starters": [1, "<=", "<=", 6], "Starters + Extenders": [2, "<=", "<=", 6], "Hand Traps + Board Breakers": [2, "==", "==", 2], "Bricks": [1, "<=", "<=", 6] } },
+            { name: "B", rules: { "Starters": [1, "<=", "<=", 6], "Starters + Extenders": [2, "<=", "<=", 6], "Hand Traps + Board Breakers": [1, "==", "==", 1], "Bricks": [0, "<=", "<=", 6] } },
+            { name: "C", rules: { "Starters": [1, "==", "==", 1], "Starters + Extenders": [1, "==", "==", 1], "Hand Traps + Board Breakers": [0, "<=", "<=", 6], "Bricks": [0, "<=", "<=", 6] } }
+        ];
+        renderTierRules();
+        saveAll();
+    }
 
     function handleConfigClick() {
         const btn = document.getElementById('configBtn');
@@ -569,7 +604,9 @@
             }, 3000);
         } else {
             clearTimeout(deleteConfirm.timeout);
-            localStorage.removeItem('ygo_deck_save');
+            const currentSave = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
+            const preservedTierRules = currentSave.tierRules;
+            localStorage.setItem('ygo_deck_save', JSON.stringify({ deckName: "", deckFormat: "", tierRules: preservedTierRules }));
             location.reload();
         }
     }
@@ -620,12 +657,10 @@
         if (op1 === "<") leftOk = (min < val);
         else if (op1 === "<=") leftOk = (min <= val);
         else if (op1 === "==") leftOk = (min == val);
-
         let rightOk = false;
         if (op2 === "<") rightOk = (val < max);
         else if (op2 === "<=") rightOk = (val <= max);
         else if (op2 === "==") rightOk = (val == max);
-
         return leftOk && rightOk;
     }
 
@@ -646,13 +681,19 @@
         }
         const modaResult = {};
         categories.forEach(cat => {
-            const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
-            let maxF = 0, mV = 0;
-            for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
-            if (mV === 0 && (successCount[cat]/iterations) >= 0.48) mV = 1;
-            modaResult[cat] = mV;
+        const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
+        let maxF = 0, mV = 0;
+        for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
+    
+        // Nueva lógica diferenciada UMBRALES (BRICKS):(STARTERS;EXTENDERS etc)
+        const umbral = (cat === "Bricks") ? 0.4 : 0.5;
+    
+        if (mV === 0 && (successCount[cat] / iterations) >= umbral) {
+        mV = 1;
+        }
+    
+        modaResult[cat] = mV;
         });
-        
         const bar = document.getElementById(barId); bar.innerHTML = '';
         let currentTotal = 0;
         categories.forEach(cat => {
@@ -662,25 +703,13 @@
                 seg.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
                 const widthPercent = (val / handSize) * 100;
                 seg.style.width = `${widthPercent}%`;
-                
                 const label = cat.toUpperCase();
-                if (widthPercent > 12) {
-                    seg.innerHTML = `<span>${val} ${label}</span>`;
-                } else {
-                    seg.innerHTML = `<span>${val}</span>`;
-                }
-                
-                if (widthPercent < 25) {
-                    seg.style.fontSize = "7.5px";
-                } else {
-                    seg.style.fontSize = "10px";
-                }
-                
+                seg.innerHTML = widthPercent > 12 ? `<span>${val} ${label}</span>` : `<span>${val}</span>`;
+                seg.style.fontSize = widthPercent < 25 ? "7.5px" : "10px";
                 bar.appendChild(seg); 
                 currentTotal += val;
             }
         });
-
         if (currentTotal < handSize) {
             const rest = handSize - currentTotal;
             const seg = document.createElement('div'); 
@@ -691,7 +720,6 @@
             if (widthPercent < 25) seg.style.fontSize = "7.5px";
             bar.appendChild(seg);
         }
-
         const consList = document.getElementById(consId); consList.innerHTML = '';
         categories.forEach(cat => {
             const p = ((successCount[cat]/iterations)*100).toFixed(1);
@@ -707,11 +735,8 @@
         const pdfH = doc.internal.pageSize.getHeight();
         const margin = 15;
         const contentW = pdfW - (margin * 2);
-
         const deckName = (document.getElementById('deck-name').value || "DECK").toUpperCase();
         const tierText = document.getElementById('tier-text').innerText;
-        
-        // --- PÁGINA 1: LISTADO DE CARTAS ---
         doc.setFontSize(16); doc.setTextColor(0, 122, 255);
         doc.text(deckName, margin, 20);
         doc.setFontSize(10); doc.setTextColor(28, 28, 30);
@@ -720,7 +745,6 @@
         doc.text(`Clasificación: ${tierText}`, margin, 34);
         doc.setFont(undefined, 'normal');
         doc.line(margin, 38, pdfW - margin, 38);
-        
         let y = 48;
         let grandTotal = 0;
         const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
@@ -743,30 +767,19 @@
         });
         doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 0, 0);
         doc.text(`TOTAL DECK: ${grandTotal} CARTAS`, margin, y);
-
-        // --- PÁGINA 2: RESULTADOS GRÁFICOS (CENTRADO Y AJUSTADO) ---
         doc.addPage();
         const captureEl = document.getElementById('capture-container');
-        
-        // Capturamos el contenedor de resultados
         const canvas = await html2canvas(captureEl, { scale: 3, useCORS: true, backgroundColor: "#F2F2F7" });
         const imgData = canvas.toDataURL('image/png');
-        
-        // Cálculo de dimensiones para que la imagen quepa en la hoja manteniendo el ratio
         const imgRatio = canvas.height / canvas.width;
         let finalImgW = contentW;
         let finalImgH = finalImgW * imgRatio;
-
-        // Si la imagen resultante es más alta que la hoja, la escalamos por altura
         if (finalImgH > (pdfH - margin * 2)) {
             finalImgH = pdfH - margin * 2;
             finalImgW = finalImgH / imgRatio;
         }
-
-        // Cálculo para centrado horizontal y vertical
         const posX = (pdfW - finalImgW) / 2;
         const posY = (pdfH - finalImgH) / 2;
-
         doc.addImage(imgData, 'PNG', posX, posY, finalImgW, finalImgH);
         doc.save(`${deckName}_Reporte.pdf`);
     }
