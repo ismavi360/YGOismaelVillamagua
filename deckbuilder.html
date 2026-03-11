@@ -304,7 +304,6 @@
         </div>
 
         <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
-        <button id="powerupBtn" class="btn-ios btn-powerup" onclick="handlePowerUpClick()">DECK POWER-UP!</button>
         <div id="powerup-results" class="powerup-area"></div>
         <div id="prob-table-container" style="margin-top: 20px; overflow-x: auto; background: white; border-radius: 16px; padding: 15px; box-shadow: var(--shadow); display: none;">
         <h3 style="font-size: 16px; color: var(--ios-text); margin-bottom: 12px;">Matriz de Probabilidad (Umbral 60%)</h3>
@@ -630,11 +629,13 @@ async function handleAnalyzeClick() {
         // 1. Ejecuta la simulación de manos actual
         executeAnalysis(); 
         
-        // 2. Calcula la matriz de probabilidad Tier S (40-60)
-        // Usamos await porque es una operación de cálculo
+        // 2. Calcula la matriz de probabilidad
         await calculateProbabilityTable(); 
         
-        // 3. Dibuja la tabla en la interfaz
+        // 3. NUEVO: Ejecutar Power-Up automáticamente
+        await executePowerUp(); 
+
+        // 4. Dibuja la tabla
         if (typeof renderProbabilityTable === "function") {
             renderProbabilityTable();
         }
@@ -645,7 +646,6 @@ async function handleAnalyzeClick() {
         document.getElementById('pdfBtn').style.display = 'block';
     }
 }
-
     function handleDownloadClick() {
         const btn = document.getElementById('pdfBtn');
         if (!pdfConfirm.active) {
@@ -946,8 +946,7 @@ async function calculateProbabilityTable() {
 async function executePowerUp() {
     const display = document.getElementById('powerup-results');
     display.style.display = 'block';
-    display.innerHTML = "Calculando equilibrio...";
-
+    
     const matrix = JSON.parse(localStorage.getItem('probability_matrix'));
     const moda = JSON.parse(localStorage.getItem('last_simulation_moda'));
     
