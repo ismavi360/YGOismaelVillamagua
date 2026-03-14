@@ -24,7 +24,6 @@
             --purple-strong: #9370DB; 
         }
 
-        /* ANIMACIÓN DE PULSACIÓN PARA EL NOMBRE DEL DECK */
         .cloud-item-name {
             cursor: pointer;
             flex-grow: 1;
@@ -33,10 +32,7 @@
             transition: transform 0.1s ease-in-out, opacity 0.2s;
             display: inline-block;
         }
-        .cloud-item-name:active {
-            transform: scale(0.95);
-            opacity: 0.7;
-        }
+        .cloud-item-name:active { transform: scale(0.95); opacity: 0.7; }
 
         html, body { overflow-x: hidden; touch-action: pan-y; -webkit-text-size-adjust: none; }
 
@@ -203,26 +199,11 @@
             overflow: hidden; text-align: center; white-space: nowrap; padding: 0 4px;
         }
 
-        .cons-bar-wrapper {
-            height: 32px; width: 100%; background: #E5E5EA; border-radius: 8px;
-            margin-bottom: 10px; overflow: hidden; position: relative;
-            display: flex; align-items: center;
-        }
-        .cons-bar-fill { height: 100%; transition: width 0.6s ease-out; }
-        .cons-bar-text {
-            position: absolute; width: 100%; text-align: center; left: 0;
-            font-size: 12px; font-weight: 800; text-transform: uppercase;
-            z-index: 2; pointer-events: none;
-        }
-
         .segment-Starters, .fill-Starters { background-color: var(--ios-green); }
         .segment-Extenders, .fill-Extenders { background-color: var(--aqua-strong); } 
-        .segment-HandTraps, .fill-HandTraps { background-color: var(--ios-blue); }
-        .segment-BoardBreakers, .fill-BoardBreakers { background-color: var(--purple-strong); } 
+        .segment-Interrupcion, .fill-Interrupcion { background-color: var(--purple-strong); } 
         .segment-Bricks, .fill-Bricks { background-color: var(--ios-red); }
         .segment-Random, .fill-Random { background-color: #8E8E93; }
-
-        .text-light { color: white; text-shadow: 0px 1px 2px rgba(0,0,0,0.3); }
 
         .cloud-list {
             background: var(--ios-card); border-radius: 16px; padding: 10px; margin-top: 15px;
@@ -239,11 +220,47 @@
         .rule-row span { font-weight: 800; color: var(--ios-blue); text-align: center; line-height: 1.1; }
         .rule-row input, .rule-row select { padding: 5px; font-size: 12px; border-radius: 6px; text-align: center; }
         
-        .btn-powerup { background: var(--purple-strong); color: white; margin-top: 15px; }
-        .btn-powerup.confirm { background: #FF9F0A; transform: scale(1.02); }
-        .btn-powerup.executing { background: var(--ios-green); transform: scale(1.02); }
-        .powerup-area { margin-top: 20px; padding: 15px; border-radius: 16px; background: white; box-shadow: var(--shadow); display: none; text-align: left; font-size: 14px; line-height: 1.4; color: var(--ios-text); }
+        .powerup-area { margin-top: 20px; padding: 15px; border-radius: 16px; background: white; box-shadow: var(--shadow); display: none; text-align: left; font-size: 14px; line-height: 1.4; color: var(--ios-text); } 
+        
+        /* Contenedor de cada barra de probabilidad */
+.cons-bar-wrapper {
+    position: relative;
+    height: 30px; /* Un poco más gruesas para que quepa el texto */
+    background: #E5E5EA;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border: 0.5px solid #D1D1D6;
+}
 
+/* El relleno de color de la barra */
+.cons-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease-out;
+}
+
+/* El texto dentro de la barra */
+.cons-bar-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #1C1C1E; /* Texto oscuro por defecto */
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+/* Clase para que el texto sea blanco si la barra está muy llena */
+.cons-bar-text.text-light {
+    color: white;
+    text-shadow: 0px 1px 2px rgba(0,0,0,0.3);
+}
     </style>
 </head>
 <body>
@@ -272,15 +289,11 @@
     
     <div class="total-section">
         <span class="total-badge">Total: <span id="deck-total">0</span> / 60 cartas</span>
-
         <button id="syncBtn" class="btn-ios btn-purple" onclick="handleSyncClick()">GUARDAR DECK</button>
         <button id="viewCloudBtn" class="btn-ios btn-purple" onclick="toggleCloudList()">ABRIR DECK</button>
-        
         <div id="cloud-explorer" class="cloud-list">
-            <div style="font-weight: bold; margin-bottom: 10px; color: var(--ios-secondary); text-align: left; padding-left: 10px;">TUS DECKBOX</div>
             <div id="cloud-items-container"></div>
         </div>
-
         <button id="mainBtn" class="btn-ios btn-blue" onclick="handleAnalyzeClick()">ANALIZAR DECK</button>
         <button id="deleteBtn" class="btn-ios btn-blue" onclick="handleDeleteClick()">CLEAR DECK</button>
     </div>
@@ -302,22 +315,26 @@
                 <div id="cons-t2" class="consistency-list"></div>
             </div>
         </div>
-
         <button id="pdfBtn" class="btn-ios btn-pdf" onclick="handleDownloadClick()">DESCARGAR RESULTADOS</button>
         <div id="powerup-results" class="powerup-area"></div>
         <div id="prob-table-container" style="margin-top: 20px; overflow-x: auto; background: white; border-radius: 16px; padding: 15px; box-shadow: var(--shadow); display: none;">
-        <h3 style="font-size: 16px; color: var(--ios-text); margin-bottom: 12px;">Matriz de Probabilidad (Umbral 60%)</h3>
-        <table id="prob-table" style="width:100%; border-collapse: collapse; font-size: 12px; text-align: center;">
-        <thead>
-            <tr style="background: var(--ios-blue); color: white;">
-                <th style="padding: 10px; border-radius: 10px 0 0 10px;">Deck</th>
-                <th style="padding: 10px;">Starters</th>
-                <th style="padding: 10px;">Motor (S+E)</th>
-                <th style="padding: 10px; border-radius: 0 10px 10px 0;">HT/BB</th>
-            </tr>
-        </thead>
-        <tbody id="prob-table-body"></tbody>
-        </table>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+    <h3 style="font-size: 16px; color: var(--ios-text); margin: 0;">Matriz de Probabilidad</h3>
+    <div style="font-size: 12px;">
+       <input type="number" id="prob-threshold" value="60" oninput="actualizarTodo()" style="width: 50px; padding: 2px; text-align: center;">%
+    </div>
+</div>
+            <table id="prob-table" style="width:100%; border-collapse: collapse; font-size: 12px; text-align: center;">
+                <thead>
+                    <tr style="background: var(--ios-blue); color: white;">
+                        <th style="padding: 10px; border-radius: 10px 0 0 10px;">Deck</th>
+                        <th style="padding: 10px;">Starters</th>
+                        <th style="padding: 10px;">Motor (S+E)</th>
+                        <th style="padding: 10px; border-radius: 0 10px 10px 0;">Interrupción</th>
+                    </tr>
+                </thead>
+                <tbody id="prob-table-body"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -379,7 +396,6 @@
                 const name = docSnap.id;
                 const row = document.createElement('div');
                 row.className = 'cloud-item';
-                // AQUI SE APLICA LA CLASE .cloud-item-name PARA LA ANIMACIÓN
                 row.innerHTML = `<span class="cloud-item-name" onclick="loadFromCloud('${name}')">${name}</span><button class="btn-delete-cloud" id="del-${name}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:8px 12px; font-size:11px; font-weight:bold;" onclick="handleCloudDelete('${name}')">BORRAR</button>`;
                 list.appendChild(row);
             });
@@ -409,10 +425,9 @@
 </script>
 
 <script>
-    const categories = ["Starters", "Extenders", "Hand Traps", "Board Breakers", "Bricks"];
+    const categories = ["Starters", "Extenders", "Interrupcion", "Bricks"];
     let analyzeConfirm = { active: false, timeout: null };
     let deleteConfirm = { active: false, timeout: null };
-    let pdfConfirm = { active: false, timeout: null };
     let configConfirm = { active: false, timeout: null };
     let delTierConfirm = { idx: null, timeout: null };
     let defaultConfirm = { active: false, timeout: null };
@@ -425,9 +440,14 @@
         document.getElementById('deck-name').value = savedData.deckName || "";
         document.getElementById('deck-format').value = savedData.deckFormat || "";
         
+        // Recuperar el umbral si existe
+    if (savedData.probThreshold) {
+        document.getElementById('prob-threshold').value = savedData.probThreshold;
+    }
+
         customTierRules = savedData.tierRules || [
-            { name: "S", rules: { "Starters": [1, "<=", "<=", 2], "Starters + Extenders": [1, "<=", "<=", 3], "Hand Traps + Board Breakers": [2, "<=", "<=", 5], "Bricks": [0, "==", "==", 0] } },
-            { name: "A", rules: { "Starters": [1, "<=", "<=", 2], "Starters + Extenders": [1, "<=", "<=", 3], "Hand Traps + Board Breakers": [1, "<=", "<=", 5], "Bricks": [0, "<=", "<=", 5] } }
+            { name: "S", rules: { "Starters": [1, "<=", "<=", 2], "Motor (S+E)": [1, "<=", "<=", 3], "Interrupcion": [2, "<=", "<=", 5], "Bricks": [0, "==", "==", 0] } },
+            { name: "A", rules: { "Starters": [1, "<=", "<=", 2], "Motor (S+E)": [1, "<=", "<=", 3], "Interrupcion": [1, "<=", "<=", 5], "Bricks": [0, "<=", "<=", 5] } }
         ];
 
         categories.forEach(cat => {
@@ -435,8 +455,8 @@
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card';
             cardDiv.id = catId;
-            const singleCat = cat.endsWith('s') ? cat.slice(0, -1) : cat;
-            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div><div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>`;
+            const singleCat = (cat === 'Interrupcion') ? 'Interrupción' : (cat.endsWith('s') ? cat.slice(0, -1) : cat);
+            cardDiv.innerHTML = `<div class="category-header"><span class="category-title">${cat === 'Interrupcion' ? 'Interrupción (HT/BB)' : cat}</span><button class="add-btn" onclick="addRow('${catId}', '', '', true, 'Nombre ${singleCat}')">+</button></div><div class="rows-container"></div><div class="category-footer">Total ${cat}: <span id="total-val-${catId}">0</span></div>`;
             mainContainer.appendChild(cardDiv);
             if (savedData[cat] && savedData[cat].length > 0) { savedData[cat].forEach(card => addRow(catId, card.name, card.qty, card.hopt, `Nombre ${singleCat}`)); }
             else { addRow(catId, '', '', true, `Nombre ${singleCat}`); }
@@ -469,10 +489,10 @@
 
     function setDefaults() {
         customTierRules = [
-            { name: "S", rules: { "Starters": [1, "<=", "<=", 6], "Starters + Extenders": [2, "<=", "<=", 6], "Hand Traps + Board Breakers": [2, "<=", "<=", 6], "Bricks": [0, "==", "==", 0] } },
-            { name: "A", rules: { "Starters": [1, "<=", "<=", 6], "Starters + Extenders": [2, "<=", "<=", 6], "Hand Traps + Board Breakers": [2, "==", "==", 2], "Bricks": [1, "<=", "<=", 6] } },
-            { name: "B", rules: { "Starters": [1, "<=", "<=", 6], "Starters + Extenders": [2, "<=", "<=", 6], "Hand Traps + Board Breakers": [1, "==", "==", 1], "Bricks": [0, "<=", "<=", 6] } },
-            { name: "C", rules: { "Starters": [1, "==", "==", 1], "Starters + Extenders": [1, "==", "==", 1], "Hand Traps + Board Breakers": [0, "<=", "<=", 6], "Bricks": [0, "<=", "<=", 6] } }
+            { name: "S", rules: { "Starters": [1, "<=", "<=", 6], "Motor (S+E)": [2, "<=", "<=", 6], "Interrupcion": [2, "<=", "<=", 6], "Bricks": [0, "==", "==", 0] } },
+            { name: "A", rules: { "Starters": [1, "<=", "<=", 6], "Motor (S+E)": [2, "<=", "<=", 6], "Interrupcion": [2, "==", "==", 2], "Bricks": [1, "<=", "<=", 6] } },
+            { name: "B", rules: { "Starters": [1, "<=", "<=", 6], "Motor (S+E)": [2, "<=", "<=", 6], "Interrupcion": [1, "==", "==", 1], "Bricks": [0, "<=", "<=", 6] } },
+            { name: "C", rules: { "Starters": [1, "==", "==", 1], "Motor (S+E)": [1, "==", "==", 1], "Interrupcion": [0, "<=", "<=", 6], "Bricks": [0, "<=", "<=", 6] } }
         ];
         renderTierRules();
         saveAll();
@@ -482,7 +502,8 @@
         const btn = document.getElementById('configBtn');
         const panel = document.getElementById('tier-config-panel');
         if (!configConfirm.active) {
-            configConfirm.active = true; btn.classList.add('confirm-config');
+            configConfirm.active = true;
+            btn.classList.add('confirm-config');
             configConfirm.timeout = setTimeout(() => { configConfirm.active = false; btn.classList.remove('confirm-config'); }, 2500);
         } else {
             clearTimeout(configConfirm.timeout);
@@ -493,18 +514,14 @@
     }
 
     function addTierDefinition() {
-        customTierRules.push({ 
-            name: "NEW", 
-            rules: { "Starters": [0, "<=", "<=", 5], "Starters + Extenders": [0, "<=", "<=", 10], "Hand Traps + Board Breakers": [0, "<=", "<=", 10], "Bricks": [0, "<=", "<=", 5] } 
-        });
+        customTierRules.push({ name: "NEW", rules: { "Starters": [0, "<=", "<=", 5], "Motor (S+E)": [0, "<=", "<=", 10], "Interrupcion": [0, "<=", "<=", 10], "Bricks": [0, "<=", "<=", 5] } });
         renderTierRules();
     }
 
     function renderTierRules() {
         const container = document.getElementById('rules-container');
         container.innerHTML = "";
-        const visibleRuleKeys = ["Starters", "Starters + Extenders", "Hand Traps + Board Breakers", "Bricks"];
-
+        const visibleRuleKeys = ["Starters", "Motor (S+E)", "Interrupcion", "Bricks"];
         customTierRules.forEach((tr, idx) => {
             const div = document.createElement('div');
             div.className = "rule-card";
@@ -515,22 +532,13 @@
                 </div>
                 <button class="btn-delete-tier" id="del-tier-${idx}" style="background:var(--ios-blue); color:white; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:bold;" onclick="handleTierDelete(${idx})">BORRAR</button>
             </div>`;
-            
             visibleRuleKeys.forEach(key => {
                 const r = tr.rules[key] || [0, "<=", "<=", 5];
                 html += `<div class="rule-row">
                     <input type="number" value="${r[0]}" oninput="updateTierValue(${idx},'${key}',0,this.value)">
-                    <select onchange="updateTierValue(${idx},'${key}',1,this.value)">
-                        <option value="<" ${r[1]=='<'?'selected':''}> < </option>
-                        <option value="<=" ${r[1]=='<='?'selected':''}> <= </option>
-                        <option value="==" ${r[1]=='=='?'selected':''}> == </option>
-                    </select>
+                    <select onchange="updateTierValue(${idx},'${key}',1,this.value)"><option value="<" ${r[1]=='<'?'selected':''}> < </option><option value="<=" ${r[1]=='<='?'selected':''}> <= </option><option value="==" ${r[1]=='=='?'selected':''}> == </option></select>
                     <span>${key.toUpperCase()}</span>
-                    <select onchange="updateTierValue(${idx},'${key}',2,this.value)">
-                        <option value="<" ${r[2]=='<'?'selected':''}> < </option>
-                        <option value="<=" ${r[2]=='<='?'selected':''}> <= </option>
-                        <option value="==" ${r[2]=='=='?'selected':''}> == </option>
-                    </select>
+                    <select onchange="updateTierValue(${idx},'${key}',2,this.value)"><option value="<" ${r[2]=='<'?'selected':''}> < </option><option value="<=" ${r[2]=='<='?'selected':''}> <= </option><option value="==" ${r[2]=='=='?'selected':''}> == </option></select>
                     <input type="number" value="${r[3]}" oninput="updateTierValue(${idx},'${key}',3,this.value)">
                 </div>`;
             });
@@ -540,24 +548,19 @@
     }
 
     function updateTierRuleName(idx, val) { customTierRules[idx].name = val.toUpperCase(); saveAll(); }
-    function updateTierValue(idx, key, pos, val) { 
+    function updateTierValue(idx, key, pos, val) {
         if(!customTierRules[idx].rules[key]) customTierRules[idx].rules[key] = [0, "<=", "<=", 5];
-        customTierRules[idx].rules[key][pos] = isNaN(parseInt(val)) ? val : parseInt(val); 
-        saveAll(); 
+        customTierRules[idx].rules[key][pos] = isNaN(parseInt(val)) ? val : parseInt(val);
+        saveAll();
     }
 
     function handleTierDelete(idx) {
         const btn = document.getElementById(`del-tier-${idx}`);
         if (delTierConfirm.idx !== idx) {
-            delTierConfirm.idx = idx;
-            btn.innerText = "CONFIRMAR"; btn.style.background = "var(--ios-red)";
+            delTierConfirm.idx = idx; btn.innerText = "CONFIRMAR"; btn.style.background = "var(--ios-red)";
             delTierConfirm.timeout = setTimeout(() => { delTierConfirm.idx = null; btn.innerText = "BORRAR"; btn.style.background = "var(--ios-blue)"; }, 2000);
         } else {
-            clearTimeout(delTierConfirm.timeout);
-            customTierRules.splice(idx, 1);
-            renderTierRules();
-            saveAll();
-            delTierConfirm.idx = null;
+            clearTimeout(delTierConfirm.timeout); customTierRules.splice(idx, 1); renderTierRules(); saveAll(); delTierConfirm.idx = null;
         }
     }
 
@@ -573,475 +576,460 @@
     }
 
     function saveAll() {
-        const dataToSave = { 
-            deckName: document.getElementById('deck-name').value, 
-            deckFormat: document.getElementById('deck-format').value,
-            tierRules: customTierRules
-        };
+       const dataToSave = { 
+        deckName: document.getElementById('deck-name').value, 
+        deckFormat: document.getElementById('deck-format').value, 
+        tierRules: customTierRules,
+        probThreshold: document.getElementById('prob-threshold').value || 60 // Guardamos el umbral
+    };
         categories.forEach(cat => {
             const catId = `cat-${cat.replace(/\s/g, '')}`;
-            let catSum = 0;
-            dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => {
-                const qtyVal = parseInt(row.querySelector('.i-qty').value || 0);
-                catSum += qtyVal;
-                return { name: row.querySelector('.i-name').value, qty: qtyVal, hopt: row.querySelector('.hopt-checkbox')?.checked || false };
-            }).filter(card => card.name !== '' || card.qty !== 0);
-            document.getElementById(`total-val-${catId}`).innerText = catSum;
+            dataToSave[cat] = Array.from(document.querySelectorAll(`#${catId} .input-row`)).map(row => ({
+                name: row.querySelector('.i-name').value,
+                qty: parseInt(row.querySelector('.i-qty').value) || 0,
+                hopt: row.querySelector('.hopt-checkbox')?.checked ?? false
+            })).filter(c => c.qty > 0);
+            const sum = dataToSave[cat].reduce((a, b) => a + b.qty, 0);
+            document.getElementById(`total-val-${catId}`).innerText = sum;
         });
         localStorage.setItem('ygo_deck_save', JSON.stringify(dataToSave));
         updateTotal();
     }
 
     function updateTotal() {
-        let t = 0;
-        categories.forEach(cat => {
-            const catId = `cat-${cat.replace(/\s/g, '')}`;
-            let catSum = 0;
-            document.querySelectorAll(`#${catId} .i-qty`).forEach(i => catSum += parseInt(i.value || 0));
-            t += catSum;
-        });
-        const badge = document.getElementById('deck-total');
-        badge.innerText = t;
-        badge.style.color = (t < 40 || t > 60) ? 'var(--ios-red)' : 'var(--ios-green)';
+        let total = 0;
+        document.querySelectorAll('.i-qty').forEach(input => total += parseInt(input.value) || 0);
+        document.getElementById('deck-total').innerText = total;
     }
 
-async function handleAnalyzeClick() {
-    const btn = document.getElementById('mainBtn');
-    const t = parseInt(document.getElementById('deck-total').innerText);
-    
-    if (t < 40 || t > 60) { 
-        alert(`Ajusta el deck entre 40 y 60 cartas.`); 
-        return; 
-    }
-    
-    if (!analyzeConfirm.active) {
-        analyzeConfirm.active = true; 
-        btn.innerText = "CONFIRMAR ANÁLISIS"; 
-        btn.classList.add('confirm-analyze');
-        analyzeConfirm.timeout = setTimeout(() => { 
-            analyzeConfirm.active = false; 
-            btn.innerText = "ANALIZAR DECK"; 
-            btn.classList.remove('confirm-analyze'); 
-        }, 2000);
-    } else {
-        clearTimeout(analyzeConfirm.timeout);
-        
-        // 1. Ejecuta la simulación de manos actual
-        executeAnalysis(); 
-        
-        // 2. Calcula la matriz de probabilidad
-        await calculateProbabilityTable(); 
-        
-        // 3. NUEVO: Ejecutar Power-Up automáticamente
-        await executePowerUp(); 
-
-        // 4. Dibuja la tabla
-        if (typeof renderProbabilityTable === "function") {
-            renderProbabilityTable();
-        }
-
-        analyzeConfirm.active = false;
-        btn.innerText = "ANALIZAR DECK"; 
-        btn.classList.remove('confirm-analyze');
-        document.getElementById('pdfBtn').style.display = 'block';
-    }
-}
-    function handleDownloadClick() {
-        const btn = document.getElementById('pdfBtn');
-        if (!pdfConfirm.active) {
-            pdfConfirm.active = true; btn.innerText = "CONFIRMAR DESCARGA"; btn.classList.add('confirm-pdf');
-            pdfConfirm.timeout = setTimeout(() => { pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }, 2000);
-        } else { clearTimeout(pdfConfirm.timeout); generatePDF(); pdfConfirm.active = false; btn.innerText = "DESCARGAR RESULTADOS"; btn.classList.remove('confirm-pdf'); }
-    }
-
-    function handleDeleteClick() {
-        const btn = document.getElementById('deleteBtn');
-        if (!deleteConfirm.active) {
-            deleteConfirm.active = true;
-            btn.innerText = "CONFIRMAR VACIAR";
-            btn.classList.add('confirm-clear');
-            deleteConfirm.timeout = setTimeout(() => {
-                deleteConfirm.active = false;
-                btn.innerText = "CLEAR DECK";
-                btn.classList.remove('confirm-clear');
-            }, 3000);
+    function handleAnalyzeClick() {
+        const btn = document.getElementById('mainBtn');
+        if (!analyzeConfirm.active) {
+            analyzeConfirm.active = true; btn.innerText = "CONFIRMAR ANÁLISIS"; btn.classList.add('confirm-analyze');
+            analyzeConfirm.timeout = setTimeout(() => { analyzeConfirm.active = false; btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze'); }, 2500);
         } else {
-            clearTimeout(deleteConfirm.timeout);
-            const currentSave = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-            const preservedTierRules = currentSave.tierRules;
-            localStorage.setItem('ygo_deck_save', JSON.stringify({ deckName: "", deckFormat: "", tierRules: preservedTierRules }));
-            location.reload();
+            clearTimeout(analyzeConfirm.timeout); executeAnalysis(); calculateProbabilityTable();
+            analyzeConfirm.active = false; btn.innerText = "ANALIZAR DECK"; btn.classList.remove('confirm-analyze');
         }
     }
 
-    function fisherYates(array) {
-        for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; }
-        return array;
+    function calculateHypergeometricProb(N, K, n, k) {
+        if (k > n || k > K) return 0;
+        function combinations(n, k) {
+            if (k < 0 || k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            if (k > n / 2) k = n - k;
+            let res = 1;
+            for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
+            return res;
+        }
+        let prob = 0;
+        for (let i = k; i <= Math.min(n, K); i++) prob += (combinations(K, i) * combinations(N - K, n - i)) / combinations(N, n);
+        return prob;
     }
+
+    function getHandValues(N, n, S, E, Inter, B, R) {
+    const counts = { "Starters": S, "Extenders": E, "Interrupcion": Inter, "Bricks": B, "Random": R };
+    let hand = {};
+    let remaining = n;
+    
+    // Calculamos la proporción redondeada para cada categoría
+    Object.keys(counts).forEach(key => {
+        let val = Math.round((counts[key] / N) * n);
+        if (val > remaining) val = remaining;
+        hand[key] = val; 
+        remaining -= val;
+    });
+    
+    // Si sobran espacios por redondeo, se asignan a Random
+    if (remaining > 0) hand["Random"] = (hand["Random"] || 0) + remaining;
+    
+    return hand;
+}
 
     function executeAnalysis() {
-        const fullDeck = [];
-        categories.forEach(cat => {
-            const catId = `cat-${cat.replace(/\s/g, '')}`;
-            document.querySelectorAll(`#${catId} .input-row`).forEach(row => {
-                const qty = parseInt(row.querySelector('.i-qty').value) || 0;
-                for(let i=0; i<qty; i++) fullDeck.push({ name: row.querySelector('.i-name').value || "Card", cat, h: row.querySelector('.hopt-checkbox')?.checked || false });
-            });
-        });
-        document.getElementById('results').style.display = 'block';
-        const t1Moda = runSimulationModa(fullDeck, 5, 'bar-t1', 'cons-t1');
-        localStorage.setItem('last_simulation_moda', JSON.stringify(t1Moda));
-        runSimulationModa(fullDeck, 6, 'bar-t2', 'cons-t2');
-        calculateCustomTier(t1Moda);
-        window.scrollTo({ top: document.getElementById('results').offsetTop - 20, behavior: 'smooth' });
+    const data = JSON.parse(localStorage.getItem('ygo_deck_save'));
+    if (!data) return;
+
+    const totalCards = parseInt(document.getElementById('deck-total').innerText);
+    if (totalCards < 40) {
+        alert("El mazo debe tener al menos 40 cartas.");
+        return;
     }
 
-    function calculateCustomTier(moda) {
-        let finalTier = "ERROR";
-        const sumHTBB = (moda["Hand Traps"] || 0) + (moda["Board Breakers"] || 0);
-        const sumStarExt = (moda["Starters"] || 0) + (moda["Extenders"] || 0);
+    document.getElementById('results').style.display = 'block';
 
-        for (let tr of customTierRules) {
-            let match = true;
-            if(tr.rules["Starters"] && !validateCondition(moda["Starters"] || 0, ...tr.rules["Starters"])) match = false;
-            if(match && tr.rules["Starters + Extenders"] && !validateCondition(sumStarExt, ...tr.rules["Starters + Extenders"])) match = false;
-            if(match && tr.rules["Hand Traps + Board Breakers"] && !validateCondition(sumHTBB, ...tr.rules["Hand Traps + Board Breakers"])) match = false;
-            if(match && tr.rules["Bricks"] && !validateCondition(moda["Bricks"] || 0, ...tr.rules["Bricks"])) match = false;
-            if (match) { finalTier = tr.name; break; }
-        }
+    const totalS = data.Starters.reduce((a, b) => a + b.qty, 0);
+    const totalE = data.Extenders.reduce((a, b) => a + b.qty, 0);
+    const totalInter = data.Interrupcion.reduce((a, b) => a + b.qty, 0);
+    const totalB = data.Bricks.reduce((a, b) => a + b.qty, 0);
+    const totalR = totalCards - (totalS + totalE + totalInter + totalB);
 
-        const tierDiv = document.getElementById('tier-text');
-        tierDiv.className = 'tier-value';
-        tierDiv.innerText = finalTier === "ERROR" ? "TIER ERROR" : `TIER ${finalTier}`;
-        tierDiv.classList.add(`tier-${finalTier}`);
-    }
+    // Proceso para Turno 1 (5 cartas)
+    const modaT1 = runMonteCarloModa(data, 5, totalCards);
+    renderBar('bar-t1', 'cons-t1', totalCards, 5, totalS, totalE, totalInter, totalB, totalR, modaT1);
 
-    function validateCondition(val, min, op1, op2, max) {
-        let leftOk = false;
-        if (op1 === "<") leftOk = (min < val);
-        else if (op1 === "<=") leftOk = (min <= val);
-        else if (op1 === "==") leftOk = (min == val);
-        let rightOk = false;
-        if (op2 === "<") rightOk = (val < max);
-        else if (op2 === "<=") rightOk = (val <= max);
-        else if (op2 === "==") rightOk = (val == max);
-        return leftOk && rightOk;
-    }
+    // Proceso para Turno 2 (6 cartas)
+    const modaT2 = runMonteCarloModa(data, 6, totalCards);
+    renderBar('bar-t2', 'cons-t2', totalCards, 6, totalS, totalE, totalInter, totalB, totalR, modaT2);
 
-    function runSimulationModa(deck, handSize, barId, consId) {
-        const iterations = 10000;
-        const stats = { Starters: [], Extenders: [], "Hand Traps": [], "Board Breakers": [], Bricks: [] };
-        const successCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-        for(let i=0; i<iterations; i++) {
-            const hand = fisherYates([...deck]).slice(0, handSize);
-            const handCount = { Starters: 0, Extenders: 0, "Hand Traps": 0, "Board Breakers": 0, Bricks: 0 };
-            const seen = { Starters: new Set(), Extenders: new Set(), "Hand Traps": new Set(), "Board Breakers": new Set() };
-            hand.forEach(c => {
-                if (c.cat === "Bricks") handCount[c.cat]++;
-                else if (c.h) { if (!seen[c.cat].has(c.name)) { handCount[c.cat]++; seen[c.cat].add(c.name); } }
-                else handCount[c.cat]++;
-            });
-            for(const k in handCount) { stats[k].push(handCount[k]); if(handCount[k]>=1) successCount[k]++; }
-        }
-        const modaResult = {};
-        categories.forEach(cat => {
-            const counts = {}; stats[cat].forEach(v => counts[v] = (counts[v] || 0) + 1);
-            let maxF = 0, mV = 0;
-            for(const v in counts) if(counts[v] > maxF) { maxF = counts[v]; mV = parseInt(v); }
-    
-            const umbral = (cat === "Bricks") ? 0.45 : 0.6;
-    
-            if (mV === 0 && (successCount[cat] / iterations) >= umbral) {
-                mV = 1;
-            }
-    
-            modaResult[cat] = mV;
-        });
-        const bar = document.getElementById(barId); bar.innerHTML = '';
-        let currentTotal = 0;
-        categories.forEach(cat => {
-            let val = Math.min(modaResult[cat], handSize - currentTotal);
-            if (val > 0) {
-                const seg = document.createElement('div'); 
-                seg.className = `bar-segment segment-${cat.replace(/\s/g, '')}`;
-                const widthPercent = (val / handSize) * 100;
-                seg.style.width = `${widthPercent}%`;
-                const label = cat.toUpperCase();
-                seg.innerHTML = widthPercent > 12 ? `<span>${val} ${label}</span>` : `<span>${val}</span>`;
-                seg.style.fontSize = widthPercent < 25 ? "7.5px" : "10px";
-                bar.appendChild(seg); 
-                currentTotal += val;
-            }
-        });
-        if (currentTotal < handSize) {
-            const rest = handSize - currentTotal;
-            const seg = document.createElement('div'); 
-            seg.className = 'bar-segment segment-Random';
-            const widthPercent = (rest / handSize) * 100;
-            seg.style.width = `${widthPercent}%`; 
-            seg.innerHTML = widthPercent > 12 ? `<span>${rest} RANDOM</span>` : `<span>${rest}</span>`;
-            if (widthPercent < 25) seg.style.fontSize = "7.5px";
+    evaluateTier(modaT1);
+    document.getElementById('pdfBtn').style.display = 'block';
+    executePowerUp();
+}
+
+function renderBar(barId, listId, N, n, S, E, Inter, B, R, simulatedHand) {
+    const bar = document.getElementById(barId);
+    const list = document.getElementById(listId);
+    if (!bar || !list) return;
+
+    bar.innerHTML = ""; 
+    list.innerHTML = "";
+
+    // Dibujar los segmentos de la MODA obtenida por Monte Carlo
+    const categoriesOrder = ["Starters", "Extenders", "Interrupcion", "Bricks", "Random"];
+    categoriesOrder.forEach(key => {
+        const val = simulatedHand[key] || 0;
+        if (val > 0) {
+            const seg = document.createElement('div');
+            seg.className = `bar-segment segment-${key}`;
+            seg.style.flex = val;
+            seg.innerText = val;
             bar.appendChild(seg);
         }
-        const consList = document.getElementById(consId); consList.innerHTML = '';
-        categories.forEach(cat => {
-            const p = ((successCount[cat]/iterations)*100).toFixed(1);
-            consList.innerHTML += `<div class="cons-bar-wrapper"><div class="cons-bar-text text-light">${cat}: ${p}%</div><div class="cons-bar-fill fill-${cat.replace(/\s/g, '')}" style="width:${p}%"></div></div>`;
-        });
-        return modaResult;
+    });
+
+    // Barras de Probabilidad Acumulada (Cálculo puro >= 1)
+    const countsReal = { "Starters": S, "Extenders": E, "Interrupcion": Inter, "Bricks": B };
+    const probCategories = ["Starters", "Extenders", "Interrupcion", "Bricks"];
+    
+    probCategories.forEach(key => {
+        const p = calculateHypergeometricProb(N, countsReal[key], n, 1) * 100;
+        const displayName = key === "Interrupcion" ? "INTERRUPCIÓN" : key.toUpperCase();
+        
+        list.innerHTML += `
+            <div class="cons-bar-wrapper">
+                <div class="cons-bar-fill fill-${key}" style="width:${p}%"></div>
+                <div class="cons-bar-text ${p > 50 ? 'text-light' : ''}">
+                    ${displayName} ≥ 1: ${p.toFixed(1)}%
+                </div>
+            </div>`;
+    });
+}
+function evaluateTier(hand) {
+    const text = document.getElementById('tier-text');
+    const card = document.getElementById('tier-result');
+    
+    // Extraemos valores calculados de la mano
+    const S = hand["Starters"] || 0;
+    const E = hand["Extenders"] || 0;
+    const Inter = hand["Interrupcion"] || 0;
+    const B = hand["Bricks"] || 0;
+    const motor = S + E; // Criterio Starters + Extenders
+
+    function checkRule(valorActual, regla) {
+        if (!regla) return true;
+        const [min, opMin, opMax, max] = regla;
+        const cumpleMin = (opMin === '==' ? valorActual === min : (opMin === '<=' ? valorActual >= min : valorActual > min));
+        const cumpleMax = (opMax === '==' ? valorActual === max : (opMax === '<=' ? valorActual <= max : valorActual < max));
+        return cumpleMin && cumpleMax;
     }
 
-    async function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        const pdfW = doc.internal.pageSize.getWidth();
-        const pdfH = doc.internal.pageSize.getHeight();
-        const margin = 15;
-        const contentW = pdfW - (margin * 2);
-        const deckName = (document.getElementById('deck-name').value || "DECK").toUpperCase();
-        const tierText = document.getElementById('tier-text').innerText;
-        doc.setFontSize(16); doc.setTextColor(0, 122, 255);
-        doc.text(deckName, margin, 20);
-        doc.setFontSize(10); doc.setTextColor(28, 28, 30);
-        doc.text(`Formato: ${document.getElementById('deck-format').value}`, margin, 28);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Clasificación: ${tierText}`, margin, 34);
-        doc.setFont(undefined, 'normal');
-        doc.line(margin, 38, pdfW - margin, 38);
-        let y = 48;
-        let grandTotal = 0;
-        const savedData = JSON.parse(localStorage.getItem('ygo_deck_save')) || {};
-        categories.forEach(cat => {
-            const cards = savedData[cat] || [];
-            if (cards.length > 0) {
-                doc.setFont(undefined, 'bold'); doc.setTextColor(0, 122, 255);
-                doc.text(cat.toUpperCase(), margin, y); y += 6;
-                doc.setFont(undefined, 'normal'); doc.setTextColor(28, 28, 30);
-                let catCount = 0;
-                cards.forEach(card => {
-                    doc.text(`- ${card.name} x${card.qty} ${card.hopt ? '[HOPT]' : ''}`, margin + 5, y);
-                    catCount += card.qty;
-                    y += 5; if(y > 275) { doc.addPage(); y = 20; }
-                });
-                doc.setFont(undefined, 'italic'); doc.setTextColor(142, 142, 147); 
-                doc.text(`Total ${cat}: ${catCount}`, margin + 5, y);
-                grandTotal += catCount; y += 10; if(y > 275) { doc.addPage(); y = 20; }
+    let finalTier = "ERROR";
+    
+    // Analizamos en el orden del array (S -> A -> B -> C)
+    for (let tr of customTierRules) {
+        // Paso 1: Starters
+        if (!checkRule(S, tr.rules["Starters"])) continue;
+        
+        // Paso 2: Starters + Extenders (Motor)
+        if (!checkRule(motor, tr.rules["Motor (S+E)"])) continue;
+        
+        // Paso 3: Interrupciones
+        if (!checkRule(Inter, tr.rules["Interrupcion"])) continue;
+        
+        // Paso 4: Bricks
+        if (!checkRule(B, tr.rules["Bricks"])) continue;
+
+        // Si llegó aquí, cumple todos los intervalos de este Tier
+        finalTier = tr.name;
+        break; 
+    }
+
+    text.innerText = `TIER ${finalTier}`;
+    card.className = 'tier-card'; 
+    card.classList.add(`tier-${finalTier}`);
+    
+    localStorage.setItem('last_simulation_moda', JSON.stringify({ "Starters": S, "Extenders": E, "Interrupcion": Inter, "Bricks": B }));
+}
+    function calculateProbabilityTable() {
+    // 1. Obtener el valor actual del input (con validación básica)
+    const thresholdInput = document.getElementById('prob-threshold').value;
+    let umbral = (parseFloat(thresholdInput) || 60) / 100;
+    
+    // Limitar el umbral entre 1% y 99% para evitar errores matemáticos
+    if (umbral > 0.99) umbral = 0.99;
+    if (umbral < 0.01) umbral = 0.01;
+
+    const matrix = [];
+    const nHand = 5;
+
+    // 2. Obtener la configuración de TIER S
+    const tierS = customTierRules.find(r => r.name === "S");
+    if (!tierS) return; // Si no hay tier S, no podemos calcular
+
+    const minS_Intervalo = tierS.rules["Starters"][0];
+    const minSE_Intervalo = tierS.rules["Motor (S+E)"][0];
+    const minInter_Intervalo = tierS.rules["Interrupcion"][0];
+
+    // 3. Generar la matriz para cada tamaño de deck
+    for (let N = 40; N <= 60; N++) {
+        // Cálculo de Starters
+        let startersNecesarios = 0;
+        for (let K = 0; K <= N; K++) {
+            if (calculateHypergeometricProb(N, K, nHand, minS_Intervalo) >= umbral) {
+                startersNecesarios = K;
+                break;
             }
-        });
-        doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 0, 0);
-        doc.text(`TOTAL DECK: ${grandTotal} CARTAS`, margin, y);
-        doc.addPage();
-        const captureEl = document.getElementById('capture-container');
-        const canvas = await html2canvas(captureEl, { scale: 3, useCORS: true, backgroundColor: "#F2F2F7" });
-        const imgData = canvas.toDataURL('image/png');
-        const imgRatio = canvas.height / canvas.width;
-        let finalImgW = contentW;
-        let finalImgH = finalImgW * imgRatio;
-        if (finalImgH > (pdfH - margin * 2)) {
-            finalImgH = pdfH - margin * 2;
-            finalImgW = finalImgH / imgRatio;
         }
-        const posX = (pdfW - finalImgW) / 2;
-        const posY = (pdfH - finalImgH) / 2;
-        doc.addImage(imgData, 'PNG', posX, posY, finalImgW, finalImgH);
-        doc.save(`${deckName}_Reporte.pdf`);
-    } 
-    
-    let powerUpConfirm = { active: false, timeout: null };
-    
-    function handlePowerUpClick() {
-        const btn = document.getElementById('powerupBtn');
-        if (!powerUpConfirm.active) {
-            powerUpConfirm.active = true;
-            btn.innerText = "¿CONFIRMAR?";
-            btn.classList.add('confirm');
-            powerUpConfirm.timeout = setTimeout(() => {
-                powerUpConfirm.active = false;
-                btn.innerText = "DECK POWER-UP!";
-                btn.classList.remove('confirm');
-            }, 3000);
+
+        // Cálculo de Extenders (con tu lógica de resta)
+        let diffIntervaloSE = Math.max(0, minSE_Intervalo - minS_Intervalo);
+        let extendersNecesarios = 0;
+        
+        if (diffIntervaloSE === 0) {
+            for (let K = 0; K <= N; K++) {
+                let probExacta0 = combinations(N - K, 5) / combinations(N, 5);
+                if (probExacta0 >= umbral) { extendersNecesarios = K; } else { break; }
+            }
         } else {
-            clearTimeout(powerUpConfirm.timeout);
-            btn.innerText = "EJECUTANDO...";
-            btn.classList.remove('confirm');
-            btn.classList.add('executing');
-            executePowerUp();
-            setTimeout(() => {
-                btn.innerText = "DECK POWER-UP!";
-                btn.classList.remove('executing');
-                powerUpConfirm.active = false;
-            }, 2000);
+            for (let K = 0; K <= N; K++) {
+                if (calculateHypergeometricProb(N, K, nHand, diffIntervaloSE) >= umbral) {
+                    extendersNecesarios = K;
+                    break;
+                }
+            }
         }
+
+        // Cálculo de Interrupciones
+        let interNecesarias = 0;
+        for (let K = 0; K <= N; K++) {
+            if (calculateHypergeometricProb(N, K, nHand, minInter_Intervalo) >= umbral) {
+                interNecesarias = K;
+                break;
+            }
+        }
+
+        // Cálculo de OTHERS
+        let others = N - startersNecesarios - extendersNecesarios - interNecesarias;
+
+        matrix.push({
+            totalDeck: N,
+            starters: startersNecesarios,
+            extenders: extendersNecesarios,
+            inter: interNecesarias,
+            others: others
+        });
     }
 
-// INICIO FUNCIONES PARA TABLAS COMPARATIVAS DECK POWER UP! 
-// Función para calcular combinaciones (nCr)
-function combinations(n, r) {
-    if (r < 0 || r > n) return 0;
-    if (r === 0 || r === n) return 1;
-    if (r > n / 2) r = n - r;
+    // 4. Guardar y Renderizar
+    localStorage.setItem('probability_matrix', JSON.stringify(matrix));
+    renderProbabilityTable();
+}
+
+// Función auxiliar necesaria para el cálculo de combinaciones (fuera de la principal)
+function combinations(n, k) {
+    if (k < 0 || k > n) return 0;
+    if (k === 0 || k === n) return 1;
+    if (k > n / 2) k = n - k;
     let res = 1;
-    for (let i = 1; i <= r; i++) {
-        res = res * (n - i + 1) / i;
-    }
+    for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
     return res;
 }
 
-function calculateHypergeometricProb(N, K, n, x_min) {
-    let prob = 0;
-    for (let i = x_min; i <= n; i++) {
-        let p_x = (combinations(K, i) * combinations(N - K, n - i)) / combinations(N, n);
-        prob += p_x;
-    }
-    return prob;
+function renderProbabilityTable() {
+    const matrix = JSON.parse(localStorage.getItem('probability_matrix'));
+    const tbody = document.getElementById('prob-table-body');
+    const tableHead = document.querySelector('#prob-table thead tr');
+    if (!matrix || !tbody) return;
+
+    document.getElementById('prob-table-container').style.display = 'block';
+    
+    // Actualizar encabezados
+    tableHead.innerHTML = `
+        <th style="padding: 10px; border-radius: 10px 0 0 10px;">DECK</th>
+        <th style="padding: 10px;">STARTERS</th>
+        <th style="padding: 10px;">EXTENDERS</th>
+        <th style="padding: 10px;">INTERRUPCION</th>
+        <th style="padding: 10px; border-radius: 0 10px 10px 0;">OTHERS</th>
+    `;
+
+    tbody.innerHTML = '';
+    matrix.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = "0.5px solid var(--ios-gray)";
+        tr.innerHTML = `
+            <td style="padding:10px; font-weight:bold;">${row.totalDeck}</td>
+            <td>${row.starters}</td>
+            <td>${row.extenders}</td>
+            <td>${row.inter}</td>
+            <td>${row.others}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
-
-// Probabilidad Acumulada: P(X >= x_min)
-function probabilityAtLeast(N, K, n, x_min) {
-    let prob = 0;
-    for (let i = x_min; i <= n; i++) {
-        let p_x = (combinations(K, i) * combinations(N - K, n - i)) / combinations(N, n);
-        prob += p_x;
-    }
-    return prob;
-}
-
-// Encuentra el mínimo de copias 'K' en el mazo para cumplir el umbral del 60%
-function solveForK(deckSize, requiredInHand, threshold = 0.60) {
-    if (requiredInHand <= 0) return 0;
-    for (let K = 1; K <= deckSize; K++) {
-        if (probabilityAtLeast(deckSize, K, 5, requiredInHand) >= threshold) {
-            return K;
-        }
-    }
-    return deckSize;
-}
-
-// Generador de la Matriz de Probabilidad (40 a 60 cartas)
-async function calculateProbabilityTable() {
-    const tierS = customTierRules.find(r => r.name === "S");
-    if (!tierS) return null;
-
-    const rules = tierS.rules;
-    const minS = rules["Starters"]?.[0] || 1;
-    const minSE = rules["Starters + Extenders"]?.[0] || 2;
-    const minHTBB = rules["Hand Traps + Board Breakers"]?.[0] || 2;
-
-    const matrix = [];
-    for (let N = 40; N <= 60; N++) {
-        matrix.push({
-            totalDeck: N,
-            minStarters: solveForK(N, minS),
-            minStartersExtenders: solveForK(N, minSE),
-            minHTBB: solveForK(N, minHTBB)
-        });
-    }
-    localStorage.setItem('probability_matrix', JSON.stringify(matrix));
-    return matrix;
-}
-
-// FIN FUNCIONES PARA TABLAS COMPARATIVAS DECK POWER UP!
-
-// FUNCIÓN PRINCIPAL DE OPTIMIZACIÓN (EXECUTE POWER UP)
 async function executePowerUp() {
     const display = document.getElementById('powerup-results');
     display.style.display = 'block';
     
     const matrix = JSON.parse(localStorage.getItem('probability_matrix'));
+    const savedData = JSON.parse(localStorage.getItem('ygo_deck_save'));
     const moda = JSON.parse(localStorage.getItem('last_simulation_moda'));
-    
-    if (!matrix || !moda) {
-        display.innerHTML = "⚠️ Error: Primero pulsa 'ANALIZAR DECK'.";
+
+    if (!matrix || !savedData || !moda) {
+        display.innerHTML = "⚠️ Falta información para calcular.";
         return;
     }
 
     const currentTotal = parseInt(document.getElementById('deck-total').innerText);
-    const cS = parseInt(document.getElementById('total-val-cat-Starters')?.innerText || 0);
-    const cE = parseInt(document.getElementById('total-val-cat-Extenders')?.innerText || 0);
-    const cHTBB = (parseInt(document.getElementById('total-val-cat-HandTraps')?.innerText || 0) + 
-                  parseInt(document.getElementById('total-val-cat-BoardBreakers')?.innerText || 0));
-    const cBricks = parseInt(document.getElementById('total-val-cat-Bricks')?.innerText || 0);
+    const totalS = savedData.Starters.reduce((a, b) => a + (b.qty || 0), 0);
+    const totalE = savedData.Extenders.reduce((a, b) => a + (b.qty || 0), 0);
+    const totalInter = savedData.Interrupcion.reduce((a, b) => a + (b.qty || 0), 0);
+    const totalB = savedData.Bricks.reduce((a, b) => a + (b.qty || 0), 0);
 
-    // 1. DILUCIÓN (Fase 1: Encontrar tamaño óptimo)
-    let targetSize = currentTotal;
-    if (moda["Bricks"] > 0 && cBricks > 0) {
-        for (let n = currentTotal; n <= 60; n++) {
-            if (calculateHypergeometricProb(n, cBricks, 5, 1) <= 0.45) {
-                targetSize = n;
-                break;
-            }
-            targetSize = n;
+    let plan = [];
+    let nSugerido = currentTotal;
+
+    // 1. Lógica de Dilución por Bricks (Búsqueda de nuevo tamaño)
+    // Buscamos un tamaño en la matriz donde 'others' >= totalB
+    let foundSize = false;
+    for (let n = currentTotal; n <= 60; n++) {
+        const row = matrix.find(r => r.totalDeck === n);
+        if (row && row.others >= totalB) {
+            nSugerido = n;
+            foundSize = true;
+            break;
         }
     }
 
-    // 2. CÁLCULO DE DIFERENCIALES
-    const row = matrix.find(r => r.totalDeck === targetSize) || matrix[targetSize - 40];
-    
-    let diffS = row.minStarters - cS;
-    let diffHTBB = row.minHTBB - cHTBB;
-    let diffSE = row.minStartersExtenders - (cS + cE);
-
-    // 3. BALANCEO ESTRICTO DE MASA
-    // El objetivo es: (Cambios finales) == (Tamaño Objetivo - Tamaño Actual)
-    let expansionRequerida = targetSize - currentTotal;
-    let balanceNeto = diffS + diffHTBB + diffSE;
-    let errorDeBalance = balanceNeto - expansionRequerida;
-
-    // Si hay discrepancia, la corregimos ajustando el motor (Extenders), 
-    // pero protegiendo que no intente retirar más de lo que existe.
-    if (errorDeBalance !== 0) {
-        diffSE -= errorDeBalance;
+    if (foundSize && nSugerido > currentTotal) {
+        plan.push(`📈 <b>Diluir Bricks:</b> Aumentar tamaño del deck a <b>${nSugerido}</b> cartas para soportar los ${totalB} Bricks.`);
+    } else if (!foundSize) {
+        plan.push("⚠️ <b>Atención:</b> No es posible diluir suficientes Bricks hasta 60 cartas. Considera reducir el número de Bricks.");
     }
 
-    // 4. GENERACIÓN DEL PLAN VISUAL (Filtrado de ceros)
-    let plan = [];
-    if (targetSize !== currentTotal) plan.push(`📈 <b>Ajustar mazo a ${targetSize} cartas.</b>`);
-    
-    let sumas = [];
-    if (diffS > 0) sumas.push(`${diffS} Starters`);
-    if (diffHTBB > 0) sumas.push(`${diffHTBB} HT/BB`);
-    if (diffSE > 0) sumas.push(`${diffSE} Extenders`);
-
-    let restas = [];
-    if (diffS < 0) restas.push(`${Math.abs(diffS)} Starters`);
-    if (diffHTBB < 0) restas.push(`${Math.abs(diffHTBB)} HT/BB`);
-    if (diffSE < 0) restas.push(`${Math.abs(diffSE)} Extenders`);
-
-    if (sumas.length > 0) plan.push(`➕ <b>Añadir:</b> ${sumas.join(', ')}.`);
-    if (restas.length > 0) plan.push(`➖ <b>Retirar:</b> ${restas.join(', ')}.`);
-    
-    // 5. SALIDA
-    if (plan.length === 0) {
-        display.innerHTML = `<div style="color:var(--ios-green); font-weight:bold; text-align:center;">✅ ¡Deck perfectamente equilibrado!</div>`;
-    } else {
-        display.innerHTML = `<b>Plan de Acción:</b><br>` + plan.join('<br>');
+    // 2. Comparativa de Ratios (basada en el tamaño nSugerido)
+    const targetRow = matrix.find(r => r.totalDeck === nSugerido);
+    if (!targetRow) {
+        display.innerHTML = "⚠️ Mazo fuera de rango para las sugerencias.";
+        return;
     }
+
+    const checkDiff = (actual, target, label) => {
+        const diff = target - actual;
+        if (diff > 0) return `➕ <b>Añadir:</b> ${diff} ${label}.`;
+        if (diff < 0) return `➖ <b>Retirar:</b> ${Math.abs(diff)} ${label}.`;
+        return null;
+    };
+
+    const s = checkDiff(totalS, targetRow.starters, "Starters");
+    const e = checkDiff(totalE, targetRow.extenders, "Extenders");
+    const i = checkDiff(totalInter, targetRow.inter, "Interrupciones");
+
+    if (s) plan.push(s);
+    if (e) plan.push(e);
+    if (i) plan.push(i);
+
+    // 3. Mostrar resultado
+    display.innerHTML = plan.length > 0 
+        ? `<div style="border-left:4px solid var(--ios-blue); padding-left:10px;"><b>Plan de Acción (para ${nSugerido} cartas):</b><br>${plan.join('<br>')}</div>`
+        : `<div style="color:var(--ios-green); font-weight:bold; text-align:center;">✅ ¡Deck óptimo!</div>`;
 }
-// FIN FUNCIÓN PRINCIPAL DE OPTIMIZACIÓN (EXECUTE POWER UP)
+    function handleDeleteClick() {
+        const btn = document.getElementById('deleteBtn');
+        if (!deleteConfirm.active) {
+            deleteConfirm.active = true; btn.innerText = "CONFIRMAR CLEAR"; btn.classList.add('confirm-clear');
+            deleteConfirm.timeout = setTimeout(() => { deleteConfirm.active = false; btn.innerText = "CLEAR DECK"; btn.classList.remove('confirm-clear'); }, 2500);
+        } else {
+            clearTimeout(deleteConfirm.timeout); localStorage.removeItem('ygo_deck_save'); location.reload();
+        }
+    }
 
-function renderProbabilityTable() {
-    const matrix = JSON.parse(localStorage.getItem('probability_matrix'));
-    const container = document.getElementById('prob-table-container');
-    const tbody = document.getElementById('prob-table-body');
+function actualizarTodo() {
+    // 1. Recalcular la Matriz de Probabilidad primero (basado en el nuevo umbral)
+    calculateProbabilityTable();
     
-    if (!matrix || !tbody) return;
+    // 2. Ejecutar el análisis del mazo (Simulación de manos)
+    // Asumiendo que tu función principal se llama executeAnalysis()
+    // Esta función es la que genera la "moda" y los datos que usa el Plan de Acción
+    executeAnalysis(); 
+    
+    // 3. Ejecutar el Plan de Acción para actualizar el mensaje según los nuevos resultados
+    executePowerUp();
+}
 
-    container.style.display = 'block';
-    tbody.innerHTML = ''; 
+function runMonteCarloModa(data, handSize, N) {
+    const iterations = 10000;
+    const frequencies = {};
     
-    matrix.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = "0.5px solid var(--ios-gray)";
-        tr.innerHTML = `
-            <td style="padding: 10px; font-weight:bold; color:var(--ios-blue);">${row.totalDeck}</td>
-            <td style="padding: 10px;">${row.minStarters}</td>
-            <td style="padding: 10px;">${row.minStartersExtenders}</td>
-            <td style="padding: 10px;">${row.minHTBB}</td>
-        `;
-        tbody.appendChild(tr);
+    // 1. Crear el mazo plano
+    let flatDeck = [];
+    ["Starters", "Extenders", "Interrupcion", "Bricks"].forEach(cat => {
+        if (data[cat]) {
+            data[cat].forEach(card => {
+                for (let i = 0; i < card.qty; i++) {
+                    flatDeck.push({ c: cat, n: card.name, h: card.hopt });
+                }
+            });
+        }
     });
+
+    while (flatDeck.length < N) {
+        flatDeck.push({ c: "Random", n: "Random", h: false });
+    }
+
+    // 2. Simulación
+    for (let i = 0; i < iterations; i++) {
+        // Shuffle Fisher-Yates
+        let deck = [...flatDeck];
+        for (let j = deck.length - 1; j > 0; j--) {
+            const k = Math.floor(Math.random() * (j + 1));
+            [deck[j], deck[k]] = [deck[k], deck[j]];
+        }
+
+        // Tomar la mano (5 o 6 cartas)
+        let hand = deck.slice(0, handSize);
+        let cleanedHandCounts = { "Starters": 0, "Extenders": 0, "Interrupcion": 0, "Bricks": 0, "Random": 0 };
+        let usedHOPTNames = new Set();
+
+        // Limpiar la mano de duplicados HOPT antes de contar
+        hand.forEach(card => {
+            if (card.c === "Random") {
+                cleanedHandCounts["Random"]++;
+            } else if (card.h) {
+                if (!usedHOPTNames.has(card.n)) {
+                    cleanedHandCounts[card.c]++;
+                    usedHOPTNames.add(card.n);
+                } else {
+                    // Copia repetida de HOPT se convierte en espacio muerto
+                    cleanedHandCounts["Random"]++;
+                }
+            } else {
+                cleanedHandCounts[card.c]++;
+            }
+        });
+
+        // Guardar esta mano específica en el registro de frecuencias
+        const handKey = JSON.stringify(cleanedHandCounts);
+        frequencies[handKey] = (frequencies[handKey] || 0) + 1;
+    }
+
+    // 3. Obtener la moda (la mano que más se repitió)
+    const modaKey = Object.keys(frequencies).reduce((a, b) => frequencies[a] > frequencies[b] ? a : b);
+    return JSON.parse(modaKey);
 }
 
 </script>
+
 </body>
 </html>
