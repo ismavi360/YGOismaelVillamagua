@@ -23,16 +23,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between; /* Distribuye el espacio entre hero y footer de manera exacta */
             min-height: 100vh;
+            height: 100vh;
             overflow: hidden;
+            box-sizing: border-box;
+            padding: 10px;
         }
 
-        /* Contenedor principal con efecto de entrada */
+        /* Contenedor principal sin desbordamiento */
         .hero {
             text-align: center;
             animation: fadeIn 1.2s ease-out;
-            padding: 20px;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1; /* Ocupa el espacio disponible de forma flexible */
         }
 
         @keyframes fadeIn {
@@ -40,11 +49,12 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Título Estilo YGO AI-Duelist */
+        /* Títulos escalables con el viewport */
         .main-title {
-            font-size: 3rem;
+            font-size: 6vw;
+            max-size: 3rem;
             font-weight: 300;
-            letter-spacing: 8px;
+            letter-spacing: 4px;
             margin: 0;
             text-transform: uppercase;
         }
@@ -56,28 +66,27 @@
         }
 
         .subtitle {
-            font-size: 0.8rem;
+            font-size: 2vw;
             color: #888;
-            letter-spacing: 4px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 50px;
-            margin-top: 10px;
+            margin-bottom: 3vh;
+            margin-top: 5px;
         }
 
-        /* Contenedor de Opciones */
+        /* Contenedor de Opciones Flexible */
         .menu-grid {
             display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
+            gap: 15px;
+            width: 100%;
             justify-content: center;
-            max-width: 800px;
+            align-items: center;
+            box-sizing: border-box;
         }
 
         .menu-card {
             background: var(--card);
             border: 1px solid #333;
-            padding: 40px;
-            width: 280px;
             border-radius: 15px;
             text-decoration: none;
             color: white;
@@ -85,13 +94,15 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             position: relative;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         .menu-card:hover {
             border-color: var(--primary);
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
@@ -103,27 +114,73 @@
         }
 
         .icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
         }
 
         .menu-card h2 {
-            margin: 10px 0;
-            font-size: 1.4rem;
+            margin: 5px 0;
+            font-size: 1.1rem;
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .menu-card p {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #aaa;
             text-align: center;
-            line-height: 1.5;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0 10px;
         }
 
-        /* Responsivo */
-        @media (max-width: 600px) {
-            .main-title { font-size: 2rem; letter-spacing: 4px; }
-            .menu-card { width: 100%; padding: 30px; }
+        /* =======================================================
+           MODO VERTICAL (Un botón debajo de otro)
+        ======================================================= */
+        @media (orientation: portrait) {
+            .main-title { font-size: 2.2rem; letter-spacing: 4px; }
+            .subtitle { font-size: 0.7rem; margin-bottom: 4vh; }
+            
+            .menu-grid {
+                flex-direction: column; /* Apila los elementos */
+            }
+            .menu-card {
+                width: 90vw;
+                max-width: 320px;
+                height: 18vh; /* Altura calculada para que entren los 3 sin scroll */
+                padding: 10px;
+            }
+        }
+
+        /* =======================================================
+           MODO HORIZONTAL (Un botón al lado del otro)
+        ======================================================= */
+        @media (orientation: landscape) {
+            .main-title { font-size: 2rem; letter-spacing: 6px; }
+            .subtitle { font-size: 0.65rem; margin-bottom: 2vh; }
+
+            .menu-grid {
+                flex-direction: row; /* Coloca uno al lado de otro */
+            }
+            .menu-card {
+                width: 28vw;
+                max-width: 280px;
+                height: 45vh; /* Altura optimizada para que entre en pantallas anchas y bajas */
+                padding: 15px 10px;
+            }
+            .icon { font-size: 1.6rem; margin-bottom: 3px; }
+            .menu-card h2 { font-size: 0.95rem; }
+            .menu-card p { font-size: 0.7rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } /* Previene desbordes de texto */
+        }
+
+        /* Ajustes específicos para pantallas de PC o monitores muy grandes */
+        @media (min-width: 1024px) {
+            .main-title { font-size: 3rem; }
+            .subtitle { font-size: 0.8rem; margin-bottom: 50px; }
+            .menu-card { width: 280px; height: 220px; padding: 25px; }
+            .icon { font-size: 2.5rem; margin-bottom: 15px; }
+            .menu-card h2 { font-size: 1.4rem; }
+            .menu-card p { font-size: 0.85rem; display: block; }
         }
     </style>
 </head>
@@ -148,11 +205,12 @@
 
             <a href="cardVSdeck.html" class="menu-card">
                 <div class="icon">⚡</div>
-                <h2>CARDS VS META DECKS</h2>
-                <p>Compara y analiza el rendimiento de tus cartas frente a los decks del meta.</p>
+                <h2>CARDS VS DECKS</h2>
+                <p>Analiza el rendimiento de tus cartas frente a los decks del meta.</p>
             </a>
         </div>
     </div>
+
 <script>
     // Bloquea el zoom de pinza (Pinch-to-zoom)
     document.addEventListener('touchstart', function (event) {
@@ -171,12 +229,11 @@
         lastTouchEnd = now;
     }, false);
 </script>
-    <footer style="margin-top: 50px; padding: 20px; text-align: center; border-top: 1px solid #333; width: 100%; max-width: 800px;">
-        <p style="font-size: 0.7rem; letter-spacing: 3px; color: #555; margin: 0; text-transform: uppercase;">
+
+    <footer style="margin-top: 15px; padding: 10px; text-align: center; border-top: 1px solid #333; width: 100%; max-width: 800px; box-sizing: border-box;">
+        <p style="font-size: 0.65rem; letter-spacing: 3px; color: #555; margin: 0; text-transform: uppercase;">
             Designed by <span style="color: var(--primary); font-weight: bold;">Ismael Villamagua</span>
         </p>
     </footer>    
 </body>
 </html>
-
-```
