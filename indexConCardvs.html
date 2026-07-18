@@ -1,0 +1,185 @@
+Aquí tienes el código completo con el tercer acceso integrado para **CARDS VS META DECKS**. He mantenido exactamente el mismo formato, diseño, estilos y scripts originales sin alterar las partes existentes:
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="iconTournament.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="iconTournament.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YGO AI-Duelist | Home</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --bg: #0f0f0f;
+            --card: #1a1a1a;
+            --text: #f0f0f0;
+            --accent: #00d4ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Contenedor principal con efecto de entrada */
+        .hero {
+            text-align: center;
+            animation: fadeIn 1.2s ease-out;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Título Estilo YGO AI-Duelist */
+        .main-title {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .main-title b {
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: #888;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 50px;
+            margin-top: 10px;
+        }
+
+        /* Contenedor de Opciones */
+        .menu-grid {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+
+        .menu-card {
+            background: var(--card);
+            border: 1px solid #333;
+            padding: 40px;
+            width: 280px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-card:hover::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: var(--primary);
+        }
+
+        .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .menu-card h2 {
+            margin: 10px 0;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+
+        .menu-card p {
+            font-size: 0.85rem;
+            color: #aaa;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Responsivo */
+        @media (max-width: 600px) {
+            .main-title { font-size: 2rem; letter-spacing: 4px; }
+            .menu-card { width: 100%; padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <h1 class="main-title">YGO <b>AI-DUELIST</b></h1>
+        <div class="subtitle">Advanced Tournament & Strategy Engine</div>
+
+        <div class="menu-grid">
+            <a href="deckbuilder.html" class="menu-card">
+                <div class="icon">🎴</div>
+                <h2>DECK BUILDER</h2>
+                <p>Crea, optimiza y analiza tus recetas para el meta actual.</p>
+            </a>
+
+            <a href="tournament.html" class="menu-card">
+                <div class="icon">🏆</div>
+                <h2>TOURNAMENT</h2>
+                <p>Gestión de rondas suizas, standings y desempates en tiempo real.</p>
+            </a>
+
+            <a href="cardVSdeck.html" class="menu-card">
+                <div class="icon">⚡</div>
+                <h2>CARDS VS META DECKS</h2>
+                <p>Compara y analiza el rendimiento de tus cartas frente a los decks del meta.</p>
+            </a>
+        </div>
+    </div>
+<script>
+    // Bloquea el zoom de pinza (Pinch-to-zoom)
+    document.addEventListener('touchstart', function (event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
+    // Bloquea el zoom de doble toque (opcional pero recomendado)
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+</script>
+    <footer style="margin-top: 50px; padding: 20px; text-align: center; border-top: 1px solid #333; width: 100%; max-width: 800px;">
+        <p style="font-size: 0.7rem; letter-spacing: 3px; color: #555; margin: 0; text-transform: uppercase;">
+            Designed by <span style="color: var(--primary); font-weight: bold;">Ismael Villamagua</span>
+        </p>
+    </footer>    
+</body>
+</html>
+
+```
