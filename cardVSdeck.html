@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Card Meta Deck Analysis</title>
     <!-- Google Fonts & Lucide Icons via CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,6 +40,7 @@
 
         body {
             background: var(--bg-gradient);
+            background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
             padding: 2rem;
@@ -501,7 +502,7 @@
             <button class="btn btn-secondary" id="btn-new-deck"><i class="lucide-trash-2"></i>VACIAR DATOS</button>
             <button class="btn btn-secondary" id="btn-open-deck"><i class="lucide-folder-open"></i>ABRIR DECK</button>
             <button class="btn btn-primary" id="btn-save-cloud"><i class="lucide-cloud-upload"></i>GUARDAR DATOS</button>
-            <button class="btn-icon" id="btn-config" title="Configuración"><i class="lucide-settings"></i></button>
+            <button class="btn-icon" id="btn-config" title="Configuración" style="font-size: 1.1rem; line-height: 1;">⚙️</button>
             <div class="status-badge">
                 <span class="status-dot local" id="sync-indicator"></span>
                 <span id="sync-text">Cambios locales</span>
@@ -547,7 +548,6 @@
         <div class="glass-panel modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Configuración de Perfiles</h3>
-                <button class="btn-icon" onclick="closeModal('modal-config')"><i class="lucide-x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-grid">
@@ -604,7 +604,6 @@
         <div class="glass-panel modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Abrir deck en base de datos</h3>
-                <button class="btn-icon" onclick="closeModal('modal-open')"><i class="lucide-x"></i></button>
             </div>
             <input type="text" class="search-box" id="search-deck-input" placeholder="Buscar deck por nombre...">
             <div class="modal-body">
