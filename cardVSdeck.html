@@ -787,7 +787,7 @@
 
                 const delBtn = document.createElement("button");
                 delBtn.className = "btn-delete-node";
-                delBtn.innerHTML = '<i class="lucide-x" style="width:14px; height:14px;"></i>';
+                delBtn.innerHTML = '<span style="display:inline-block; width:14px; height:14px; font-size:18px; line-height:12px;">×</span>';
                 delBtn.addEventListener("click", () => {
                     invokeConfirmation(`¿Está seguro de que desea eliminar la carta "${cardName}"?`, () => {
                         state.cards = state.cards.filter(c => c !== cardName);
@@ -822,7 +822,7 @@
 
                 const delEnemyBtn = document.createElement("button");
                 delEnemyBtn.className = "btn-delete-node";
-                delEnemyBtn.innerHTML = '<i class="lucide-x" style="width:14px; height:14px;"></i>';
+                delEnemyBtn.innerHTML = '<span style="display:inline-block; width:14px; height:14px; font-size:18px; line-height:12px;">×</span>'; 
                 delEnemyBtn.addEventListener("click", () => {
                     invokeConfirmation(`¿Está seguro de que desea eliminar el deck adversario "${enemyObj.name}"?`, () => {
                         state.enemyDecks = state.enemyDecks.filter(e => e.name !== enemyObj.name);
@@ -1149,7 +1149,6 @@
                 itemNode.appendChild(openIcon);
 
                 itemNode.addEventListener("click", () => {
-                    invokeConfirmation(`¿Desea abrir el análisis "${deckDoc.deckName}"?\nSe reemplazará la memoria de trabajo actual.`, () => {
                         state.id = deckDoc.id;
                         state.deckName = deckDoc.deckName;
                         state.cards = deckDoc.cards || [];
@@ -1165,7 +1164,7 @@
                         renderInterfaceAll();
                         closeModal('modal-open');
                     });
-                });
+              
 
                 container.appendChild(itemNode);
             });
