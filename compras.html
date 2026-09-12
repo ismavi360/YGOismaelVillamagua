@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Bloqueo estricto de zoom en móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestión de Compras</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Desactivar gestos de zoom y scroll horizontal global */
+        html, body {
+            touch-action: pan-y;
+            overflow-x: hidden;
+            width: 100%;
+            background-color: #0f172a; /* Slate 900 */
+        }
+
+        /* Indicadores visuales elegantes sobre fondo oscuro */
+        .estado-recibido {
+            background-color: rgba(14, 165, 233, 0.18) !important; /* Celeste oscuro */
+            border-left: 4px solid #38bdf8;
+        }
+        .estado-reembolsado {
+            background-color: rgba(234, 179, 8, 0.15) !important; /* Amarillo suave oscuro */
+            border-left: 4px solid #facc15;
+        }
+        .estado-ambos {
+            background-color: rgba(34, 197, 94, 0.18) !important; /* Verde oscuro */
+            border-left: 4px solid #4ade80;
+        }
+
+        /* Ocultar barra de scroll en contenedores reducidos manteniendo scroll táctil */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen pb-8 antialiased">
+
+    <!-- Encabezado -->
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30">
+        <div class="max-w-md md:max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold text-slate-100 tracking-wide">Gestión de Compras</h1>
+                <p class="text-xs text-slate-400">Control de pedidos y tracking</p>
+            </div>
+            <button id="btnManageStores" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition">
+                ⚙️ Tiendas
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-md md:max-w-5xl mx-auto px-4 mt-6 space-y-6">
+        
+        <!-- Formulario de Registro (Optimizado Móvil Vertical) -->
+        <section class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-xl">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">Registrar Nueva Compra</h2>
+            <form id="purchaseForm" class="space-y-3 md:space-y-0 md:grid md:grid-cols-4 md:gap-3 md:items-end">
+                
+                <!-- Nombre del Artículo -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Artículo *</label>
+                    <input type="text" id="itemName" required placeholder="Ej. Audífonos Bluetooth"
+                        class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
+                </div>
+
+                <!-- Tracking Number -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Tracking (Opcional)</label>
+                    <input type="text" id="trackingNumber" placeholder="Ej. TBA123456789"
+                        class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
+                </div>
+
+                <!-- Selección de Tienda (Obligatorio) -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Tienda *</label>
+                    <select id="storeSelect" required class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="AMAZON">AMAZON</option>
+                        <option value="EBAY">EBAY</option>
+                        <option value="__NEW__">+ Agregar Nueva Tienda...</option>
+                    </select>
+                </div>
+
+                <!-- Botón Agregar -->
+                <div>
+                    <button type="submit" id="btnRegister" 
+                        class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 px-4 rounded-xl shadow-lg shadow-sky-950/50 transition duration-200 text-sm">
+                        Agregar Producto
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Contenedor / Tabla Adaptada para Móvil -->
+        <section class="bg-slate-800 border border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-700/60 flex justify-between items-center flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Lista de Compras</h2>
+                    <span id="pendingBadge" class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        0 en camino
+                    </span>
+                </div>
+                <span class="text-xs text-slate-400">* Doble clic para editar</span>
+            </div>
+            
+            <div class="w-full overflow-x-auto no-scrollbar">
+                <table class="w-full text-left border-collapse min-w-full">
+                    <thead>
+                        <tr class="bg-slate-900/50 text-slate-300 text-xs font-semibold uppercase tracking-wider border-b border-slate-700/60">
+                            <th class="py-3.5 px-3">Artículo / Tienda</th>
+                            <th class="py-3.5 px-2">Tracking / Fecha</th>
+                            <th class="py-3.5 px-2 text-center">Días</th>
+                            <th class="py-3.5 px-2 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody" class="divide-y divide-slate-700/40 text-sm">
+                        <!-- Carga dinámica -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para Agregar Nueva Tienda -->
+    <div id="storeModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-xs w-full p-5 space-y-4">
+            <h3 class="text-base font-bold text-slate-100">Nueva Tienda</h3>
+            <input type="text" id="customStoreInput" placeholder="Nombre de la tienda"
+                class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none text-sm">
+            <div class="flex justify-end gap-2">
+                <button type="button" id="btnCancelStore" class="px-3 py-1.5 border border-slate-600 rounded-xl text-slate-300 text-xs hover:bg-slate-700">Cancelar</button>
+                <button type="button" id="btnSaveStore" class="px-3 py-1.5 bg-sky-600 text-white rounded-xl text-xs hover:bg-sky-500 font-medium">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Gestionar y Eliminar CUALQUIER Tienda -->
+    <div id="manageStoresModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-xs w-full p-5 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-slate-100">Gestionar Tiendas</h3>
+                <button id="btnCloseManageStores" class="text-slate-400 hover:text-slate-200 text-lg font-bold">&times;</button>
+            </div>
+            <p class="text-xs text-slate-400">Puedes eliminar cualquier tienda registrada.</p>
+            <ul id="storesList" class="divide-y divide-slate-700/50 max-h-60 overflow-y-auto no-scrollbar">
+                <!-- Carga dinámica de tiendas -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script Firebase e Inicialización -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            doc, 
+            updateDoc, 
+            deleteDoc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
+            authDomain: "ygoismaelvillamagua.firebaseapp.com",
+            projectId: "ygoismaelvillamagua",
+            storageBucket: "ygoismaelvillamagua.firebasestorage.app",
+            messagingSenderId: "624990862859",
+            appId: "1:624990862859:web:170630e1e94d29fb3d910e",
+            measurementId: "G-TXKEZS7MRT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        const itemsRef = collection(db, "compras_articulos");
+        const storesRef = collection(db, "compras_tiendas");
+
+        // Orden estático reservado durante la carga inicial de la página
+        let initialSortedIds = null;
+
+        // Bloqueo estricto de Zoom multitouch (gestos de 2 dedos)
+        document.addEventListener('touchmove', function (event) {
+            if (event.scale !== 1 && event.scale !== undefined) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Elementos DOM
+        const purchaseForm = document.getElementById("purchaseForm");
+        const storeSelect = document.getElementById("storeSelect");
+        const itemsTableBody = document.getElementById("itemsTableBody");
+        const pendingBadge = document.getElementById("pendingBadge");
+        const storeModal = document.getElementById("storeModal");
+        const customStoreInput = document.getElementById("customStoreInput");
+        const btnSaveStore = document.getElementById("btnSaveStore");
+        const btnCancelStore = document.getElementById("btnCancelStore");
+        const manageStoresModal = document.getElementById("manageStoresModal");
+        const btnManageStores = document.getElementById("btnManageStores");
+        const btnCloseManageStores = document.getElementById("btnCloseManageStores");
+        const storesList = document.getElementById("storesList");
+
+        function confirmAction(message, onConfirm) {
+            if (window.confirm(message)) {
+                onConfirm();
+            }
+        }
+
+        // --- Cargar y Escuchar Tiendas ---
+        onSnapshot(storesRef, (snapshot) => {
+            storeSelect.innerHTML = `<option value="">-- Seleccionar --</option>`;
+            storesList.innerHTML = "";
+            
+            let stores = [];
+            let hasAmazon = false;
+            let hasEbay = false;
+
+            snapshot.forEach(docSnap => {
+                const sName = docSnap.data().name;
+                stores.push({ id: docSnap.id, name: sName });
+                if (sName === "AMAZON") hasAmazon = true;
+                if (sName === "EBAY") hasEbay = true;
+            });
+
+            if (!hasAmazon && snapshot.metadata.fromCache === false && snapshot.empty) {
+                addDoc(storesRef, { name: "AMAZON" });
+            }
+            if (!hasEbay && snapshot.metadata.fromCache === false && snapshot.empty) {
+                addDoc(storesRef, { name: "EBAY" });
+            }
+
+            stores.sort((a, b) => a.name.localeCompare(b.name));
+
+            stores.forEach(st => {
+                const opt = document.createElement("option");
+                opt.value = st.name;
+                opt.textContent = st.name;
+                storeSelect.appendChild(opt);
+
+                const li = document.createElement("li");
+                li.className = "py-2.5 flex justify-between items-center";
+                li.innerHTML = `
+                    <span class="font-medium text-slate-200 text-xs">${escapeHTML(st.name)}</span>
+                    <button class="text-rose-400 hover:text-rose-300 text-xs font-medium px-2 py-1 rounded bg-rose-950/40 border border-rose-800/40" data-id="${st.id}">
+                        Eliminar
+                    </button>
+                `;
+                li.querySelector("button").onclick = () => {
+                    deleteDoc(doc(db, "compras_tiendas", st.id));
+                };
+                storesList.appendChild(li);
+            });
+
+            const optNew = document.createElement("option");
+            optNew.value = "__NEW__";
+            optNew.textContent = "+ Agregar Nueva Tienda...";
+            storeSelect.appendChild(optNew);
+
+            if (stores.length === 0) {
+                storesList.innerHTML = `<li class="py-3 text-center text-xs text-slate-500">No hay tiendas registradas.</li>`;
+            }
+        });
+
+        btnManageStores.onclick = () => manageStoresModal.classList.remove("hidden");
+        btnCloseManageStores.onclick = () => manageStoresModal.classList.add("hidden");
+
+        storeSelect.addEventListener("change", (e) => {
+            if (e.target.value === "__NEW__") {
+                customStoreInput.value = "";
+                storeModal.classList.remove("hidden");
+            }
+        });
+
+        btnCancelStore.onclick = () => {
+            storeModal.classList.add("hidden");
+            storeSelect.value = "";
+        };
+
+        btnSaveStore.onclick = async () => {
+            const newStore = customStoreInput.value.trim().toUpperCase();
+            if (!newStore) return;
+
+            try {
+                await addDoc(storesRef, { name: newStore });
+                storeModal.classList.add("hidden");
+                storeSelect.value = newStore;
+            } catch (err) {
+                console.error("Error guardando tienda:", err);
+            }
+        };
+
+        // --- Agregar Producto ---
+        purchaseForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById("itemName").value.trim();
+            const tracking = document.getElementById("trackingNumber").value.trim() || "N/A";
+            const store = storeSelect.value;
+            
+            if (!store || store === "__NEW__") return;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            try {
+                await addDoc(itemsRef, {
+                    name: name,
+                    store: store,
+                    tracking: tracking,
+                    purchaseDate: todayStr,
+                    isReceived: false,
+                    isRefunded: false,
+                    receivedTimestamp: null
+                });
+
+                purchaseForm.reset();
+            } catch (err) {
+                console.error("Error al registrar producto:", err);
+            }
+        });
+
+        // --- Escuchar Productos y Renderizar ---
+        onSnapshot(itemsRef, (snapshot) => {
+            let items = [];
+            const now = new Date();
+            let pendingCount = 0;
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const item = { id: docSnap.id, ...data };
+
+                // Auto-eliminar a los 7 días de RECIBIDO
+                if (item.isReceived && item.receivedTimestamp) {
+                    const receivedDate = new Date(item.receivedTimestamp);
+                    const diffDays = (now - receivedDate) / (1000 * 60 * 60 * 24);
+                    
+                    if (diffDays >= 7) {
+                        deleteDoc(doc(db, "compras_articulos", item.id));
+                        return;
+                    }
+                }
+
+                if (!item.isReceived) {
+                    pendingCount++;
+                }
+
+                // Cálculo días transcurridos
+                const pDate = new Date(item.purchaseDate + "T00:00:00");
+                const diffTime = Math.abs(now - pDate);
+                item.daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                items.push(item);
+            });
+
+            // Actualizar el Badge del Contador
+            pendingBadge.textContent = `${pendingCount} ${pendingCount === 1 ? 'en camino' : 'en camino'}`;
+
+            // Ordenación Inicial (Solo la primera vez al cargar/refrescar la página)
+            if (initialSortedIds === null) {
+                items.sort((a, b) => {
+                    if (a.isReceived !== b.isReceived) {
+                        return a.isReceived ? 1 : -1;
+                    }
+                    const storeCompare = a.store.localeCompare(b.store);
+                    if (storeCompare !== 0) return storeCompare;
+                    if (b.daysElapsed !== a.daysElapsed) {
+                        return b.daysElapsed - a.daysElapsed;
+                    }
+                    return a.name.localeCompare(b.name);
+                });
+
+                // Guardar la estructura inicial de IDs
+                initialSortedIds = items.map(item => item.id);
+            } else {
+                // Si la página NO se refrescó, mantenemos la lista basada en los IDs de la sesión inicial
+                const itemMap = new Map(items.map(i => [i.id, i]));
+                let orderedItems = [];
+
+                // Reconstruir manteniendo la posición original
+                initialSortedIds.forEach(id => {
+                    if (itemMap.has(id)) {
+                        orderedItems.push(itemMap.get(id));
+                        itemMap.delete(id);
+                    }
+                });
+
+                // Si hay elementos nuevos agregados en vivo durante la sesión, se incorporan
+                itemMap.forEach(newItem => {
+                    orderedItems.unshift(newItem);
+                    initialSortedIds.unshift(newItem.id);
+                });
+
+                items = orderedItems;
+            }
+
+            renderTable(items);
+        });
+
+        function renderTable(items) {
+            itemsTableBody.innerHTML = "";
+
+            if (items.length === 0) {
+                itemsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-6 text-slate-500 text-sm">No hay compras registradas.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            items.forEach((item) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-750 transition border-b border-slate-700/40";
+
+                // Clases por Estado
+                if (item.isReceived && item.isRefunded) {
+                    tr.classList.add("estado-ambos");
+                } else if (item.isReceived) {
+                    tr.classList.add("estado-recibido");
+                } else if (item.isRefunded) {
+                    tr.classList.add("estado-reembolsado");
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3">
+                        <div class="font-semibold text-slate-100 text-sm leading-snug editable" data-id="${item.id}" data-field="name">${escapeHTML(item.name)}</div>
+                        <div class="text-xs text-sky-400 font-medium mt-0.5 editable" data-id="${item.id}" data-field="store">${escapeHTML(item.store)}</div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <div class="text-slate-200 text-xs font-mono editable" data-id="${item.id}" data-field="tracking">${escapeHTML(item.tracking)}</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5 editable" data-id="${item.id}" data-field="purchaseDate">${escapeHTML(item.purchaseDate)}</div>
+                    </td>
+                    <td class="py-3 px-2 text-center font-bold text-slate-200 text-sm">
+                        ${item.daysElapsed}d
+                    </td>
+                    <td class="py-3 px-2 text-center">
+                        <div class="flex flex-col gap-1.5 items-center w-28 mx-auto">
+                            <button class="btn-received w-full text-xs font-semibold py-2 px-2 rounded-lg transition border border-sky-500/30 ${item.isReceived ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-800 text-sky-400 hover:bg-slate-700'}" data-id="${item.id}">RECIBIDO</button>
+                            <button class="btn-refunded w-full text-xs font-semibold py-2 px-2 rounded-lg transition border border-amber-500/30 ${item.isRefunded ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-800 text-amber-400 hover:bg-slate-700'}" data-id="${item.id}">REEMBOLSADO</button>
+                            <button class="btn-delete w-full text-xs font-medium py-1.5 px-2 rounded-lg bg-rose-950/70 text-rose-300 hover:bg-rose-900 border border-rose-800/40 transition" data-id="${item.id}">ELIMINAR</button>
+                        </div>
+                    </td>
+                `;
+
+                itemsTableBody.appendChild(tr);
+            });
+
+            attachEvents(items);
+        }
+
+        function attachEvents(items) {
+            // Toggle Recibido
+            document.querySelectorAll(".btn-received").forEach(btn => {
+                btn.onclick = () => {
+                    const id = btn.getAttribute("data-id");
+                    const item = items.find(i => i.id === id);
+                    const newReceivedState = !item.isReceived;
+
+                    updateDoc(doc(db, "compras_articulos", id), {
+                        isReceived: newReceivedState,
+                        receivedTimestamp: newReceivedState ? new Date().toISOString() : null
+                    });
+                };
+            });
+
+            // Toggle Reembolsado
+            document.querySelectorAll(".btn-refunded").forEach(btn => {
+                btn.onclick = () => {
+                    const id = btn.getAttribute("data-id");
+                    const item = items.find(i => i.id === id);
+
+                    updateDoc(doc(db, "compras_articulos", id), {
+                        isRefunded: !item.isRefunded
+                    });
+                };
+            });
+
+            // Eliminar con confirmación
+            document.querySelectorAll(".btn-delete").forEach(btn => {
+                btn.onclick = () => {
+                    const id = btn.getAttribute("data-id");
+                    confirmAction("¿Deseas eliminar este artículo?", () => {
+                        // Quitar el ID de la lista persistente si fue eliminado
+                        if (initialSortedIds) {
+                            initialSortedIds = initialSortedIds.filter(itemId => itemId !== id);
+                        }
+                        deleteDoc(doc(db, "compras_articulos", id));
+                    });
+                };
+            });
+
+            // Edición por doble clic
+            document.querySelectorAll(".editable").forEach(cell => {
+                cell.ondblclick = () => {
+                    const currentText = cell.textContent.trim();
+                    const field = cell.getAttribute("data-field");
+                    const id = cell.getAttribute("data-id");
+
+                    const input = document.createElement("input");
+                    input.type = field === "purchaseDate" ? "date" : "text";
+                    input.value = currentText;
+                    input.className = "w-full bg-slate-900 border border-sky-500 px-2 py-1 rounded text-sm text-slate-100 outline-none";
+
+                    cell.innerHTML = "";
+                    cell.appendChild(input);
+                    input.focus();
+
+                    const save = () => {
+                        const newValue = input.value.trim();
+                        if (newValue && newValue !== currentText) {
+                            updateDoc(doc(db, "compras_articulos", id), {
+                                [field]: newValue
+                            });
+                        } else {
+                            cell.textContent = currentText;
+                        }
+                    };
+
+                    input.onblur = save;
+                    input.onkeydown = (e) => {
+                        if (e.key === "Enter") save();
+                        if (e.key === "Escape") cell.textContent = currentText;
+                    };
+                };
+            });
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>"']/g, function (m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
