@@ -38,6 +38,21 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        /* Animación personalizada parpadeante roja */
+        @keyframes pulseRed {
+            0%, 100% {
+                color: #ef4444; /* red-500 */
+                opacity: 1;
+            }
+            50% {
+                color: #fca5a5; /* red-300 */
+                opacity: 0.4;
+            }
+        }
+        .alert-pulse-red {
+            animation: pulseRed 1s infinite;
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen pb-8 antialiased">
@@ -49,9 +64,14 @@
                 <h1 class="text-xl font-bold text-slate-100 tracking-wide">Gestión de Compras</h1>
                 <p class="text-xs text-slate-400">Control de pedidos y tracking</p>
             </div>
-            <button id="btnManageStores" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition">
-                ⚙️ Tiendas
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="btnManageStores" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition">
+                    🏷️ Tiendas
+                </button>
+                <button id="btnOpenConfig" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1" title="Configuración">
+                    ⚙️ Config
+                </button>
+            </div>
         </div>
     </header>
 
@@ -154,6 +174,37 @@
         </div>
     </div>
 
+    <!-- Modal para Configuración de Constantes -->
+    <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-slate-100">⚙️ Configuración</h3>
+                <button id="btnCloseConfig" class="text-slate-400 hover:text-slate-200 text-lg font-bold">&times;</button>
+            </div>
+            
+            <form id="configForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Días para auto-eliminar recibidos</label>
+                    <input type="number" id="cfgDaysToDelete" min="1" max="365" required
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none text-sm">
+                    <p class="text-[11px] text-slate-400 mt-1">Borra el paquete automáticamente tras este número de días de haber sido recibido.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Días límite para alerta parpadeante</label>
+                    <input type="number" id="cfgDaysToAlert" min="1" max="365" required
+                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none text-sm">
+                    <p class="text-[11px] text-slate-400 mt-1">Si el artículo no se ha recibido pasados estos días, parpadeará en rojo.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
+                    <button type="button" id="btnCancelConfig" class="px-3 py-1.5 border border-slate-600 rounded-xl text-slate-300 text-xs hover:bg-slate-700">Cancelar</button>
+                    <button type="submit" class="px-3 py-1.5 bg-sky-600 text-white rounded-xl text-xs hover:bg-sky-500 font-medium">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Script Firebase e Inicialización -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -185,9 +236,17 @@
 
         const itemsRef = collection(db, "compras_articulos");
         const storesRef = collection(db, "compras_tiendas");
+        const configDocRef = doc(db, "compras_config", "settings");
+
+        // Valores por defecto
+        let appConfig = {
+            daysToDelete: 7,
+            daysToAlert: 15
+        };
 
         // Orden estático reservado durante la carga inicial de la página
         let initialSortedIds = null;
+        let currentItems = [];
 
         // Bloqueo estricto de Zoom multitouch (gestos de 2 dedos)
         document.addEventListener('touchmove', function (event) {
@@ -210,11 +269,64 @@
         const btnCloseManageStores = document.getElementById("btnCloseManageStores");
         const storesList = document.getElementById("storesList");
 
+        // Elementos Modal Configuración
+        const configModal = document.getElementById("configModal");
+        const btnOpenConfig = document.getElementById("btnOpenConfig");
+        const btnCloseConfig = document.getElementById("btnCloseConfig");
+        const btnCancelConfig = document.getElementById("btnCancelConfig");
+        const configForm = document.getElementById("configForm");
+        const cfgDaysToDeleteInput = document.getElementById("cfgDaysToDelete");
+        const cfgDaysToAlertInput = document.getElementById("cfgDaysToAlert");
+
         function confirmAction(message, onConfirm) {
             if (window.confirm(message)) {
                 onConfirm();
             }
         }
+
+        // --- Cargar y Escuchar Configuración ---
+        onSnapshot(configDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                appConfig.daysToDelete = Number(data.daysToDelete) || 7;
+                appConfig.daysToAlert = Number(data.daysToAlert) || 15;
+            } else {
+                setDoc(configDocRef, appConfig);
+            }
+            cfgDaysToDeleteInput.value = appConfig.daysToDelete;
+            cfgDaysToAlertInput.value = appConfig.daysToAlert;
+
+            if (currentItems.length > 0) {
+                processAndRenderItems(currentItems);
+            }
+        });
+
+        btnOpenConfig.onclick = () => {
+            cfgDaysToDeleteInput.value = appConfig.daysToDelete;
+            cfgDaysToAlertInput.value = appConfig.daysToAlert;
+            configModal.classList.remove("hidden");
+        };
+
+        btnCloseConfig.onclick = () => configModal.classList.add("hidden");
+        btnCancelConfig.onclick = () => configModal.classList.add("hidden");
+
+        configForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const newDeleteDays = parseInt(cfgDaysToDeleteInput.value, 10);
+            const newAlertDays = parseInt(cfgDaysToAlertInput.value, 10);
+
+            if (newDeleteDays > 0 && newAlertDays > 0) {
+                try {
+                    await setDoc(configDocRef, {
+                        daysToDelete: newDeleteDays,
+                        daysToAlert: newAlertDays
+                    });
+                    configModal.classList.add("hidden");
+                } catch (err) {
+                    console.error("Error al guardar la configuración:", err);
+                }
+            }
+        };
 
         // --- Cargar y Escuchar Tiendas ---
         onSnapshot(storesRef, (snapshot) => {
@@ -328,22 +440,28 @@
             }
         });
 
-        // --- Escuchar Productos y Renderizar ---
+        // --- Escuchar Productos ---
         onSnapshot(itemsRef, (snapshot) => {
+            let rawItems = [];
+            snapshot.forEach((docSnap) => {
+                rawItems.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            currentItems = rawItems;
+            processAndRenderItems(currentItems);
+        });
+
+        function processAndRenderItems(rawItems) {
             let items = [];
             const now = new Date();
             let pendingCount = 0;
 
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const item = { id: docSnap.id, ...data };
-
-                // Auto-eliminar a los 7 días de RECIBIDO
+            rawItems.forEach((item) => {
+                // Auto-eliminar según constante dinámica (daysToDelete) tras estar RECIBIDO
                 if (item.isReceived && item.receivedTimestamp) {
                     const receivedDate = new Date(item.receivedTimestamp);
                     const diffDays = (now - receivedDate) / (1000 * 60 * 60 * 24);
                     
-                    if (diffDays >= 7) {
+                    if (diffDays >= appConfig.daysToDelete) {
                         deleteDoc(doc(db, "compras_articulos", item.id));
                         return;
                     }
@@ -364,10 +482,6 @@
             // Actualizar el Badge del Contador
             pendingBadge.textContent = `${pendingCount} ${pendingCount === 1 ? 'en camino' : 'en camino'}`;
 
-            // Ordenación Inicial al refrescar:
-            // 0: Pendiente
-            // 1: Reembolsado puro
-            // 2: Recibido (o Recibido + Reembolsado)
             const getPriority = (i) => {
                 if (!i.isReceived && !i.isRefunded) return 0;
                 if (i.isRefunded && !i.isReceived) return 1;
@@ -388,10 +502,8 @@
                     return a.name.localeCompare(b.name);
                 });
 
-                // Guardar la estructura inicial de IDs
                 initialSortedIds = items.map(item => item.id);
             } else {
-                // Mantener el orden visual actual mientras no se refresque la ventana
                 const itemMap = new Map(items.map(i => [i.id, i]));
                 let orderedItems = [];
 
@@ -411,7 +523,7 @@
             }
 
             renderTable(items);
-        });
+        }
 
         function renderTable(items) {
             itemsTableBody.innerHTML = "";
@@ -438,9 +550,15 @@
                     tr.classList.add("estado-reembolsado");
                 }
 
+                // Evaluar la alerta parpadeante en rojo (NO recibido y días transcurridos >= límite configurado)
+                const isAlertActive = !item.isReceived && (item.daysElapsed >= appConfig.daysToAlert);
+                const nameTextClasses = isAlertActive 
+                    ? "font-semibold text-sm leading-snug editable cursor-pointer alert-pulse-red font-bold" 
+                    : "font-semibold text-slate-100 text-sm leading-snug editable cursor-pointer";
+
                 tr.innerHTML = `
                     <td class="py-3 px-3">
-                        <div class="font-semibold text-slate-100 text-sm leading-snug editable cursor-pointer" data-id="${item.id}" data-field="name">${escapeHTML(item.name)}</div>
+                        <div class="${nameTextClasses}" data-id="${item.id}" data-field="name">${escapeHTML(item.name)}</div>
                         <div class="text-xs text-sky-400 font-medium mt-0.5 editable cursor-pointer" data-id="${item.id}" data-field="store">${escapeHTML(item.store)}</div>
                     </td>
                     <td class="py-3 px-2">
