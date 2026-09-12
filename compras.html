@@ -196,15 +196,6 @@
             }
         }, { passive: false });
 
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
-
         // Elementos DOM
         const purchaseForm = document.getElementById("purchaseForm");
         const storeSelect = document.getElementById("storeSelect");
@@ -373,12 +364,22 @@
             // Actualizar el Badge del Contador
             pendingBadge.textContent = `${pendingCount} ${pendingCount === 1 ? 'en camino' : 'en camino'}`;
 
-            // Ordenación Inicial (Solo la primera vez al cargar/refrescar la página)
+            // Ordenación Inicial al refrescar:
+            // 0: Pendiente
+            // 1: Reembolsado puro
+            // 2: Recibido (o Recibido + Reembolsado)
+            const getPriority = (i) => {
+                if (!i.isReceived && !i.isRefunded) return 0;
+                if (i.isRefunded && !i.isReceived) return 1;
+                return 2;
+            };
+
             if (initialSortedIds === null) {
                 items.sort((a, b) => {
-                    if (a.isReceived !== b.isReceived) {
-                        return a.isReceived ? 1 : -1;
-                    }
+                    const pA = getPriority(a);
+                    const pB = getPriority(b);
+                    if (pA !== pB) return pA - pB;
+
                     const storeCompare = a.store.localeCompare(b.store);
                     if (storeCompare !== 0) return storeCompare;
                     if (b.daysElapsed !== a.daysElapsed) {
@@ -390,11 +391,10 @@
                 // Guardar la estructura inicial de IDs
                 initialSortedIds = items.map(item => item.id);
             } else {
-                // Si la página NO se refrescó, mantenemos la lista basada en los IDs de la sesión inicial
+                // Mantener el orden visual actual mientras no se refresque la ventana
                 const itemMap = new Map(items.map(i => [i.id, i]));
                 let orderedItems = [];
 
-                // Reconstruir manteniendo la posición original
                 initialSortedIds.forEach(id => {
                     if (itemMap.has(id)) {
                         orderedItems.push(itemMap.get(id));
@@ -402,7 +402,6 @@
                     }
                 });
 
-                // Si hay elementos nuevos agregados en vivo durante la sesión, se incorporan
                 itemMap.forEach(newItem => {
                     orderedItems.unshift(newItem);
                     initialSortedIds.unshift(newItem.id);
@@ -441,12 +440,12 @@
 
                 tr.innerHTML = `
                     <td class="py-3 px-3">
-                        <div class="font-semibold text-slate-100 text-sm leading-snug editable" data-id="${item.id}" data-field="name">${escapeHTML(item.name)}</div>
-                        <div class="text-xs text-sky-400 font-medium mt-0.5 editable" data-id="${item.id}" data-field="store">${escapeHTML(item.store)}</div>
+                        <div class="font-semibold text-slate-100 text-sm leading-snug editable cursor-pointer" data-id="${item.id}" data-field="name">${escapeHTML(item.name)}</div>
+                        <div class="text-xs text-sky-400 font-medium mt-0.5 editable cursor-pointer" data-id="${item.id}" data-field="store">${escapeHTML(item.store)}</div>
                     </td>
                     <td class="py-3 px-2">
-                        <div class="text-slate-200 text-xs font-mono editable" data-id="${item.id}" data-field="tracking">${escapeHTML(item.tracking)}</div>
-                        <div class="text-[11px] text-slate-400 mt-0.5 editable" data-id="${item.id}" data-field="purchaseDate">${escapeHTML(item.purchaseDate)}</div>
+                        <div class="text-slate-200 text-xs font-mono editable cursor-pointer" data-id="${item.id}" data-field="tracking">${escapeHTML(item.tracking)}</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5 editable cursor-pointer" data-id="${item.id}" data-field="purchaseDate">${escapeHTML(item.purchaseDate)}</div>
                     </td>
                     <td class="py-3 px-2 text-center font-bold text-slate-200 text-sm">
                         ${item.daysElapsed}d
@@ -498,7 +497,6 @@
                 btn.onclick = () => {
                     const id = btn.getAttribute("data-id");
                     confirmAction("¿Deseas eliminar este artículo?", () => {
-                        // Quitar el ID de la lista persistente si fue eliminado
                         if (initialSortedIds) {
                             initialSortedIds = initialSortedIds.filter(itemId => itemId !== id);
                         }
@@ -507,9 +505,11 @@
                 };
             });
 
-            // Edición por doble clic
+            // Edición por doble clic / toque doble en móvil
             document.querySelectorAll(".editable").forEach(cell => {
-                cell.ondblclick = () => {
+                const makeEditable = () => {
+                    if (cell.querySelector("input")) return;
+
                     const currentText = cell.textContent.trim();
                     const field = cell.getAttribute("data-field");
                     const id = cell.getAttribute("data-id");
@@ -523,7 +523,11 @@
                     cell.appendChild(input);
                     input.focus();
 
+                    let saved = false;
                     const save = () => {
+                        if (saved) return;
+                        saved = true;
+
                         const newValue = input.value.trim();
                         if (newValue && newValue !== currentText) {
                             updateDoc(doc(db, "compras_articulos", id), {
@@ -537,8 +541,25 @@
                     input.onblur = save;
                     input.onkeydown = (e) => {
                         if (e.key === "Enter") save();
-                        if (e.key === "Escape") cell.textContent = currentText;
+                        if (e.key === "Escape") {
+                            saved = true;
+                            cell.textContent = currentText;
+                        }
                     };
+                };
+
+                cell.ondblclick = makeEditable;
+
+                // Soporte optimizado para doble toque táctil en pantallas móviles
+                let lastClickTime = 0;
+                cell.ontouchend = (e) => {
+                    const currentTime = new Date().getTime();
+                    const tapLength = currentTime - lastClickTime;
+                    if (tapLength < 300 && tapLength > 0) {
+                        e.preventDefault();
+                        makeEditable();
+                    }
+                    lastClickTime = currentTime;
                 };
             });
         }
