@@ -119,14 +119,27 @@
 
         <!-- Contenedor / Tabla Adaptada para Móvil -->
         <section class="bg-slate-800 border border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-700/60 flex justify-between items-center flex-wrap gap-2">
+            <div class="px-5 py-4 border-b border-slate-700/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
                     <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Lista de Compras</h2>
                     <span id="pendingBadge" class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                         0 en camino
                     </span>
+                    <span id="refundedBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        0 reembolsados
+                    </span>
                 </div>
-                <span class="text-xs text-slate-400">* Doble clic para editar</span>
+                
+                <!-- Buscador de texto/artículo/tracking -->
+                <div class="flex items-center gap-2 w-full md:w-72">
+                    <div class="relative w-full">
+                        <input type="text" id="searchInput" placeholder="🔍 Buscar artículo, tracking o tienda..."
+                            class="w-full pl-3 pr-8 py-1.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 outline-none text-xs transition">
+                        <button id="btnClearSearch" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold">
+                            ✕
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="w-full overflow-x-auto no-scrollbar">
@@ -260,6 +273,7 @@
         const storeSelect = document.getElementById("storeSelect");
         const itemsTableBody = document.getElementById("itemsTableBody");
         const pendingBadge = document.getElementById("pendingBadge");
+        const refundedBadge = document.getElementById("refundedBadge");
         const storeModal = document.getElementById("storeModal");
         const customStoreInput = document.getElementById("customStoreInput");
         const btnSaveStore = document.getElementById("btnSaveStore");
@@ -268,6 +282,10 @@
         const btnManageStores = document.getElementById("btnManageStores");
         const btnCloseManageStores = document.getElementById("btnCloseManageStores");
         const storesList = document.getElementById("storesList");
+
+        // Elementos Buscador
+        const searchInput = document.getElementById("searchInput");
+        const btnClearSearch = document.getElementById("btnClearSearch");
 
         // Elementos Modal Configuración
         const configModal = document.getElementById("configModal");
@@ -283,6 +301,24 @@
                 onConfirm();
             }
         }
+
+        // --- Eventos del Buscador ---
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.trim();
+            if (query.length > 0) {
+                btnClearSearch.classList.remove("hidden");
+            } else {
+                btnClearSearch.classList.add("hidden");
+            }
+            processAndRenderItems(currentItems);
+        });
+
+        btnClearSearch.addEventListener("click", () => {
+            searchInput.value = "";
+            btnClearSearch.classList.add("hidden");
+            searchInput.focus();
+            processAndRenderItems(currentItems);
+        });
 
         // --- Cargar y Escuchar Configuración ---
         onSnapshot(configDocRef, (docSnap) => {
@@ -454,6 +490,7 @@
             let items = [];
             const now = new Date();
             let pendingCount = 0;
+            let refundedCount = 0;
 
             rawItems.forEach((item) => {
                 // Auto-eliminar según constante dinámica (daysToDelete) tras estar RECIBIDO
@@ -471,6 +508,10 @@
                     pendingCount++;
                 }
 
+                if (item.isRefunded) {
+                    refundedCount++;
+                }
+
                 // Cálculo días transcurridos
                 const pDate = new Date(item.purchaseDate + "T00:00:00");
                 const diffTime = Math.abs(now - pDate);
@@ -479,8 +520,9 @@
                 items.push(item);
             });
 
-            // Actualizar el Badge del Contador
-            pendingBadge.textContent = `${pendingCount} ${pendingCount === 1 ? 'en camino' : 'en camino'}`;
+            // Actualizar los Badges de los Contadores
+            pendingBadge.textContent = `${pendingCount} en camino`;
+            refundedBadge.textContent = `${refundedCount} ${refundedCount === 1 ? 'reembolsado' : 'reembolsados'}`;
 
             const getPriority = (i) => {
                 if (!i.isReceived && !i.isRefunded) return 0;
@@ -522,6 +564,17 @@
                 items = orderedItems;
             }
 
+            // Aplicar Filtro del Buscador
+            const searchQuery = searchInput.value.trim().toLowerCase();
+            if (searchQuery !== "") {
+                items = items.filter(item => {
+                    const nameMatch = item.name.toLowerCase().includes(searchQuery);
+                    const trackingMatch = item.tracking ? item.tracking.toLowerCase().includes(searchQuery) : false;
+                    const storeMatch = item.store.toLowerCase().includes(searchQuery);
+                    return nameMatch || trackingMatch || storeMatch;
+                });
+            }
+
             renderTable(items);
         }
 
@@ -529,9 +582,12 @@
             itemsTableBody.innerHTML = "";
 
             if (items.length === 0) {
+                const isSearching = searchInput.value.trim() !== "";
                 itemsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="text-center py-6 text-slate-500 text-sm">No hay compras registradas.</td>
+                        <td colspan="4" class="text-center py-6 text-slate-500 text-sm">
+                            ${isSearching ? "No se encontraron coincidencias para la búsqueda." : "No hay compras registradas."}
+                        </td>
                     </tr>
                 `;
                 return;
