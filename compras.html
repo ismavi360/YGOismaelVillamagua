@@ -152,25 +152,57 @@
 
         <!-- Contenedor / Tabla Adaptada para Móvil -->
         <section class="bg-slate-800 border border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-700/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Lista de Compras</h2>
-                    <span id="pendingBadge" class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                        0 en camino
-                    </span>
-                    <span id="refundedBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                        0 reembolsados
-                    </span>
+            <div class="px-5 py-4 border-b border-slate-700/60 flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Lista de Compras</h2>
+                        <span id="pendingBadge" class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            0 en camino
+                        </span>
+                        <span id="refundedBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            0 reembolsados
+                        </span>
+                    </div>
                 </div>
-                
-                <!-- Buscador de texto/artículo/tracking -->
-                <div class="flex items-center gap-2 w-full md:w-72">
-                    <div class="relative w-full">
-                        <input type="text" id="searchInput" placeholder="🔍 Buscar artículo, tracking o tienda..."
+
+                <!-- Barra de Filtros, Orden y Buscador -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 pt-1">
+                    <!-- Buscador -->
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="🔍 Buscar..."
                             class="w-full pl-3 pr-8 py-1.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 outline-none text-xs transition">
                         <button id="btnClearSearch" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold">
                             ✕
                         </button>
+                    </div>
+
+                    <!-- Filtro por Estado -->
+                    <div>
+                        <select id="filterStatusSelect" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-sky-500 outline-none transition">
+                            <option value="ALL">Estado: Todos</option>
+                            <option value="PENDING">Estado: En camino</option>
+                            <option value="RECEIVED">Estado: Recibidos</option>
+                            <option value="REFUNDED">Estado: Reembolsados</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Mes de Compra -->
+                    <div>
+                        <select id="filterMonthSelect" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-sky-500 outline-none transition">
+                            <option value="ALL">Mes: Todos</option>
+                            <!-- Se puebla dinámicamente -->
+                        </select>
+                    </div>
+
+                    <!-- Criterio de Ordenación -->
+                    <div>
+                        <select id="sortOrderSelect" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-sky-500 outline-none transition">
+                            <option value="DEFAULT">Orden: Por defecto</option>
+                            <option value="PRICE_DESC">Precio: Mayor a Menor</option>
+                            <option value="PRICE_ASC">Precio: Menor a Mayor</option>
+                            <option value="DATE_ASC">Fecha: Antigua a Reciente (Menor a Mayor)</option>
+                            <option value="DATE_DESC">Fecha: Reciente a Antigua (Mayor a Menor)</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -321,18 +353,12 @@
         const btnCloseManageStores = document.getElementById("btnCloseManageStores");
         const storesList = document.getElementById("storesList");
 
-        // Elementos Buscador
+        // Elementos Buscador, Filtros y Orden
         const searchInput = document.getElementById("searchInput");
         const btnClearSearch = document.getElementById("btnClearSearch");
-
-        // Elementos Modal Configuración
-        const configModal = document.getElementById("configModal");
-        const btnOpenConfig = document.getElementById("btnOpenConfig");
-        const btnCloseConfig = document.getElementById("btnCloseConfig");
-        const btnCancelConfig = document.getElementById("btnCancelConfig");
-        const configForm = document.getElementById("configForm");
-        const cfgDaysToDeleteInput = document.getElementById("cfgDaysToDelete");
-        const cfgDaysToAlertInput = document.getElementById("cfgDaysToAlert");
+        const filterStatusSelect = document.getElementById("filterStatusSelect");
+        const filterMonthSelect = document.getElementById("filterMonthSelect");
+        const sortOrderSelect = document.getElementById("sortOrderSelect");
 
         function confirmAction(message, onConfirm) {
             if (window.confirm(message)) {
@@ -349,7 +375,7 @@
             monthlySummarySection.classList.add("hidden");
         };
 
-        // --- Eventos del Buscador ---
+        // --- Eventos del Buscador, Filtros y Orden ---
         searchInput.addEventListener("input", () => {
             const query = searchInput.value.trim();
             if (query.length > 0) {
@@ -366,6 +392,10 @@
             searchInput.focus();
             processAndRenderItems(currentItems);
         });
+
+        filterStatusSelect.addEventListener("change", () => processAndRenderItems(currentItems));
+        filterMonthSelect.addEventListener("change", () => processAndRenderItems(currentItems));
+        sortOrderSelect.addEventListener("change", () => processAndRenderItems(currentItems));
 
         // --- Cargar y Escuchar Configuración ---
         onSnapshot(configDocRef, (docSnap) => {
@@ -534,8 +564,49 @@
                 rawItems.push({ id: docSnap.id, ...docSnap.data() });
             });
             currentItems = rawItems;
+            updateMonthDropdownOptions(rawItems);
             processAndRenderItems(currentItems);
         });
+
+        // Actualizar opciones únicas de meses en el filtro
+        function updateMonthDropdownOptions(rawItems) {
+            const monthNames = [
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+            ];
+
+            const currentSelected = filterMonthSelect.value;
+            const monthsSet = new Set();
+
+            rawItems.forEach(item => {
+                if (item.purchaseDate && !item.isAutoDeleted) {
+                    const parts = item.purchaseDate.split("-");
+                    if (parts.length >= 2) {
+                        monthsSet.add(`${parts[0]}-${parts[1]}`);
+                    }
+                }
+            });
+
+            const sortedMonths = Array.from(monthsSet).sort().reverse();
+            
+            filterMonthSelect.innerHTML = `<option value="ALL">Mes: Todos</option>`;
+            sortedMonths.forEach(mKey => {
+                const [year, monthStr] = mKey.split("-");
+                const mIndex = parseInt(monthStr, 10) - 1;
+                const label = `${monthNames[mIndex] || monthStr} ${year}`;
+                
+                const opt = document.createElement("option");
+                opt.value = mKey;
+                opt.textContent = label;
+                filterMonthSelect.appendChild(opt);
+            });
+
+            if (monthsSet.has(currentSelected)) {
+                filterMonthSelect.value = currentSelected;
+            } else {
+                filterMonthSelect.value = "ALL";
+            }
+        }
 
         function processAndRenderItems(rawItems) {
             let activeItems = [];
@@ -586,56 +657,90 @@
             // Renderizar resumen mensual pasando la lista completa (incluyendo auto-eliminados)
             renderMonthlySummary(rawItems);
 
-            const getPriority = (i) => {
-                if (!i.isReceived && !i.isRefunded) return 0;
-                if (i.isRefunded && !i.isReceived) return 1;
-                return 2;
-            };
-
-            if (initialSortedIds === null) {
-                activeItems.sort((a, b) => {
-                    const pA = getPriority(a);
-                    const pB = getPriority(b);
-                    if (pA !== pB) return pA - pB;
-
-                    const storeCompare = a.store.localeCompare(b.store);
-                    if (storeCompare !== 0) return storeCompare;
-                    if (b.daysElapsed !== a.daysElapsed) {
-                        return b.daysElapsed - a.daysElapsed;
-                    }
-                    return a.name.localeCompare(b.name);
-                });
-
-                initialSortedIds = activeItems.map(item => item.id);
-            } else {
-                const itemMap = new Map(activeItems.map(i => [i.id, i]));
-                let orderedItems = [];
-
-                initialSortedIds.forEach(id => {
-                    if (itemMap.has(id)) {
-                        orderedItems.push(itemMap.get(id));
-                        itemMap.delete(id);
-                    }
-                });
-
-                itemMap.forEach(newItem => {
-                    orderedItems.unshift(newItem);
-                    initialSortedIds.unshift(newItem.id);
-                });
-
-                activeItems = orderedItems;
-            }
-
-            // Aplicar Filtro del Buscador
+            // --- APLICAR FILTROS DE ESTADO, MES Y BÚSQUEDA ---
+            const statusFilter = filterStatusSelect.value;
+            const monthFilter = filterMonthSelect.value;
             const searchQuery = searchInput.value.trim().toLowerCase();
-            if (searchQuery !== "") {
-                activeItems = activeItems.filter(item => {
+
+            activeItems = activeItems.filter(item => {
+                // Filtro por Estado
+                if (statusFilter === "PENDING" && item.isReceived) return false;
+                if (statusFilter === "RECEIVED" && !item.isReceived) return false;
+                if (statusFilter === "REFUNDED" && !item.isRefunded) return false;
+
+                // Filtro por Mes
+                if (monthFilter !== "ALL") {
+                    if (!item.purchaseDate || !item.purchaseDate.startsWith(monthFilter)) {
+                        return false;
+                    }
+                }
+
+                // Filtro por Búsqueda de Texto
+                if (searchQuery !== "") {
                     const nameMatch = item.name.toLowerCase().includes(searchQuery);
                     const trackingMatch = item.tracking ? item.tracking.toLowerCase().includes(searchQuery) : false;
                     const storeMatch = item.store.toLowerCase().includes(searchQuery);
                     const priceMatch = item.price ? item.price.toString().includes(searchQuery) : false;
-                    return nameMatch || trackingMatch || storeMatch || priceMatch;
-                });
+                    if (!nameMatch && !trackingMatch && !storeMatch && !priceMatch) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // --- APLICAR CRITERIO DE ORDENACIÓN ---
+            const sortOrder = sortOrderSelect.value;
+
+            if (sortOrder === "PRICE_DESC") {
+                activeItems.sort((a, b) => b.price - a.price);
+            } else if (sortOrder === "PRICE_ASC") {
+                activeItems.sort((a, b) => a.price - b.price);
+            } else if (sortOrder === "DATE_ASC") {
+                activeItems.sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate));
+            } else if (sortOrder === "DATE_DESC") {
+                activeItems.sort((a, b) => b.purchaseDate.localeCompare(a.purchaseDate));
+            } else {
+                // OPCIÓN POR DEFECTO: Mantiene el orden original preservado con jerarquía de prioridad
+                const getPriority = (i) => {
+                    if (!i.isReceived && !i.isRefunded) return 0;
+                    if (i.isRefunded && !i.isReceived) return 1;
+                    return 2;
+                };
+
+                if (initialSortedIds === null) {
+                    activeItems.sort((a, b) => {
+                        const pA = getPriority(a);
+                        const pB = getPriority(b);
+                        if (pA !== pB) return pA - pB;
+
+                        const storeCompare = a.store.localeCompare(b.store);
+                        if (storeCompare !== 0) return storeCompare;
+                        if (b.daysElapsed !== a.daysElapsed) {
+                            return b.daysElapsed - a.daysElapsed;
+                        }
+                        return a.name.localeCompare(b.name);
+                    });
+
+                    initialSortedIds = activeItems.map(item => item.id);
+                } else {
+                    const itemMap = new Map(activeItems.map(i => [i.id, i]));
+                    let orderedItems = [];
+
+                    initialSortedIds.forEach(id => {
+                        if (itemMap.has(id)) {
+                            orderedItems.push(itemMap.get(id));
+                            itemMap.delete(id);
+                        }
+                    });
+
+                    itemMap.forEach(newItem => {
+                        orderedItems.unshift(newItem);
+                        initialSortedIds.unshift(newItem.id);
+                    });
+
+                    activeItems = orderedItems;
+                }
             }
 
             renderTable(activeItems);
@@ -645,11 +750,11 @@
             itemsTableBody.innerHTML = "";
 
             if (items.length === 0) {
-                const isSearching = searchInput.value.trim() !== "";
+                const isFiltered = searchInput.value.trim() !== "" || filterStatusSelect.value !== "ALL" || filterMonthSelect.value !== "ALL";
                 itemsTableBody.innerHTML = `
                     <tr>
                         <td colspan="5" class="text-center py-6 text-slate-500 text-sm">
-                            ${isSearching ? "No se encontraron coincidencias para la búsqueda." : "No hay compras registradas."}
+                            ${isFiltered ? "No se encontraron coincidencia(s) para los filtros seleccionados." : "No hay compras registradas."}
                         </td>
                     </tr>
                 `;
