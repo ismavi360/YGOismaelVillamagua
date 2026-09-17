@@ -65,6 +65,9 @@
                 <p class="text-xs text-slate-400">Control de pedidos y tracking</p>
             </div>
             <div class="flex items-center gap-2">
+                <button id="btnToggleSummary" class="text-xs font-medium px-3 py-2 rounded-lg border border-sky-600 bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 transition flex items-center gap-1">
+                    📊 Resumen Gastos
+                </button>
                 <button id="btnManageStores" class="text-xs font-medium px-3 py-2 rounded-lg border border-slate-600 bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition">
                     🏷️ Tiendas
                 </button>
@@ -80,7 +83,7 @@
         <!-- Formulario de Registro (Optimizado Móvil Vertical) -->
         <section class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-xl">
             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3">Registrar Nueva Compra</h2>
-            <form id="purchaseForm" class="space-y-3 md:space-y-0 md:grid md:grid-cols-4 md:gap-3 md:items-end">
+            <form id="purchaseForm" class="space-y-3 md:space-y-0 md:grid md:grid-cols-5 md:gap-3 md:items-end">
                 
                 <!-- Nombre del Artículo -->
                 <div>
@@ -93,6 +96,13 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Tracking (Opcional)</label>
                     <input type="text" id="trackingNumber" placeholder="Ej. TBA123456789"
+                        class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
+                </div>
+
+                <!-- Precio (Opcional) -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Precio $ (Opcional)</label>
+                    <input type="number" id="itemPrice" step="0.01" min="0" placeholder="Ej. 25.50"
                         class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
                 </div>
 
@@ -115,6 +125,29 @@
                     </button>
                 </div>
             </form>
+        </section>
+
+        <!-- Tabla Resumen Gastos Mensuales (Ubicada ARRIBA de la lista de productos y oculta por defecto) -->
+        <section id="monthlySummarySection" class="hidden bg-slate-800 border border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-700/60 flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">📊 Resumen de Gastos Mensuales</h2>
+                <button id="btnCloseSummary" class="text-slate-400 hover:text-slate-200 text-lg font-bold" title="Cerrar">&times;</button>
+            </div>
+            <div class="w-full overflow-x-auto no-scrollbar">
+                <table class="w-full text-left border-collapse min-w-full">
+                    <thead>
+                        <tr class="bg-slate-900/50 text-slate-300 text-xs font-semibold uppercase tracking-wider border-b border-slate-700/60">
+                            <th class="py-3 px-4">Mes / Año</th>
+                            <th class="py-3 px-3 text-right">Gasto Total</th>
+                            <th class="py-3 px-3 text-right text-amber-400">Reembolsado</th>
+                            <th class="py-3 px-4 text-right text-emerald-400">Gasto Neto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlySummaryBody" class="divide-y divide-slate-700/40 text-sm">
+                        <!-- Carga dinámica -->
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- Contenedor / Tabla Adaptada para Móvil -->
@@ -148,6 +181,7 @@
                         <tr class="bg-slate-900/50 text-slate-300 text-xs font-semibold uppercase tracking-wider border-b border-slate-700/60">
                             <th class="py-3.5 px-3">Artículo / Tienda</th>
                             <th class="py-3.5 px-2">Tracking / Fecha</th>
+                            <th class="py-3.5 px-2 text-right">Precio</th>
                             <th class="py-3.5 px-2 text-center">Días</th>
                             <th class="py-3.5 px-2 text-center">Acciones</th>
                         </tr>
@@ -272,6 +306,10 @@
         const purchaseForm = document.getElementById("purchaseForm");
         const storeSelect = document.getElementById("storeSelect");
         const itemsTableBody = document.getElementById("itemsTableBody");
+        const monthlySummaryBody = document.getElementById("monthlySummaryBody");
+        const monthlySummarySection = document.getElementById("monthlySummarySection");
+        const btnToggleSummary = document.getElementById("btnToggleSummary");
+        const btnCloseSummary = document.getElementById("btnCloseSummary");
         const pendingBadge = document.getElementById("pendingBadge");
         const refundedBadge = document.getElementById("refundedBadge");
         const storeModal = document.getElementById("storeModal");
@@ -301,6 +339,15 @@
                 onConfirm();
             }
         }
+
+        // --- Eventos Resumen Mensual Visibilidad ---
+        btnToggleSummary.onclick = () => {
+            monthlySummarySection.classList.toggle("hidden");
+        };
+
+        btnCloseSummary.onclick = () => {
+            monthlySummarySection.classList.add("hidden");
+        };
 
         // --- Eventos del Buscador ---
         searchInput.addEventListener("input", () => {
@@ -453,6 +500,8 @@
             
             const name = document.getElementById("itemName").value.trim();
             const tracking = document.getElementById("trackingNumber").value.trim() || "N/A";
+            const priceVal = parseFloat(document.getElementById("itemPrice").value);
+            const price = isNaN(priceVal) ? 0 : priceVal;
             const store = storeSelect.value;
             
             if (!store || store === "__NEW__") return;
@@ -464,10 +513,12 @@
                     name: name,
                     store: store,
                     tracking: tracking,
+                    price: price,
                     purchaseDate: todayStr,
                     isReceived: false,
                     isRefunded: false,
-                    receivedTimestamp: null
+                    receivedTimestamp: null,
+                    isAutoDeleted: false
                 });
 
                 purchaseForm.reset();
@@ -487,42 +538,53 @@
         });
 
         function processAndRenderItems(rawItems) {
-            let items = [];
+            let activeItems = [];
             const now = new Date();
             let pendingCount = 0;
             let refundedCount = 0;
 
             rawItems.forEach((item) => {
-                // Auto-eliminar según constante dinámica (daysToDelete) tras estar RECIBIDO
-                if (item.isReceived && item.receivedTimestamp) {
+                // Normalizar campo de precio
+                item.price = typeof item.price === "number" ? item.price : (parseFloat(item.price) || 0);
+
+                // Auto-eliminar marcando estado conservador para resumen tras estar RECIBIDO
+                if (item.isReceived && item.receivedTimestamp && !item.isAutoDeleted) {
                     const receivedDate = new Date(item.receivedTimestamp);
                     const diffDays = (now - receivedDate) / (1000 * 60 * 60 * 24);
                     
                     if (diffDays >= appConfig.daysToDelete) {
-                        deleteDoc(doc(db, "compras_articulos", item.id));
+                        updateDoc(doc(db, "compras_articulos", item.id), {
+                            isAutoDeleted: true
+                        });
                         return;
                     }
                 }
 
-                if (!item.isReceived) {
-                    pendingCount++;
+                // Filtrar elementos activos (que no han sido auto-eliminados)
+                if (!item.isAutoDeleted) {
+                    if (!item.isReceived) {
+                        pendingCount++;
+                    }
+
+                    if (item.isRefunded) {
+                        refundedCount++;
+                    }
+
+                    // Cálculo días transcurridos
+                    const pDate = new Date(item.purchaseDate + "T00:00:00");
+                    const diffTime = Math.abs(now - pDate);
+                    item.daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                    activeItems.push(item);
                 }
-
-                if (item.isRefunded) {
-                    refundedCount++;
-                }
-
-                // Cálculo días transcurridos
-                const pDate = new Date(item.purchaseDate + "T00:00:00");
-                const diffTime = Math.abs(now - pDate);
-                item.daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                items.push(item);
             });
 
             // Actualizar los Badges de los Contadores
             pendingBadge.textContent = `${pendingCount} en camino`;
             refundedBadge.textContent = `${refundedCount} ${refundedCount === 1 ? 'reembolsado' : 'reembolsados'}`;
+
+            // Renderizar resumen mensual pasando la lista completa (incluyendo auto-eliminados)
+            renderMonthlySummary(rawItems);
 
             const getPriority = (i) => {
                 if (!i.isReceived && !i.isRefunded) return 0;
@@ -531,7 +593,7 @@
             };
 
             if (initialSortedIds === null) {
-                items.sort((a, b) => {
+                activeItems.sort((a, b) => {
                     const pA = getPriority(a);
                     const pB = getPriority(b);
                     if (pA !== pB) return pA - pB;
@@ -544,9 +606,9 @@
                     return a.name.localeCompare(b.name);
                 });
 
-                initialSortedIds = items.map(item => item.id);
+                initialSortedIds = activeItems.map(item => item.id);
             } else {
-                const itemMap = new Map(items.map(i => [i.id, i]));
+                const itemMap = new Map(activeItems.map(i => [i.id, i]));
                 let orderedItems = [];
 
                 initialSortedIds.forEach(id => {
@@ -561,21 +623,22 @@
                     initialSortedIds.unshift(newItem.id);
                 });
 
-                items = orderedItems;
+                activeItems = orderedItems;
             }
 
             // Aplicar Filtro del Buscador
             const searchQuery = searchInput.value.trim().toLowerCase();
             if (searchQuery !== "") {
-                items = items.filter(item => {
+                activeItems = activeItems.filter(item => {
                     const nameMatch = item.name.toLowerCase().includes(searchQuery);
                     const trackingMatch = item.tracking ? item.tracking.toLowerCase().includes(searchQuery) : false;
                     const storeMatch = item.store.toLowerCase().includes(searchQuery);
-                    return nameMatch || trackingMatch || storeMatch;
+                    const priceMatch = item.price ? item.price.toString().includes(searchQuery) : false;
+                    return nameMatch || trackingMatch || storeMatch || priceMatch;
                 });
             }
 
-            renderTable(items);
+            renderTable(activeItems);
         }
 
         function renderTable(items) {
@@ -585,7 +648,7 @@
                 const isSearching = searchInput.value.trim() !== "";
                 itemsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="text-center py-6 text-slate-500 text-sm">
+                        <td colspan="5" class="text-center py-6 text-slate-500 text-sm">
                             ${isSearching ? "No se encontraron coincidencias para la búsqueda." : "No hay compras registradas."}
                         </td>
                     </tr>
@@ -612,6 +675,8 @@
                     ? "font-semibold text-sm leading-snug editable cursor-pointer alert-pulse-red font-bold" 
                     : "font-semibold text-slate-100 text-sm leading-snug editable cursor-pointer";
 
+                const formattedPrice = item.price > 0 ? `$${item.price.toFixed(2)}` : "-";
+
                 tr.innerHTML = `
                     <td class="py-3 px-3">
                         <div class="${nameTextClasses}" data-id="${item.id}" data-field="name">${escapeHTML(item.name)}</div>
@@ -620,6 +685,9 @@
                     <td class="py-3 px-2">
                         <div class="text-slate-200 text-xs font-mono editable cursor-pointer" data-id="${item.id}" data-field="tracking">${escapeHTML(item.tracking)}</div>
                         <div class="text-[11px] text-slate-400 mt-0.5 editable cursor-pointer" data-id="${item.id}" data-field="purchaseDate">${escapeHTML(item.purchaseDate)}</div>
+                    </td>
+                    <td class="py-3 px-2 text-right font-medium text-emerald-400 text-xs font-mono editable cursor-pointer" data-id="${item.id}" data-field="price">
+                        ${formattedPrice}
                     </td>
                     <td class="py-3 px-2 text-center font-bold text-slate-200 text-sm">
                         ${item.daysElapsed}d
@@ -637,6 +705,84 @@
             });
 
             attachEvents(items);
+        }
+
+        // --- Renderizar Tabla de Resumen Mensual ---
+        function renderMonthlySummary(allRawItems) {
+            monthlySummaryBody.innerHTML = "";
+
+            if (allRawItems.length === 0) {
+                monthlySummaryBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-slate-500 text-xs">
+                            Sin datos para el cálculo mensual.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const monthNames = [
+                "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+            ];
+
+            const summary = {};
+
+            allRawItems.forEach(item => {
+                if (!item.purchaseDate) return;
+                const parts = item.purchaseDate.split("-");
+                if (parts.length < 2) return;
+
+                const year = parts[0];
+                const monthIndex = parseInt(parts[1], 10) - 1;
+                const key = `${year}-${parts[1]}`;
+
+                if (!summary[key]) {
+                    summary[key] = {
+                        year: year,
+                        monthIndex: monthIndex,
+                        label: `${monthNames[monthIndex] || 'Mes ' + parts[1]} ${year}`,
+                        totalSpent: 0,
+                        totalRefunded: 0
+                    };
+                }
+
+                const price = typeof item.price === "number" ? item.price : (parseFloat(item.price) || 0);
+                summary[key].totalSpent += price;
+
+                if (item.isRefunded) {
+                    summary[key].totalRefunded += price;
+                }
+            });
+
+            const sortedKeys = Object.keys(summary).sort().reverse();
+
+            if (sortedKeys.length === 0) {
+                monthlySummaryBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-slate-500 text-xs">
+                            Sin datos para el cálculo mensual.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            sortedKeys.forEach(key => {
+                const data = summary[key];
+                const netSpent = data.totalSpent - data.totalRefunded;
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-750 transition border-b border-slate-700/40";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-slate-200 text-xs">${escapeHTML(data.label)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs text-slate-300">$${data.totalSpent.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-right font-mono text-xs text-amber-400">$${data.totalRefunded.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-right font-mono text-xs font-bold text-emerald-400">$${netSpent.toFixed(2)}</td>
+                `;
+                monthlySummaryBody.appendChild(tr);
+            });
         }
 
         function attachEvents(items) {
@@ -666,7 +812,7 @@
                 };
             });
 
-            // Eliminar con confirmación
+            // Eliminar con confirmación (Borrado completo de base de datos)
             document.querySelectorAll(".btn-delete").forEach(btn => {
                 btn.onclick = () => {
                     const id = btn.getAttribute("data-id");
@@ -684,12 +830,19 @@
                 const makeEditable = () => {
                     if (cell.querySelector("input")) return;
 
-                    const currentText = cell.textContent.trim();
                     const field = cell.getAttribute("data-field");
                     const id = cell.getAttribute("data-id");
+                    let currentText = cell.textContent.trim();
+                    if (field === "price") {
+                        currentText = currentText.replace("$", "").replace("-", "0").trim();
+                    }
 
                     const input = document.createElement("input");
-                    input.type = field === "purchaseDate" ? "date" : "text";
+                    input.type = field === "purchaseDate" ? "date" : (field === "price" ? "number" : "text");
+                    if (field === "price") {
+                        input.step = "0.01";
+                        input.min = "0";
+                    }
                     input.value = currentText;
                     input.className = "w-full bg-slate-900 border border-sky-500 px-2 py-1 rounded text-sm text-slate-100 outline-none";
 
@@ -702,13 +855,23 @@
                         if (saved) return;
                         saved = true;
 
-                        const newValue = input.value.trim();
-                        if (newValue && newValue !== currentText) {
+                        let newValue = input.value.trim();
+                        if (field === "price") {
+                            const parsed = parseFloat(newValue);
+                            newValue = isNaN(parsed) ? 0 : parsed;
+                        }
+
+                        if (newValue !== "" && newValue !== currentText) {
                             updateDoc(doc(db, "compras_articulos", id), {
                                 [field]: newValue
                             });
                         } else {
-                            cell.textContent = currentText;
+                            if (field === "price") {
+                                const pVal = parseFloat(currentText);
+                                cell.textContent = (!isNaN(pVal) && pVal > 0) ? `$${pVal.toFixed(2)}` : "-";
+                            } else {
+                                cell.textContent = currentText;
+                            }
                         }
                     };
 
@@ -717,7 +880,12 @@
                         if (e.key === "Enter") save();
                         if (e.key === "Escape") {
                             saved = true;
-                            cell.textContent = currentText;
+                            if (field === "price") {
+                                const pVal = parseFloat(currentText);
+                                cell.textContent = (!isNaN(pVal) && pVal > 0) ? `$${pVal.toFixed(2)}` : "-";
+                            } else {
+                                cell.textContent = currentText;
+                            }
                         }
                     };
                 };
