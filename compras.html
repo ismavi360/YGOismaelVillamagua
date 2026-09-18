@@ -91,14 +91,14 @@
 
                 <!-- Tracking Number -->
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Tracking (Opcional)</label>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Tracking Number</label>
                     <input type="text" id="trackingNumber" placeholder="Ej. TBA123456789"
                         class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
                 </div>
 
                 <!-- Precio (Opcional) -->
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Precio $ (Opcional)</label>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Precio $</label>
                     <input type="number" id="itemPrice" step="0.01" min="0" placeholder="Ej. 25.50"
                         class="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm transition">
                 </div>
@@ -157,7 +157,7 @@
                             0 en camino
                         </span>
                         <span id="refundedBadge" class="inline-flex items-center justify-center text-center bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                            0 reembolsados
+                            0 reembolsos
                         </span>
                     </div>
                 </div>
@@ -195,10 +195,10 @@
                     <div>
                         <select id="sortOrderSelect" class="w-full px-2.5 py-1.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-sky-500 outline-none transition">
                             <option value="DEFAULT">Orden: Por defecto</option>
-                            <option value="PRICE_DESC">Precio: Mayor a Menor</option>
-                            <option value="PRICE_ASC">Precio: Menor a Mayor</option>
-                            <option value="DATE_ASC">Fecha: Antigua a Reciente (Menor a Mayor)</option>
-                            <option value="DATE_DESC">Fecha: Reciente a Antigua (Mayor a Menor)</option>
+                            <option value="PRICE_DESC">Precio: Mayor</option>
+                            <option value="PRICE_ASC">Precio: Menor</option>
+                            <option value="DATE_ASC">Fecha: Más Antigua</option>
+                            <option value="DATE_DESC">Fecha: Más Reciente</option>
                         </select>
                     </div>
                 </div>
@@ -208,8 +208,8 @@
                 <table class="w-full text-left border-collapse table-fixed">
                     <thead class="w-full">
                         <tr class="bg-slate-900/50 text-slate-300 text-[10px] font-semibold uppercase tracking-wider border-b border-slate-700/60">
-                            <th class="py-2.5 px-1 w-[25%] text-left">Artículo / Tienda</th>
-                            <th class="py-2.5 px-1 w-[20%] text-left overflow-hidden">Tracking / Fecha</th>
+                            <th class="py-2.5 px-1 w-[25%] text-left">ITEM</th>
+                            <th class="py-2.5 px-1 w-[20%] text-left overflow-hidden">Tracking</th>
                             <th class="py-2.5 px-1 text-right w-[15%]">Precio</th>
                             <th class="py-2.5 px-0.5 text-center w-[10%]">Días</th>
                             <th class="py-2.5 px-0.5 text-center w-[30%]">Acciones</th>
@@ -651,7 +651,7 @@
 
             // Actualizar los Badges de los Contadores
             pendingBadge.textContent = `${pendingCount} en camino`;
-            refundedBadge.textContent = `${refundedCount} ${refundedCount === 1 ? 'reembolsado' : 'reembolsados'}`;
+            refundedBadge.textContent = `${refundedCount} ${refundedCount === 1 ? 'reembolso' : 'reembolsos'}`;
 
             // Renderizar resumen mensual pasando la lista completa (incluyendo auto-eliminados)
             renderMonthlySummary(rawItems);
@@ -798,9 +798,9 @@
                     </td>
                     <td class="py-2.5 px-0.5 text-center align-middle">
                         <div class="flex flex-col gap-1 items-center w-full max-w-[85px] mx-auto">
-                            <button class="btn-received w-full text-[10px] font-semibold py-1 px-1 rounded transition border border-sky-500/30 truncate ${item.isReceived ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-800 text-sky-400 hover:bg-slate-700'}" data-id="${item.id}">Recibido</button>
-                            <button class="btn-refunded w-full text-[10px] font-semibold py-1 px-1 rounded transition border border-amber-500/30 truncate ${item.isRefunded ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-800 text-amber-400 hover:bg-slate-700'}" data-id="${item.id}">Reembolso</button>
-                            <button class="btn-delete w-full text-[10px] font-medium py-1 px-1 rounded bg-rose-950/70 text-rose-300 hover:bg-rose-900 border border-rose-800/40 transition truncate" data-id="${item.id}">Eliminar</button>
+                            <button class="btn-received w-full text-[10px] font-semibold py-1 px-1 rounded transition border border-sky-500/30 truncate ${item.isReceived ? 'bg-sky-500 text-white shadow-md' : 'bg-slate-800 text-sky-400 hover:bg-slate-700'}" data-id="${item.id}">RECIBIDO</button>
+                            <button class="btn-refunded w-full text-[10px] font-semibold py-1 px-1 rounded transition border border-amber-500/30 truncate ${item.isRefunded ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-800 text-amber-400 hover:bg-slate-700'}" data-id="${item.id}">REEMBOLSADO</button>
+                            <button class="btn-delete w-full text-[10px] font-medium py-1 px-1 rounded bg-rose-950/70 text-rose-300 hover:bg-rose-900 border border-rose-800/40 transition truncate" data-id="${item.id}">ELIMINAR</button>
                         </div>
                     </td>
                 `;
@@ -966,6 +966,14 @@
                         }
 
                         if (newValue !== "" && newValue !== currentText) {
+                            // Actualizar la vista visualmente primero para evitar desfases estéticos
+                            if (field === "price") {
+                                const pVal = parseFloat(newValue);
+                                cell.textContent = (!isNaN(pVal) && pVal > 0) ? `$${pVal.toFixed(2)}` : "-";
+                            } else {
+                                cell.textContent = newValue;
+                            }
+
                             updateDoc(doc(db, "compras_articulos", id), {
                                 [field]: newValue
                             });
@@ -981,7 +989,10 @@
 
                     input.onblur = save;
                     input.onkeydown = (e) => {
-                        if (e.key === "Enter") save();
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            input.blur();
+                        }
                         if (e.key === "Escape") {
                             saved = true;
                             if (field === "price") {
