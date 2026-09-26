@@ -399,6 +399,100 @@
             text-align: center;
         }
 
+        /* --- ESTILOS PARA LAS TABLETAS DE GRÁFICOS HORIZONTALES --- */
+        .chart-panel {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 0.8rem;
+        }
+
+        .chart-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-header h3 i {
+            color: var(--accent);
+        }
+
+        .chart-container-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            width: 100%;
+        }
+
+        .chart-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .chart-card-label {
+            width: 180px;
+            min-width: 180px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #d1d5db;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+        }
+
+        .chart-bar-track {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            height: 28px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e3a8a 0%, var(--accent) 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            min-width: 2px;
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            right: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .chart-empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 1.5rem 0;
+            font-style: italic;
+        }
+
         /* Modal window infrastructure layout */
         .modal-overlay {
             position: fixed;
@@ -506,6 +600,12 @@
         .deck-item-info .name { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;}
         .deck-item-info .date { font-size: 0.75rem; color: var(--text-muted); }
 
+        .deck-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         /* Responsive Breakpoints Handling */
         @media (max-width: 768px) {
             .page-wrapper { padding: 1rem; gap: 1rem; }
@@ -518,6 +618,7 @@
             .input-group input { flex: 1; }
             .form-grid { grid-template-columns: 1fr; }
             th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) { position: sticky; }
+            .chart-card-label { width: 100px; min-width: 100px; }
         }
     </style>
 </head>
@@ -572,6 +673,26 @@
                         <!-- Populated dynamically via state scripts -->
                     </tbody>
                 </table>
+            </section>
+
+            <!-- TABLETA 1: Gráfico de barras horizontales - Solo Decks META -->
+            <section class="glass-panel chart-panel">
+                <div class="chart-header">
+                    <h3><i class="lucide-bar-chart-2"></i> Rendimiento de Cartas vs Decks META</h3>
+                </div>
+                <div class="chart-container-bars" id="chart-meta-container">
+                    <!-- Generado dinámicamente -->
+                </div>
+            </section>
+
+            <!-- TABLETA 2: Gráfico de barras horizontales - Global (META y NO META) -->
+            <section class="glass-panel chart-panel">
+                <div class="chart-header">
+                    <h3><i class="lucide-bar-chart-3"></i> Rendimiento Global de Cartas (Meta & No Meta)</h3>
+                </div>
+                <div class="chart-container-bars" id="chart-global-container">
+                    <!-- Generado dinámicamente -->
+                </div>
             </section>
         </main>
     </div>
@@ -653,7 +774,7 @@
     <!-- Firebase Connection Engine Module Core Script Execution Initialization Section -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, getDocs, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC58tN_1MeVoc32t1C3liGrQIFqpjryqW8",
@@ -675,7 +796,7 @@
             enemyDecks: [], 
             ratings: {},    
             weightsNormal: { MALA: -1, INEFICIENTE: 0, BUENA: 1, COUNTER: 3 },
-            weightsMeta: { MALA: -2, INEFICIENTE: -1, BUENA: 2, COUNTER: 4 },
+            weightsMeta: { MALA: -3, INEFICIENTE: -1, BUENA: 2, COUNTER: 5 },
             createdAt: null,
             updatedAt: null,
             isSynced: false 
@@ -745,15 +866,76 @@
             updateSyncIndicator();
         }
 
-        function computeCardSumaTotal(cardName) {
+        function computeCardSumaTotal(cardName, onlyMeta = false) {
             let columnAccumulator = 0;
             state.enemyDecks.forEach(enemy => {
+                if (onlyMeta && !enemy.isMeta) return;
                 const compositeKey = `${enemy.name}::${cardName}`;
                 const elementRating = state.ratings[compositeKey] || "INEFICIENTE";
                 const standardWeightsMap = enemy.isMeta ? state.weightsMeta : state.weightsNormal;
                 columnAccumulator += Number(standardWeightsMap[elementRating] ?? 0);
             });
             return columnAccumulator;
+        }
+
+        /* LÓGICA DE RENDERIZADO DE LAS NUEVAS TABLETAS DE GRÁFICOS */
+        function renderCharts() {
+            const metaContainer = document.getElementById('chart-meta-container');
+            const globalContainer = document.getElementById('chart-global-container');
+
+            if (!metaContainer || !globalContainer) return;
+
+            if (!state.cards || state.cards.length === 0) {
+                metaContainer.innerHTML = '<div class="chart-empty-state">No hay cartas registradas.</div>';
+                globalContainer.innerHTML = '<div class="chart-empty-state">No hay cartas registradas.</div>';
+                return;
+            }
+
+            // Datos ordenados de Mayor a Menor para Decks META
+            const metaData = state.cards.map(cardName => ({
+                name: cardName,
+                score: computeCardSumaTotal(cardName, true)
+            })).sort((a, b) => b.score - a.score);
+
+            // Datos ordenados de Mayor a Menor para Decks GLOBAL (Meta + No Meta)
+            const globalData = state.cards.map(cardName => ({
+                name: cardName,
+                score: computeCardSumaTotal(cardName, false)
+            })).sort((a, b) => b.score - a.score);
+
+            metaContainer.innerHTML = generateChartBarsHTML(metaData);
+            globalContainer.innerHTML = generateChartBarsHTML(globalData);
+        }
+
+        function generateChartBarsHTML(dataList) {
+            if (dataList.length === 0) return '<div class="chart-empty-state">No hay cartas registradas.</div>';
+
+            const scores = dataList.map(d => d.score);
+            const maxScore = Math.max(...scores, 1);
+            const minScore = Math.min(...scores, 0);
+            const absoluteMax = Math.max(Math.abs(maxScore), Math.abs(minScore), 1);
+
+            return dataList.map(item => {
+                let percentage = 0;
+                if (item.score !== 0) {
+                    percentage = (Math.abs(item.score) / absoluteMax) * 100;
+                }
+
+                const isNegative = item.score < 0;
+                const barBackground = isNegative 
+                    ? 'rgba(239, 68, 68, 0.8)' 
+                    : 'linear-gradient(90deg, #1e3a8a 0%, var(--accent) 100%)';
+
+                return `
+                    <div class="chart-bar-row">
+                        <div class="chart-card-label" title="${item.name}">${item.name}</div>
+                        <div class="chart-bar-track">
+                            <div class="chart-bar-fill" style="width: ${percentage}%; background: ${barBackground};"></div>
+                            <span class="chart-bar-value">${item.score} pts</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function buildEvaluationMatrixStructure() {
@@ -903,12 +1085,15 @@
                 const tdScore = document.createElement("td");
                 tdScore.className = "valuation-score";
                 tdScore.id = `score-cell-${btoa(encodeURIComponent(cardName)).replace(/=/g, "")}`;
-                tdScore.innerText = computeCardSumaTotal(cardName);
+                tdScore.innerText = computeCardSumaTotal(cardName, false);
                 trValuation.appendChild(tdScore);
             });
 
             tableBody.appendChild(trValuation);
             
+            // Renderizado síncrono de gráficos
+            renderCharts();
+
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
@@ -919,9 +1104,11 @@
                 const safeId = `score-cell-${btoa(encodeURIComponent(cardName)).replace(/=/g, "")}`;
                 const targetCell = document.getElementById(safeId);
                 if (targetCell) {
-                    targetCell.innerText = computeCardSumaTotal(cardName);
+                    targetCell.innerText = computeCardSumaTotal(cardName, false);
                 }
             });
+
+            renderCharts();
         }
 
         function triggerNodeRenameSequence(nodeType, currentKeyName) {
@@ -977,7 +1164,7 @@
             if (state.cards.length <= 1) return;
 
             const mappedTuples = state.cards.map(card => {
-                return { name: card, computedScore: computeCardSumaTotal(card) };
+                return { name: card, computedScore: computeCardSumaTotal(card, false) };
             });
 
             mappedTuples.sort((nodeA, nodeB) => nodeB.computedScore - nodeA.computedScore);
@@ -1143,28 +1330,67 @@
                 infoWrapper.appendChild(dateDiv);
                 itemNode.appendChild(infoWrapper);
 
+                const actionsWrapper = document.createElement("div");
+                actionsWrapper.className = "deck-actions";
+
+                const delBtn = document.createElement("button");
+                delBtn.className = "btn-delete-node";
+                delBtn.title = "Eliminar deck de la base de datos";
+                delBtn.innerHTML = '<span style="display:inline-block; font-size:18px; line-height:12px;">×</span>';
+                delBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    invokeConfirmation(`¿Está seguro de que desea eliminar el deck "${deckDoc.deckName}" de la base de datos?`, async () => {
+                        try {
+                            await deleteDoc(doc(db, "Decks", deckDoc.id));
+                            remoteDecksCache = remoteDecksCache.filter(d => d.id !== deckDoc.id);
+
+                            if (state.id === deckDoc.id) {
+                                state.id = null;
+                                state.deckName = "Mi Nuevo Analysis Deck";
+                                state.cards = [];
+                                state.enemyDecks = [];
+                                state.ratings = {};
+                                state.createdAt = null;
+                                state.updatedAt = null;
+                                state.isSynced = false;
+                                localStorage.removeItem("CMDA_DECK_DATA");
+                                renderInterfaceAll();
+                            }
+
+                            const queryText = document.getElementById("search-deck-input").value.toLowerCase().trim();
+                            const filteredData = remoteDecksCache.filter(item => item.deckName.toLowerCase().includes(queryText));
+                            renderFilteredCloudDecks(filteredData);
+                        } catch (err) {
+                            console.error("Error al eliminar el deck remoto:", err);
+                            alert("Ocurrió un error al intentar eliminar el deck de la base de datos.");
+                        }
+                    });
+                });
+
                 const openIcon = document.createElement("i");
                 openIcon.className = "lucide-chevron-right";
                 openIcon.style.color = "var(--text-muted)";
-                itemNode.appendChild(openIcon);
+
+                actionsWrapper.appendChild(delBtn);
+                actionsWrapper.appendChild(openIcon);
+                itemNode.appendChild(actionsWrapper);
 
                 itemNode.addEventListener("click", () => {
-                        state.id = deckDoc.id;
-                        state.deckName = deckDoc.deckName;
-                        state.cards = deckDoc.cards || [];
-                        state.enemyDecks = deckDoc.enemyDecks || [];
-                        state.ratings = deckDoc.ratings || {};
-                        state.weightsNormal = deckDoc.weightsNormal || { MALA: -1, INEFICIENTE: 0, BUENA: 1, COUNTER: 3 };
-                        state.weightsMeta = deckDoc.weightsMeta || { MALA: -2, INEFICIENTE: -1, BUENA: 2, COUNTER: 4 };
-                        state.createdAt = deckDoc.createdAt;
-                        state.updatedAt = deckDoc.updatedAt;
-                        state.isSynced = true;
+                    state.id = deckDoc.id;
+                    state.deckName = deckDoc.deckName;
+                    state.cards = deckDoc.cards || [];
+                    state.enemyDecks = deckDoc.enemyDecks || [];
+                    state.ratings = deckDoc.ratings || {};
+                    state.weightsNormal = deckDoc.weightsNormal || { MALA: -1, INEFICIENTE: 0, BUENA: 1, COUNTER: 3 };
+                    state.weightsMeta = deckDoc.weightsMeta || { MALA: -2, INEFICIENTE: -1, BUENA: 2, COUNTER: 4 };
+                    state.createdAt = deckDoc.createdAt;
+                    state.updatedAt = deckDoc.updatedAt;
+                    state.isSynced = true;
 
-                        saveToLocalStorage();
-                        renderInterfaceAll();
-                        closeModal('modal-open');
-                    });
-              
+                    saveToLocalStorage();
+                    renderInterfaceAll();
+                    closeModal('modal-open');
+                });
 
                 container.appendChild(itemNode);
             });
