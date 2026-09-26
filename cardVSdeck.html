@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Card Meta Deck Analysis</title>
     <!-- Google Fonts & Lucide Icons via CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +36,7 @@
             margin: 0;
             padding: 0;
             font-family: 'Plus Jakarta Sans', sans-serif;
+            touch-action: manipulation;
         }
 
         html, body {
@@ -46,6 +47,7 @@
             background-size: cover;
             background-repeat: no-repeat;
             color: var(--text-main);
+            touch-action: manipulation;
         }
 
         body {
@@ -770,6 +772,46 @@
             </div>
         </div>
     </div>
+
+    <!-- Script de Bloqueo de Zoom (PC y Móviles) -->
+    <script>
+        // Bloquear atajos de teclado de zoom (Ctrl/Cmd + '+', '-', '0')
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0' || e.keyCode === 187 || e.keyCode === 189 || e.keyCode === 48)) {
+                e.preventDefault();
+            }
+        });
+
+        // Bloquear zoom con rueda del ratón (Ctrl + Scroll / Cmd + Scroll)
+        document.addEventListener('wheel', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Bloquear gestos táctiles multitáctiles (pellizco/pinch zoom)
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Bloquear zoom por doble toque rápido (Double-tap zoom)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
 
     <!-- Firebase Connection Engine Module Core Script Execution Initialization Section -->
     <script type="module">
