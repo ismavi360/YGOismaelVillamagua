@@ -650,11 +650,11 @@
             <!-- Metadata Actions and inputs management row -->
             <section class="glass-panel deck-meta-section">
                 <div class="deck-title-wrapper">
-                    <input type="text" class="deck-title-input" id="input-deck-name" placeholder="[INGRESE NOMBRE DEL DECK]" value="[INGRESE NOMBRE DEL DECK]">
+                    <input type="text" class="deck-title-input" id="input-deck-name" placeholder="[MAIN DECK NAME]" value="[MAIN DECK NAME]">
                 </div>
                 <div class="management-inputs">
                     <div class="input-group">
-                        <input type="text" id="input-enemy-name" placeholder="Ingrese deck...">
+                        <input type="text" id="input-enemy-name" placeholder="Ingrese deck rival...">
                     </div>
                     <div class="input-group">
                         <input type="text" id="input-card-name" placeholder="Ingrese carta...">
@@ -833,7 +833,7 @@
 
         let state = {
             id: null,
-            deckName: "[INGRESE NOMBRE DEL DECK]",
+            deckName: "[MAIN DECK NAME]",
             cards: [],
             enemyDecks: [], 
             ratings: {},    
@@ -868,7 +868,7 @@
                 try {
                     const parsed = JSON.parse(data);
                     state.id = parsed.id || null;
-                    state.deckName = parsed.deckName || "[INGRESE NOMBRE DEL DECK]";
+                    state.deckName = parsed.deckName || "[MAIN DECK NAME]";
                     state.cards = parsed.cards || [];
                     state.enemyDecks = parsed.enemyDecks || [];
                     state.ratings = parsed.ratings || {};
@@ -1387,7 +1387,7 @@
 
                             if (state.id === deckDoc.id) {
                                 state.id = null;
-                                state.deckName = "[INGRESE NOMBRE DEL DECK]";
+                                state.deckName = "[MAIN DECK NAME]";
                                 state.cards = [];
                                 state.enemyDecks = [];
                                 state.ratings = {};
@@ -1504,7 +1504,7 @@
         document.getElementById("btn-new-deck").addEventListener("click", () => {
             invokeConfirmation("¿Desea crear un nuevo análisis?\nSe vaciará la memoria de trabajo local.", () => {
                 state.id = null;
-                state.deckName = "[INGRESE NOMBRE DEL DECK]";
+                state.deckName = "[MAIN DECK NAME]";
                 state.cards = [];
                 state.enemyDecks = [];
                 state.ratings = {};
