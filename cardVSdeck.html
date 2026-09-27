@@ -1270,9 +1270,8 @@
                     isOverwriteAction = true;
                     executionPromptMessage = "Este análisis ya existe.\n¿Desea sobrescribirlo?";
                 } else {
-                    if (!targetDocumentID) {
-                        targetDocumentID = "doc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-                    }
+                    // Si el nombre del análisis cambio (ya no coincide con la base de datos), desvinculamos el ID viejo para crear un documento nuevo
+                    targetDocumentID = "doc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
                     executionPromptMessage = "Se creará un nuevo análisis en la nube.\n¿Desea continuar?";
                 }
 
