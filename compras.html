@@ -246,10 +246,10 @@
             
             <form id="configForm" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Días para auto-eliminar recibidos</label>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Días para ocultar recibidos</label>
                     <input type="number" id="cfgDaysToDelete" min="1" max="365" required
                         class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none text-sm">
-                    <p class="text-[11px] text-slate-400 mt-1">Borra el paquete automáticamente tras este número de días de haber sido recibido.</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Oculta el paquete automáticamente tras este número de días de haber sido recibido.</p>
                 </div>
 
                 <div>
@@ -257,6 +257,12 @@
                     <input type="number" id="cfgDaysToAlert" min="1" max="365" required
                         class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none text-sm">
                     <p class="text-[11px] text-slate-400 mt-1">Si el artículo no se ha recibido pasados estos días, parpadeará en rojo.</p>
+                </div>
+
+                <!-- Opción para mostrar u ocultar paquetes ocultos por defecto -->
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="cfgShowHidden" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-sky-600 focus:ring-sky-500 cursor-pointer">
+                    <label for="cfgShowHidden" class="text-xs font-medium text-slate-300 cursor-pointer">Mostrar paquetes ocultos</label>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
@@ -317,6 +323,9 @@
             daysToAlert: 15
         };
 
+        // Estado local para visibilidad de paquetes ocultos (siempre false por defecto al cargar)
+        let showHiddenItems = false;
+
         // Orden estático reservado durante la carga inicial de la página
         let initialSortedIds = null;
         let currentItems = [];
@@ -352,6 +361,7 @@
         const btnCancelConfig = document.getElementById("btnCancelConfig");
         const cfgDaysToDeleteInput = document.getElementById("cfgDaysToDelete");
         const cfgDaysToAlertInput = document.getElementById("cfgDaysToAlert");
+        const cfgShowHiddenCheckbox = document.getElementById("cfgShowHidden");
 
         // Elementos Buscador, Filtros y Orden
         const searchInput = document.getElementById("searchInput");
@@ -417,6 +427,7 @@
         btnOpenConfig.onclick = () => {
             cfgDaysToDeleteInput.value = appConfig.daysToDelete;
             cfgDaysToAlertInput.value = appConfig.daysToAlert;
+            cfgShowHiddenCheckbox.checked = showHiddenItems;
             configModal.classList.remove("hidden");
         };
 
@@ -434,6 +445,10 @@
                         daysToDelete: newDeleteDays,
                         daysToAlert: newAlertDays
                     });
+                    
+                    showHiddenItems = cfgShowHiddenCheckbox.checked;
+                    processAndRenderItems(currentItems);
+
                     configModal.classList.add("hidden");
                 } catch (err) {
                     console.error("Error al guardar la configuración:", err);
@@ -578,7 +593,7 @@
             const monthsSet = new Set();
 
             rawItems.forEach(item => {
-                if (item.purchaseDate && !item.isAutoDeleted) {
+                if (item.purchaseDate && (!item.isAutoDeleted || showHiddenItems)) {
                     const parts = item.purchaseDate.split("-");
                     if (parts.length >= 2) {
                         monthsSet.add(`${parts[0]}-${parts[1]}`);
@@ -617,7 +632,7 @@
                 // Normalizar campo de precio
                 item.price = typeof item.price === "number" ? item.price : (parseFloat(item.price) || 0);
 
-                // Auto-eliminar marcando estado conservador para resumen tras estar RECIBIDO
+                // Ocultar marcando el estado tras estar RECIBIDO por la cantidad de días
                 if (item.isReceived && item.receivedTimestamp && !item.isAutoDeleted) {
                     const receivedDate = new Date(item.receivedTimestamp);
                     const diffDays = (now - receivedDate) / (1000 * 60 * 60 * 24);
@@ -626,12 +641,12 @@
                         updateDoc(doc(db, "compras_articulos", item.id), {
                             isAutoDeleted: true
                         });
-                        return;
+                        item.isAutoDeleted = true;
                     }
                 }
 
-                // Filtrar elementos activos (que no han sido auto-eliminados)
-                if (!item.isAutoDeleted) {
+                // Determinar si debe mostrarse según la opción de configuración
+                if (!item.isAutoDeleted || showHiddenItems) {
                     if (!item.isReceived) {
                         pendingCount++;
                     }
@@ -653,7 +668,7 @@
             pendingBadge.textContent = `${pendingCount} en camino`;
             refundedBadge.textContent = `${refundedCount} ${refundedCount === 1 ? 'reembolso' : 'reembolsos'}`;
 
-            // Renderizar resumen mensual pasando la lista completa (incluyendo auto-eliminados)
+            // Renderizar resumen mensual pasando la lista completa (incluyendo ocultos)
             renderMonthlySummary(rawItems);
 
             // --- APLICAR FILTROS DE ESTADO, MES Y BÚSQUEDA ---
